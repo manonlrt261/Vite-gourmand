@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Connexion',
+    image: asset('assets/bigtittle.png'),
+    image_alt: 'Table gourmande Vite et Gourmand'
+} %}
+
+<main class="auth-page">
+    <section class="auth-card">
+        <div class="auth-card__header">
+            <h1>Bienvenue !</h1>
+            <p>Connectez-vous à votre compte pour accéder à vos commandes.</p>
+            <span aria-hidden="true"></span>
+        </div>
+
+        {% for message in app.flashes('error') %}
+            <div class="auth-alert auth-alert--error">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('success') %}
+            <div class="auth-alert auth-alert--success">{{ message }}</div>
+        {% endfor %}
+
+        <form class="auth-form" method="post" action="{{ path('login', app.request.query.all) }}">
+            <label class="auth-field">
+                <span>Email</span>
+                <input type="email" name="email" placeholder="votre.email@exemple.fr" autocomplete="email" required>
+            </label>
+
+            <label class="auth-field">
+                <span>Mot de passe</span>
+                <span class="auth-password-control">
+                    <input type="hidden" name="password" data-password-value>
+                    <input
+                        type="text"
+                        name="password_display"
+                        placeholder="Votre Mot de Passe"
+                        autocomplete="current-password"
+                        data-password-mask
+                        required
+                    >
+                    <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                </span>
+                <a href="{{ path('forgot_password') }}" class="auth-forgot-link">Mot de passe oublié ?</a>
+            </label>
+
+            <div class="auth-actions">
+                <button type="submit" class="buttonprimary">Se connecter</button>
+
+                <span class="auth-separator">
+                    <span></span>
+                    <p>ou</p>
+                    <span></span>
+                </span>
+
+                <a href="{{ path('register', app.request.query.all) }}" class="buttonoffwhite auth-signup-button">S'inscrire</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="auth-contact-card">
+        <h2>Un projet en tête ?</h2>
+        <p>Parlons-en ensemble et créons un moment gourmand qui vous ressemble.</p>
+        <a href="{{ path('contact_index') }}" class="buttonwhite">Contactez-nous !</a>
+    </section>
+</main>
+
+<script>
+    (() => {
+        const visibleInput = document.querySelector('[data-password-mask]');
+        const hiddenInput = document.querySelector('[data-password-value]');
+        const toggleButton = document.querySelector('[data-password-toggle]');
+
+        if (!visibleInput || !hiddenInput || !toggleButton) {
+            return;
+        }
+
+        let realPassword = '';
+        let isVisible = false;
+
+        const refreshPasswordDisplay = () => {
+            hiddenInput.value = realPassword;
+            visibleInput.value = isVisible ? realPassword : '*'.repeat(realPassword.length);
+            toggleButton.textContent = isVisible ? 'Masquer' : 'Afficher';
+        };
+
+        visibleInput.addEventListener('beforeinput', (event) => {
+            if (event.inputType === 'insertText') {
+                realPassword += event.data || '';
+                event.preventDefault();
+            }
+
+            if (event.inputType === 'deleteContentBackward') {
+                realPassword = realPassword.slice(0, -1);
+                event.preventDefault();
+            }
+
+            if (event.inputType === 'deleteContentForward') {
+                realPassword = realPassword.slice(1);
+                event.preventDefault();
+            }
+
+            refreshPasswordDisplay();
+        });
+
+        visibleInput.addEventListener('paste', (event) => {
+            event.preventDefault();
+            realPassword += event.clipboardData.getData('text');
+            refreshPasswordDisplay();
+        });
+
+        toggleButton.addEventListener('click', () => {
+            isVisible = !isVisible;
+            refreshPasswordDisplay();
+            visibleInput.focus();
+        });
+    })();
+</script>
+{% endblock %}

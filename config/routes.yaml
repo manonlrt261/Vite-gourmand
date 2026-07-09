@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+
+
+# This file is the entry point to configure the routes of your app.
+# Methods with the #[Route] attribute are automatically imported.
+# See also https://symfony.com/doc/current/routing.html
+
+
+# To list all registered routes, run the following command:
+#   bin/console debug:router
+
+
+controllers:
+    resource: routing.controllers
+
+
+home_show:
+    path: /
+    controller: App\Controller\HomeController::show
+
+menu_index:
+    path: /menus
+    controller: App\Controller\MenuController::index
+
+menu_show:
+    path: /menus/{id}
+    controller: App\Controller\MenuController::show
+    requirements:
+        id: '\d+'
+
+contact_index:
+    path: /contact
+    controller: App\Controller\ContactController::index
+
+login:
+    path: /connexion
+    controller: App\Controller\AuthController::login
+
+register:
+    path: /inscription
+    controller: App\Controller\AuthController::register
+
+forgot_password:
+    path: /mot-de-passe-oublie
+    controller: App\Controller\AuthController::forgotPassword
+
+reset_password:
+    path: /reinitialiser-mot-de-passe/{token}
+    controller: App\Controller\AuthController::resetPassword
+
+logout:
+    path: /deconnexion
+    controller: App\Controller\AuthController::logout
+
+cart_index:
+    path: /panier
+    controller: App\Controller\CartController::index
+
+cart_remove:
+    path: /panier/supprimer/{id}
+    controller: App\Controller\CartController::remove
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+cart_show:
+    path: /panier/{id}
+    controller: App\Controller\CartController::show
+    requirements:
+        id: '\d+'

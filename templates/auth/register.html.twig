@@ -1,0 +1,99 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Inscription',
+    image: asset('assets/bigtittle.png'),
+    image_alt: 'Table gourmande Vite et Gourmand'
+} %}
+
+<main class="register-page">
+    <section class="register-intro" aria-labelledby="register-title">
+        <h1 id="register-title">Créer votre compte pour accéder à vos futures commandes</h1>
+        <span aria-hidden="true"></span>
+        <p>Bienvenue chez Vite &amp; Gourmand !</p>
+    </section>
+
+    <section class="register-card">
+        {% for message in app.flashes('register_error') %}
+            <div class="auth-alert auth-alert--error">{{ message }}</div>
+        {% endfor %}
+
+        <form class="register-form" method="post" action="{{ path('register', app.request.query.all) }}">
+            <div class="register-grid">
+                <label class="register-field register-field--full">
+                    <span>Prénom *</span>
+                    <input type="text" name="prenom" value="{{ formData.prenom|default('') }}" placeholder="Votre prénom" autocomplete="given-name" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Nom *</span>
+                    <input type="text" name="nom" value="{{ formData.nom|default('') }}" placeholder="Votre nom" autocomplete="family-name" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Email *</span>
+                    <input type="email" name="email" value="{{ formData.email|default('') }}" placeholder="votre.email@exemple.fr" autocomplete="email" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Mot de passe *</span>
+                    <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="new-password" required>
+                </label>
+
+                <div class="register-password-info register-field--full">
+                    <p>Le mot de passe doit contenir au minimum :</p>
+                    <ul>
+                        <li>10 caractères minimum</li>
+                        <li>Au minimum 1 caractère spécial</li>
+                        <li>Une majuscule</li>
+                        <li>Une minuscule</li>
+                        <li>Au minimum 1 chiffre</li>
+                    </ul>
+                </div>
+
+                <label class="register-field register-field--full">
+                    <span>Confirmation du mot de passe *</span>
+                    <input type="password" name="password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Numéro de téléphone *</span>
+                    <input type="tel" name="telephone" value="{{ formData.telephone|default('') }}" placeholder="Votre numéro de téléphone" autocomplete="tel" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Adresse postale *</span>
+                    <input type="text" name="adresse_postale" value="{{ formData.adresse_postale|default('') }}" placeholder="Votre adresse postale" autocomplete="street-address" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Code postal *</span>
+                    <input type="text" name="code_postal" value="{{ formData.code_postal|default('') }}" placeholder="Votre code postal" autocomplete="postal-code" required>
+                </label>
+
+                <label class="register-field register-field--full">
+                    <span>Ville *</span>
+                    <input type="text" name="ville" value="{{ formData.ville|default('') }}" placeholder="Votre ville" autocomplete="address-level2" required>
+                </label>
+            </div>
+
+            <p class="register-note">Les champs comprenant un * sont obligatoires.</p>
+
+            <div class="register-actions">
+                <button type="submit" class="buttonprimary">Inscrivez-vous</button>
+
+                <div class="register-separator">
+                    <span></span>
+                    <p>ou</p>
+                    <span></span>
+                </div>
+
+                <p class="register-login-link">Déjà inscrit ? <a href="{{ path('login') }}">Connectez-vous !</a></p>
+            </div>
+        </form>
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ menu.nom_menu }} - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: menu.nom_menu,
+    image: menu.image_url ? asset(menu.image_url) : asset('assets/bigtittle.png'),
+    image_alt: menu.image_alt ?: menu.nom_menu
+} %}
+
+<main class="menu-detail-page">
+    <section class="menu-detail-intro">
+        <p>{{ menu.description }}</p>
+    </section>
+
+    <section class="menu-detail-layout">
+        <div class="menu-detail-meal-list">
+            {% for category, item in mealItems %}
+                {% if item %}
+                    <article class="menu-detail-row">
+                        <div class="menu-detail-row__content">
+                            <h2>{{ category }}</h2>
+                            <h3>{{ item.nom }}</h3>
+                            <p>{{ item.description }}</p>
+
+                            {% if item.allergenes %}
+                                <div class="menu-detail-allergens">
+                                    <span>Allergènes</span>
+                                    <p>{{ item.allergenes }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if item.image_url %}
+                            <img
+                                src="{{ asset(item.image_url) }}"
+                                alt="{{ item.image_alt ?: item.nom }}"
+                                class="menu-detail-row__image"
+                            >
+                        {% endif %}
+                    </article>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <aside class="menu-detail-sidebar">
+            <section class="menu-detail-summary" aria-label="Informations du menu">
+                <div>
+                    <strong>{{ menu.personnes_minimum }} pers. min.</strong>
+                    <span>Minimum {{ menu.personnes_minimum }} personnes</span>
+                </div>
+
+                <div>
+                    <strong>{{ menu.prix_par_personne|number_format(2, ',', ' ') }} € / pers.</strong>
+                    <span>Prix par personne</span>
+                </div>
+
+                <div>
+                    <strong>{{ menu.stock_disponible > 0 ? 'Disponible' : 'Indisponible' }}</strong>
+                    <span>Stock disponible</span>
+                </div>
+            </section>
+
+            <section class="menu-detail-conditions">
+                <h2>Conditions de ce menu</h2>
+
+                {% if menu.conditions %}
+                    <p>{{ menu.conditions|nl2br }}</p>
+                {% else %}
+                    <ul>
+                        <li>Commande minimum pour {{ menu.personnes_minimum }} personnes</li>
+                        <li>Réservation recommandée 48h à l'avance</li>
+                        <li>Menu disponible le midi et le soir</li>
+                        <li>Non cumulable avec d'autres promotions</li>
+                        <li>Boissons non incluses</li>
+                    </ul>
+                {% endif %}
+            </section>
+
+            <section class="menu-detail-order">
+                <a href="{{ path('cart_show', { id: menu.menu_id }) }}" class="buttonprimary menu-detail-order__button">Commander</a>
+                <p>Connectez-vous pour pouvoir commander ce menu</p>
+            </section>
+        </aside>
+    </section>
+</main>
+{% endblock %}

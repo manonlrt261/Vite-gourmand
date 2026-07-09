@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Panier - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Panier',
+    image: asset('assets/bigtittle.png'),
+    image_alt: 'Table gourmande Vite et Gourmand'
+} %}
+
+<main class="cart-page">
+    <section class="cart-card cart-empty-card">
+        <h2>Votre panier est vide</h2>
+        <div class="cart-card__line"></div>
+        <p>Choisissez un menu gourmand pour commencer votre commande.</p>
+        <a href="{{ path('menu_index') }}" class="buttonprimary">Voir les menus</a>
+    </section>
+</main>
+{% endblock %}

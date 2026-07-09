@@ -1,0 +1,33 @@
+:root {
+  /* Couleurs */
+  --primary: #b56320;
+  --secondary: #6d3b12;
+  --dark: #2e2e2e;
+  --bgdark: #000000;
+  --white: #fff7ed;
+  --offwhite: #f9e8d7;
+  --green: #7a8f6a;
+
+  /* Variables */
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-dark: var(--dark);
+  --color-bgdark: var(--bgdark);
+  --color-white: var(--white);
+  --color-offwhite: var(--offwhite);
+
+  /* Polices */
+  --font-title: "Cormorant Garamond", serif;
+  --font-text: "Inter", sans-serif;
+
+  /* Tailles */
+  --font-size-h1: 70px;
+  --font-size-h2: 55px;
+  --font-size-h3: 30px;
+  --font-size-h4: 22px;
+  --font-size-content: 18px;
+  --font-size-description: 18px;
+  --font-size-infos: 14px;
+  --font-size-link: 18px;
+  --font-size-headercontent: 20px;
+}

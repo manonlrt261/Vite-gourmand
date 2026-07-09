@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Les menus - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Les menus',
+    image_alt: 'Présentation des menus Vite et Gourmand'
+} %}
+
+<main class="menus-page">
+    <section class="menus-filter-panel" aria-label="Filtres de recherche" data-menu-filters>
+        <div class="menus-filter-panel__header">
+            <h2>Filtres</h2>
+            <button type="button" class="menus-reset-button" data-filter-reset>Réinitialiser</button>
+        </div>
+
+        <div class="menus-filter-panel__controls">
+            <select class="menus-filter-control" aria-label="Trier par prix" data-filter-price>
+                <option value="">Prix</option>
+                <option value="asc">Prix croissant</option>
+                <option value="desc">Prix décroissant</option>
+            </select>
+
+            <select class="menus-filter-control" aria-label="Filtrer par disponibilité" data-filter-stock>
+                <option value="">Disponibilité</option>
+                <option value="available">En stock</option>
+            </select>
+
+            <select class="menus-filter-control" aria-label="Filtrer par thème" data-filter-theme>
+                <option value="">Thème</option>
+                <option value="Classiques">Classiques</option>
+                <option value="Evénementiels">Evénementiels</option>
+                <option value="Saisonniers">Saisonniers</option>
+                <option value="Régimes particuliers">Régimes particuliers</option>
+            </select>
+
+            <select class="menus-filter-control" aria-label="Filtrer par régime" data-filter-regime>
+                <option value="">Régime</option>
+                <option value="vegetarien">Végétarien</option>
+                <option value="vegan">Végan</option>
+                <option value="sans-gluten">Sans gluten</option>
+            </select>
+
+            <select class="menus-filter-control" aria-label="Filtrer par nombre minimum de personnes" data-filter-min-person>
+                <option value="">Nb pers. minimum</option>
+                <option value="1-5">1 à 5 personnes</option>
+                <option value="5-10">5 à 10 personnes</option>
+                <option value="10-20">10 à 20 personnes</option>
+                <option value="20-plus">20 personnes ou plus</option>
+            </select>
+
+            <button type="button" class="buttonprimary menus-filter-submit" data-filter-submit>Appliquer les filtres</button>
+        </div>
+
+        <div class="menus-sort-row">
+            <span>Trier par :</span>
+            <select class="menus-filter-control" aria-label="Trier les menus" data-filter-sort>
+                <option value="">Ordre par défaut</option>
+                <option value="popularity">Popularité</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+                <option value="person-asc">Nombre de personnes croissant</option>
+                <option value="person-desc">Nombre de personnes décroissant</option>
+            </select>
+        </div>
+    </section>
+
+    <p class="menus-empty-message" data-empty-message hidden>Aucun menu ne correspond à ces filtres.</p>
+
+    <section class="menus-section menus-results-section" aria-labelledby="menus-results-title" data-results-section hidden>
+        <header class="menus-section__header">
+            <h2 id="menus-results-title">Résultats</h2>
+            <span class="menus-section__line" aria-hidden="true"></span>
+            <span class="menus-section__arrow" aria-hidden="true">›</span>
+        </header>
+
+        <div class="menus-section__grid" data-results-grid></div>
+    </section>
+
+    {% for title, sectionMenus in groupedMenus %}
+        {% if sectionMenus is not empty %}
+            <section class="menus-section" aria-labelledby="section-{{ loop.index }}" data-menu-section>
+                <header class="menus-section__header">
+                    <h2 id="section-{{ loop.index }}">{{ title }}</h2>
+                    <span class="menus-section__line" aria-hidden="true"></span>
+                    <span class="menus-section__arrow" aria-hidden="true">›</span>
+                </header>
+
+                <div class="menus-section__grid" data-menu-grid>
+                    {% for menu in sectionMenus %}
+                        {% include 'components/_menu_card.html.twig' with { menu: menu } %}
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    {% endfor %}
+
+    <section class="menus-contact-card">
+        <h2>Un projet en tête ?</h2>
+        <p>Parlons-en ensemble et créons un moment gourmand qui vous ressemble.</p>
+        <a href="{{ path('contact_index') }}" class="buttonprimary">Contactez-nous !</a>
+    </section>
+</main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/menu-filters.js') }}" defer></script>
+{% endblock %}

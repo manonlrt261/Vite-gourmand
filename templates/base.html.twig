@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Vite & Gourmand{% endblock %}</title>
+        <link rel="icon" href="{{ asset('assets/logo.png') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/variables.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/typography.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/buttons.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/badge.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/bigtittle.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/card.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/filters.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/forms.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/header.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/footer.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/widget.css') }}">
+        <link rel="stylesheet" href="{{ asset('assets/styles/app.css') }}">
+
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+        {% endblock %}
+    </head>
+    <body>
+        {% include 'partials/_header.html.twig' %}
+
+        {% block body %}{% endblock %}
+
+        {% include 'partials/_footer.html.twig' %}
+    </body>
+</html>

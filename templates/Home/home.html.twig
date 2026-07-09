@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - Vite & Gourmand{% endblock %}
+
+{% block body %}
+<main class="home-page">
+    <section class="home-festive-hero">
+        <img
+            src="{{ asset('assets/bigtittle.png') }}"
+            alt="Plat raffiné préparé par Vite et Gourmand"
+            class="home-festive-hero__image"
+        >
+        <div class="home-festive-hero__overlay" aria-hidden="true"></div>
+
+        <div class="home-festive-hero__content">
+            <p>Chaque occasion mérite son</p>
+            <h1>festin</h1>
+            <a href="{{ path('menu_index') }}" class="buttonprimary">Découvrez nos menus</a>
+        </div>
+    </section>
+
+    <section class="home-section home-professionalism">
+        <div class="home-kicker">
+            <span></span>
+            <p>Notre professionnalisme</p>
+            <span></span>
+        </div>
+
+        <header class="home-section-heading">
+            <h2>L'exigence au service de vos plus beaux moments</h2>
+            <p>
+                Derrière chaque menu, il y a un savoir-faire, une organisation rigoureuse
+                et surtout, des femmes et des hommes passionnés.
+            </p>
+        </header>
+
+        <div class="home-values-grid">
+            <div class="home-values-grid__image">
+                <img
+                    src="{{ asset('assets/julieetjose.png') }}"
+                    alt="Julie et José en cuisine"
+                >
+            </div>
+
+            <article class="home-value-card">
+                <h3>Une cuisine authentique</h3>
+                <p>
+                    Toutes nos recettes sont élaborées avec passion dans notre laboratoire.
+                    Chaque menu est préparé avec le même soin.
+                </p>
+            </article>
+
+            <article class="home-value-card">
+                <h3>Une sélection d'ingrédients de qualité</h3>
+                <p>
+                    Nous privilégions des produits soigneusement sélectionnés afin de proposer
+                    des recettes savoureuses, préparées avec exigence.
+                </p>
+            </article>
+
+            <article class="home-value-card">
+                <h3>Notre équipe, notre force</h3>
+                <p>
+                    Notre complémentarité est au coeur de chaque prestation. Ensemble,
+                    nous imaginons des menus pensés pour chaque événement.
+                </p>
+            </article>
+
+            <article class="home-value-card">
+                <h3>Organisation et ponctualité</h3>
+                <p>
+                    Du premier échange jusqu'à la livraison, nous veillons au respect
+                    des délais afin que vous puissiez profiter sereinement.
+                </p>
+            </article>
+
+            <article class="home-value-card">
+                <h3>Qualité et confiance</h3>
+                <p>
+                    Depuis plus de deux décennies, nous avons bâti une relation de confiance
+                    avec nos clients grâce à notre exigence.
+                </p>
+            </article>
+        </div>
+
+        <div class="home-centered-button">
+            <a href="{{ path('menu_index') }}" class="buttonprimary">Nos menus</a>
+        </div>
+    </section>
+
+    <section class="home-success-card">
+        <div class="home-success-card__content">
+            <h2>Notre plus belle réussite ?</h2>
+            <p>Voir nos clients repartir avec le sourire.</p>
+            <span>Julie & José</span>
+        </div>
+
+        <img
+            src="{{ asset('assets/imageaccueil.png') }}"
+            alt="Table élégante préparée pour un événement"
+            class="home-success-card__image"
+        >
+    </section>
+
+    <div class="home-contact-cta">
+        <a href="{{ path('contact_index') }}" class="buttonwhite">Contactez-nous !</a>
+    </div>
+
+    <section class="home-section home-reviews">
+        <div class="home-kicker">
+            <span></span>
+            <p>Avis clients vérifiés</p>
+            <span></span>
+        </div>
+
+        <header class="home-section-heading">
+            <h2>Ils nous ont fait confiance</h2>
+            <p>Découvrez les avis de nos clients après leur événement.</p>
+        </header>
+
+        <div class="home-review-grid">
+            <article class="home-review-card">
+                <div class="home-review-card__top">
+                    <span class="home-quote">“</span>
+                    <span class="home-stars">★★★★★</span>
+                </div>
+                <h3>Un repas exceptionnel pour notre mariage !</h3>
+                <p>
+                    Julie et José ont su comprendre nos envies et régaler tous nos invités.
+                    Produits frais, service impeccable et équipe aux petits soins.
+                </p>
+                <footer>
+                    <strong>Claire & Thomas</strong>
+                    <span>Mariage - Mai 2026</span>
+                </footer>
+            </article>
+
+            <article class="home-review-card">
+                <div class="home-review-card__top">
+                    <span class="home-quote">“</span>
+                    <span class="home-stars">★★★★★</span>
+                </div>
+                <h3>Nous avons fait appel à V&G pour notre séminaire</h3>
+                <p>
+                    Tout était parfait, de l'organisation à la dégustation. Des mets
+                    délicieux et un service très professionnel.
+                </p>
+                <footer>
+                    <strong>Sophie L.</strong>
+                    <span>Evénement professionnel - Mars 2026</span>
+                </footer>
+            </article>
+        </div>
+
+        <div class="home-google-rating">
+            <span></span>
+            <p>★ 4,9 Avis Google</p>
+            <span></span>
+            <small>Basé sur plus de 120 avis clients</small>
+        </div>
+    </section>
+</main>
+{% endblock %}

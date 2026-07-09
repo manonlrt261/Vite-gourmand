@@ -1,0 +1,666 @@
+/*Carte filtres espace administrateur*/
+.filterbadge {
+  width: 320px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 16px;
+}
+
+.filterbadge-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 55px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.filterbadge-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterbadge-field label {
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--primary);
+}
+
+.filterbadge-input,
+.filterbadge-dropdown summary {
+  width: 272px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+}
+
+.filterbadge-input:focus {
+  outline: none;
+}
+
+.filterbadge-dropdown {
+  position: relative;
+  width: 272px;
+}
+
+.filterbadge-dropdown summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.filterbadge-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.filterbadge-options {
+  width: 272px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.filterbadge-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.filterbadge-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filterbadge-button {
+  width: 272px;
+  height: 23px;
+}
+
+/*Filtre prix*/
+.pricefilter {
+  width: 160px;
+}
+
+.pricefilter-select {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+}
+
+.pricefilter-select:focus {
+  outline: none;
+}
+
+/*Filtre disponibilités*/
+.availabilityfilter {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.availabilityfilter-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+}
+
+.availabilityfilter-checkbox {
+  accent-color: var(--primary);
+}
+
+/*Filtre catégories*/
+.categoryfilter {
+  width: 160px;
+}
+
+.categoryfilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.categoryfilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.categoryfilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.categoryfilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.categoryfilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.categoryfilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre régimes particuliers*/
+.specialregimefilter {
+  width: 160px;
+}
+
+.specialregimefilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.specialregimefilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.specialregimefilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.specialregimefilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.specialregimefilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.specialregimefilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre nombre de personnes minimum*/
+.minimumpersonfilter {
+  width: 160px;
+}
+
+.minimumpersonfilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.minimumpersonfilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.minimumpersonfilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.minimumpersonfilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.minimumpersonfilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.minimumpersonfilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre par popularité*/
+.popularityfilter {
+  width: 160px;
+}
+
+.popularityfilter-button {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+}
+
+.popularityfilter-button:focus {
+  outline: none;
+}
+
+/*Filtre par statut de la commande*/
+.statutfilter {
+  width: 160px;
+}
+
+.statutfilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.statutfilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.statutfilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.statutfilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.statutfilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.statutfilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre par période de temps*/
+.periodfilter {
+  width: 160px;
+}
+
+.periodfilter-select {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+}
+
+.periodfilter-select:focus {
+  outline: none;
+}
+
+/*Filtre par notes*/
+.scorefilter {
+  width: 160px;
+}
+
+.scorefilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.scorefilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.scorefilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.scorefilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.scorefilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.scorefilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre par menu*/
+.menufilter {
+  width: 160px;
+}
+
+.menufilter-dropdown {
+  position: relative;
+  width: 160px;
+}
+
+.menufilter-dropdown summary {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+
+  cursor: pointer;
+  list-style: none;
+}
+
+.menufilter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.menufilter-options {
+  width: 160px;
+  margin-top: 4px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+}
+
+.menufilter-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--secondary);
+}
+
+.menufilter-options input {
+  accent-color: var(--primary);
+}
+
+/*Filtre par date de livraison*/
+.deliverydatefilter {
+  width: 160px;
+}
+
+.deliverydatefilter-input {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+}
+
+.deliverydatefilter-input:focus {
+  outline: none;
+}
+
+/*Filtre par lieu de livraison*/
+.postalcodefilter {
+  width: 160px;
+}
+
+.postalcodefilter-input {
+  width: 160px;
+  height: 40px;
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+}
+
+.postalcodefilter-input:focus {
+  outline: none;
+}

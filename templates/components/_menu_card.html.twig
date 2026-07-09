@@ -1,0 +1,44 @@
+{% set menuName = menu.nom_menu|lower %}
+{% set regime = '' %}
+{% if 'végétarien' in menuName or 'vegetarien' in menuName %}
+    {% set regime = 'vegetarien' %}
+{% elseif 'végan' in menuName or 'vegan' in menuName %}
+    {% set regime = 'vegan' %}
+{% elseif 'sans gluten' in menuName %}
+    {% set regime = 'sans-gluten' %}
+{% endif %}
+
+<article
+    class="menucard"
+    data-menu-card
+    data-menu-id="{{ menu.menu_id }}"
+    data-price="{{ menu.prix_par_personne }}"
+    data-stock="{{ menu.stock_disponible }}"
+    data-category="{{ menu.theme }}"
+    data-regime="{{ regime }}"
+    data-minimum-person="{{ menu.personnes_minimum }}"
+    data-popularity="{{ menu.popularite|default(0) }}"
+>
+    {% if menu.image_url %}
+        <img
+            src="{{ asset(menu.image_url) }}"
+            alt="{{ menu.image_alt ?: menu.nom_menu }}"
+            class="menucard-image"
+        >
+    {% endif %}
+
+    <div class="menucard-content">
+        <h2 class="menucard-title">{{ menu.nom_menu }}</h2>
+
+        <p class="menucard-description">{{ menu.description }}</p>
+
+        <p class="menucard-infos">
+            {{ menu.personnes_minimum }} personnes min /
+            {{ menu.prix_par_personne|number_format(2, ',', ' ') }} € par personne
+        </p>
+
+        <a href="{{ path('menu_show', { id: menu.menu_id }) }}" class="buttonwhite menucard-button">
+            Découvrir
+        </a>
+    </div>
+</article>

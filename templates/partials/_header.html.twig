@@ -1,0 +1,26 @@
+<header class="header-desktop">
+    <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
+        <img
+            src="{{ asset('assets/logo.png') }}"
+            alt="Logo Vite et Gourmand"
+            class="header-logo"
+        >
+
+        <span class="header-title">Vite et Gourmand</span>
+    </a>
+
+    <nav class="header-nav" aria-label="Navigation principale">
+        <a href="{{ path('home_show') }}">Accueil</a>
+        <a href="{{ path('menu_index') }}">Menus</a>
+        <a href="{{ path('contact_index') }}">Contact</a>
+        {% if app.session.get('utilisateur_id') %}
+            <a href="{{ path('logout') }}">Déconnexion</a>
+        {% else %}
+            <a href="{{ path('login') }}">Connexion</a>
+        {% endif %}
+    </nav>
+
+    <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
+        Panier
+    </a>
+</header>

@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contact - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Contactez-nous !',
+    image_alt: 'Contact Vite et Gourmand'
+} %}
+
+<main class="contact-page">
+    <section class="contact-layout" aria-label="Formulaire de contact">
+        <form class="contact-form-card" method="post" action="{{ path('contact_index') }}">
+            <header class="contact-form-card__header">
+                <h1>Nous sommes à votre écoute</h1>
+                <p>
+                    Une demande d'information, un projet, un petit message ?
+                    Remplissez le formulaire ci-dessous et nous vous répondrons
+                    dans les plus brefs délais.
+                </p>
+            </header>
+
+            {% for message in app.flashes('contact_success') %}
+                <p class="contact-alert contact-alert--success">{{ message }}</p>
+            {% endfor %}
+
+            {% for message in app.flashes('contact_error') %}
+                <p class="contact-alert contact-alert--error">{{ message }}</p>
+            {% endfor %}
+
+            <div class="contact-fields">
+                <label class="contact-field">
+                    <span>Email *</span>
+                    <input type="email" name="email" placeholder="votre.mail@exemple.fr" required>
+                </label>
+
+                <label class="contact-field">
+                    <span>Sujet *</span>
+                    <input type="text" name="titre" placeholder="Votre demande concerne ..." required>
+                </label>
+
+                <label class="contact-field">
+                    <span>Message *</span>
+                    <textarea name="description" placeholder="Ecrivez votre message ici." required></textarea>
+                </label>
+            </div>
+
+            <div class="contact-form-card__footer">
+                <button type="submit" class="buttonprimary contact-submit-button">Envoyer votre message</button>
+                <p class="contact-security">Vos données ne seront jamais partagées.</p>
+            </div>
+        </form>
+
+        <aside class="contact-info-card" aria-label="Informations complémentaires">
+            <h2>Un projet en tête ?</h2>
+
+            <div class="contact-info-card__item">
+                <h3>Parlons-en ensemble</h3>
+                <p>
+                    Nous vous accompagnons dans la création d'un moment gourmand
+                    qui vous ressemble.
+                </p>
+            </div>
+
+            <div class="contact-info-card__item">
+                <h3>Réponse rapide</h3>
+                <p>Nous nous engageons à vous répondre dans les plus brefs délais.</p>
+            </div>
+
+            <div class="contact-info-card__item">
+                <h3>Sur-mesure</h3>
+                <p>Chaque demande est unique, chaque réponse est personnalisée.</p>
+            </div>
+        </aside>
+    </section>
+</main>
+{% endblock %}

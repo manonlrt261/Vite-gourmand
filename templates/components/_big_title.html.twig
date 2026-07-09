@@ -1,0 +1,11 @@
+<section class="bigtittle">
+    <img
+        src="{{ image|default(asset('assets/bigtittle.png')) }}"
+        alt="{{ image_alt|default('') }}"
+        class="bigtittle-image"
+    >
+
+    <div class="bigtittle-overlay" aria-hidden="true"></div>
+
+    <h1 class="bigtittle-title">{{ title }}</h1>
+</section>
