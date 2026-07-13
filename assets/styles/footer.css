@@ -98,6 +98,40 @@ body {
   line-height: 1;
 }
 
+.footer-employee {
+  min-height: 151px;
+}
+
+.footer-employee .footer-title {
+  margin-bottom: 8px;
+  font-size: 45px;
+  font-weight: 700;
+}
+
+.footer-employee .footer-name {
+  font-weight: 400;
+}
+
+.footer-employee-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-employee-links a {
+  font-family: var(--font-text);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.footer-employee .footer-legal a,
+.footer-employee .footer-nav a {
+  font-size: 20px;
+}
+
 @media (max-width: 768px) {
   .footer-desktop {
     padding: 24px;

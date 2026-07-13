@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+
+{% macro editable_card(item, type, priceLabel) %}
+    {% set isActive = item.actif|default(1) == 1 %}
+
+    <article class="editablemenucard employee-editable-card" data-management-card data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
+        <img
+            src="{{ item.image_url|default('') ? asset(item.image_url) : asset('assets/bigtittle.png') }}"
+            alt="{{ item.image_alt|default(item.title) }}"
+            class="editablemenucard-image"
+        >
+
+        <div class="editablemenucard-content">
+            <div class="editablemenucard-header">
+                <h3 class="editablemenucard-title">{{ item.title }}</h3>
+
+                <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
+                    <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button>
+                        {{ isActive ? 'Actif' : 'Inactif' }}
+                    </button>
+                </form>
+            </div>
+
+            <p class="editablemenucard-description">{{ item.description|default('Aucune description renseign&eacute;e.') }}</p>
+
+            <div class="editablemenucard-footer">
+                <p class="editablemenucard-price">
+                    {% if type == 'menu' %}
+                        {{ item.prix_par_personne|default(0)|number_format(2, ',', ' ') }} &euro; par personne
+                    {% else %}
+                        {{ priceLabel }}
+                    {% endif %}
+                </p>
+
+                <div class="editablemenucard-actions">
+                    <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
+
+                    <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
+                        <button type="submit" class="buttondelete">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </article>
+{% endmacro %}
+
+{% import _self as ui %}
+
+{% block title %}Les menus et les plats - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Les menus et les plats',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Plat Vite et Gourmand'
+    } %}
+
+    <main class="employee-management-page">
+        {% include 'components/_workspace_back_link.html.twig' %}
+
+        <section class="employee-manage-section">
+            <div class="employee-manage-heading">
+                <div>
+                    <h2>Les menus</h2>
+                    <p>Ajoutez, modifiez ou supprimez vos menus.</p>
+                    <a href="{{ path('employee_items_all') }}#menus">Voir tous les menus</a>
+                </div>
+
+                <a href="{{ path('employee_menu_create') }}" class="buttonprimary employee-add-button">Ajouter un menu</a>
+            </div>
+
+            <div class="employee-editable-grid">
+                {% for menu in menus %}
+                    {{ ui.editable_card(menu, 'menu', '') }}
+                {% else %}
+                    <p class="employee-empty">Aucun menu &agrave; afficher.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="employee-manage-section">
+            <div class="employee-manage-heading">
+                <div>
+                    <h2>Les entr&eacute;es</h2>
+                    <p>Ajoutez, modifiez ou supprimez vos entr&eacute;es ind&eacute;pendamment des menus.</p>
+                    <a href="{{ path('employee_items_all') }}#entrees">Voir toutes les entr&eacute;es</a>
+                </div>
+
+                <a href="{{ path('employee_meal_create', { type: 'entree' }) }}" class="buttonprimary employee-add-button">Ajouter une entr&eacute;e</a>
+            </div>
+
+            <div class="employee-editable-grid">
+                {% for entree in entrees %}
+                    {{ ui.editable_card(entree, 'entree', entree.nom_menu ? 'Menu : ' ~ entree.nom_menu : 'Entr&eacute;e ind&eacute;pendante') }}
+                {% else %}
+                    <p class="employee-empty">Aucune entr&eacute;e &agrave; afficher.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="employee-manage-section">
+            <div class="employee-manage-heading">
+                <div>
+                    <h2>Les plats</h2>
+                    <p>Ajoutez, modifiez ou supprimez vos plats ind&eacute;pendamment des menus.</p>
+                    <a href="{{ path('employee_items_all') }}#plats">Voir tous les plats</a>
+                </div>
+
+                <a href="{{ path('employee_meal_create', { type: 'plat' }) }}" class="buttonprimary employee-add-button">Ajouter un plat</a>
+            </div>
+
+            <div class="employee-editable-grid">
+                {% for plat in plats %}
+                    {{ ui.editable_card(plat, 'plat', plat.nom_menu ? 'Menu : ' ~ plat.nom_menu : 'Plat ind&eacute;pendant') }}
+                {% else %}
+                    <p class="employee-empty">Aucun plat &agrave; afficher.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="employee-manage-section">
+            <div class="employee-manage-heading">
+                <div>
+                    <h2>Les desserts</h2>
+                    <p>Ajoutez, modifiez ou supprimez vos desserts ind&eacute;pendamment des menus.</p>
+                    <a href="{{ path('employee_items_all') }}#desserts">Voir tous les desserts</a>
+                </div>
+
+                <a href="{{ path('employee_meal_create', { type: 'dessert' }) }}" class="buttonprimary employee-add-button">Ajouter un dessert</a>
+            </div>
+
+            <div class="employee-editable-grid">
+                {% for dessert in desserts %}
+                    {{ ui.editable_card(dessert, 'dessert', dessert.nom_menu ? 'Menu : ' ~ dessert.nom_menu : 'Dessert ind&eacute;pendant') }}
+                {% else %}
+                    <p class="employee-empty">Aucun dessert &agrave; afficher.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <aside class="employee-info-box">
+            <span class="employee-info-box__icon" aria-hidden="true">i</span>
+            <div>
+                <h2>Informations importantes</h2>
+                <p>Les modifications apport&eacute;es &agrave; un menu ne sont pas r&eacute;percut&eacute;es sur les commandes en cours. Ces ajouts seront pris en compte uniquement pour les nouvelles commandes.</p>
+            </div>
+        </aside>
+    </main>
+
+    <div class="employee-delete-modal" data-delete-modal hidden>
+        <div class="employee-delete-modal__overlay" data-delete-cancel></div>
+
+        <section class="employee-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <h2 id="delete-modal-title">Attention</h2>
+            <p>Voulez-vous vraiment supprimer cet &eacute;l&eacute;ment ? Il ne sera plus visible sur le site.</p>
+
+            <div class="employee-delete-modal__actions">
+                <button type="button" class="buttonoffwhite" data-delete-confirm>Supprimer</button>
+                <button type="button" class="buttonprimary" data-delete-cancel>Annuler</button>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/employee-management.js') }}" defer></script>
+{% endblock %}

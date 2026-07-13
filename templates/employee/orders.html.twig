@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des commandes - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Gestion des commandes',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Commandes Vite et Gourmand'
+    } %}
+
+    <main class="employee-orders-management-page" data-employee-orders-page>
+        {% include 'components/_workspace_back_link.html.twig' %}
+
+        <section class="employee-orders-intro">
+            <h1>Commandes clients</h1>
+            <p>Consultez les commandes, filtrez les demandes et faites avancer leur statut.</p>
+        </section>
+
+        <section class="employee-orders-filters-panel" data-order-filters>
+            <label class="employee-orders-filter employee-orders-filter--search">
+                <span>Rechercher une commande</span>
+                <input type="search" name="search" placeholder="N&deg; de commande ou nom du client" data-order-search>
+            </label>
+
+            <div class="employee-orders-filter-grid">
+                <label class="employee-orders-filter">
+                    <span>Statut</span>
+                    <select name="status" data-order-status>
+                        <option value="">Tous les statuts</option>
+                        {% for status in statuses %}
+                            <option value="{{ status.code }}">{{ status.libelle }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="employee-orders-filter">
+                    <span>P&eacute;riode</span>
+                    <select name="period" data-order-period>
+                        <option value="">Toutes les p&eacute;riodes</option>
+                        <option value="10days">10 derniers jours</option>
+                        <option value="previous_month">Mois pr&eacute;c&eacute;dent</option>
+                        <option value="6months">6 derniers mois</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="other">Autres</option>
+                    </select>
+                </label>
+
+                <label class="employee-orders-filter">
+                    <span>Nombre de personnes</span>
+                    <select name="people" data-order-people>
+                        <option value="">Tous</option>
+                        <option value="1-5">1 &agrave; 5 personnes</option>
+                        <option value="5-10">5 &agrave; 10 personnes</option>
+                        <option value="10-20">10 &agrave; 20 personnes</option>
+                        <option value="20-plus">20 personnes ou plus</option>
+                    </select>
+                </label>
+
+                <label class="employee-orders-filter">
+                    <span>Date de livraison</span>
+                    <input type="date" name="delivery_date" data-order-delivery-date>
+                </label>
+
+                <label class="employee-orders-filter">
+                    <span>Lieu de livraison</span>
+                    <input type="text" name="postal_code" placeholder="Code postal" data-order-postal>
+                </label>
+            </div>
+
+            <div class="employee-orders-filter-actions">
+                <button type="button" class="buttonprimary" data-order-apply>Appliquer les filtres</button>
+                <button type="button" class="buttonoffwhite" data-order-reset>R&eacute;initialiser les filtres</button>
+            </div>
+        </section>
+
+        <section class="employee-orders-results">
+            <p class="employee-orders-count"><span data-order-count>{{ orders|length }}</span> commande(s) affich&eacute;e(s)</p>
+
+            <div class="employee-orders-management-list" data-order-list>
+                {% for order in orders %}
+                    {% set statusCode = order.statut_code|default('en_attente') %}
+                    {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode == 'en_attente' ? 'badgeattente' : 'badgevalidee') %}
+                    {% set customerName = (order.prenom|default('Client') ~ ' ' ~ order.nom|default(''))|trim %}
+
+                    <article
+                        class="ordergestion"
+                        data-order-card
+                        data-order-id="{{ order.commande_id }}"
+                        data-order-search="{{ ('commande ' ~ order.commande_id ~ ' ' ~ customerName ~ ' ' ~ order.nom_menu|default(''))|lower }}"
+                        data-order-status="{{ statusCode }}"
+                        data-order-date="{{ order.date_commande ? order.date_commande|date('Y-m-d') : '' }}"
+                        data-order-delivery-date="{{ order.date_prestation ? order.date_prestation|date('Y-m-d') : '' }}"
+                        data-order-people="{{ order.nombre_personnes|default(0) }}"
+                        data-order-postal="{{ order.code_postal_livraison|default('') }}"
+                    >
+                        <div class="ordergestion-main">
+                            <div class="ordergestion-left">
+                                <h2 class="ordergestion-number">Commande n&deg;{{ order.commande_id }}</h2>
+                                <p class="ordergestion-client">{{ customerName }}</p>
+                                <div class="ordergestion-menu-line">
+                                    <span class="ordergestion-dot" aria-hidden="true"></span>
+                                    <p>{{ order.nom_menu|default('Menu non renseign&eacute;') }}</p>
+                                </div>
+                                <p class="ordergestion-delivery">
+                                    Livraison le
+                                    {{ order.date_prestation ? order.date_prestation|date('d/m/Y') : 'date inconnue' }}
+                                    {% if order.heure_de_livraison %}
+                                        &agrave; {{ order.heure_de_livraison|date('H:i') }}
+                                    {% endif %}
+                                </p>
+                                <p class="ordergestion-delivery">
+                                    {{ order.adresse_livraison|default('Adresse non renseign&eacute;e') }},
+                                    {{ order.code_postal_livraison|default('') }}
+                                    {{ order.ville_livraison|default('') }}
+                                </p>
+                            </div>
+
+                            <div class="ordergestion-right">
+                                <div class="ordergestion-total-line">
+                                    <span class="ordergestion-dot" aria-hidden="true"></span>
+                                    <p>{{ order.nombre_personnes|default(0) }} personne(s)</p>
+                                </div>
+                                <div class="ordergestion-total-line">
+                                    <span class="ordergestion-dot" aria-hidden="true"></span>
+                                    <p>Total <strong class="ordergestion-total">{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} &euro;</strong></p>
+                                </div>
+                                <p class="ordergestion-delivery">
+                                    Command&eacute;e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-order-status-form>
+                            <button
+                                type="submit"
+                                class="{{ statusClass }} ordergestion-status"
+                                data-order-status-button
+                                {% if statusCode in ['terminee', 'livree', 'annulee', 'en_livraison'] %}disabled aria-label="Statut non modifiable"{% endif %}
+                            >
+                                {{ order.statut_libelle|default('En attente') }}
+                            </button>
+                        </form>
+                    </article>
+                {% else %}
+                    <p class="employee-empty">Aucune commande pour le moment.</p>
+                {% endfor %}
+
+                <p class="employee-empty" data-order-empty hidden>Aucune commande ne correspond aux filtres.</p>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/employee-orders.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% set footerUser = app.session.get('utilisateur') %}
+{% set footerRole = footerUser.role_libelle|default('') %}
+{% set footerRoleId = footerUser.role_id|default(0) %}
+{% set footerDashboardRoute = footerRole == 'administrateur' or footerRoleId == 3 ? 'admin_dashboard' : 'employee_dashboard' %}
+
+<footer class="footer-desktop footer-employee">
+    <div class="footer-hours footer-employee-management">
+        <h2 class="footer-title">Gestion :</h2>
+
+        <nav class="footer-text footer-employee-links" aria-label="Navigation gestion">
+            <a href="{{ path('employee_orders') }}">Des commandes</a>
+            <a href="{{ path('employee_menus') }}">Des menus et des plats</a>
+            <a href="{{ path('employee_reviews') }}">Des avis</a>
+            <a href="{{ path('employee_hours') }}">Des horaires</a>
+        </nav>
+    </div>
+
+    <div class="footer-brand">
+        <p class="footer-name">Vite & Gourmand</p>
+
+        <nav class="footer-legal" aria-label="Liens légaux">
+            <a href="#">Mentions légales</a>
+            <a href="#">CGV</a>
+        </nav>
+    </div>
+
+    <nav class="footer-nav" aria-label="Navigation">
+        <a href="{{ path('home_show') }}">Accueil</a>
+        <a href="{{ path('menu_index') }}">Menus</a>
+        <a href="{{ path(footerDashboardRoute) }}">Mon espace</a>
+        <a href="{{ path('logout') }}">Déconnexion</a>
+    </nav>
+</footer>

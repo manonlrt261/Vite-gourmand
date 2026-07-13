@@ -1,26 +1,96 @@
-<header class="header-desktop">
-    <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
-        <img
-            src="{{ asset('assets/logo.png') }}"
-            alt="Logo Vite et Gourmand"
-            class="header-logo"
-        >
+{% set connectedUser = app.session.get('utilisateur') %}
+{% set roleLibelle = connectedUser.role_libelle|default('') %}
+{% set roleId = connectedUser.role_id|default(0) %}
+{% set isAdminHeader = roleLibelle == 'administrateur' or roleId == 3 %}
+{% set isEmployeeHeader = roleLibelle in ['employe', 'employé', 'administrateur'] or roleId in [2, 3] %}
+{% set dashboardRoute = isAdminHeader ? 'admin_dashboard' : 'employee_dashboard' %}
 
-        <span class="header-title">Vite et Gourmand</span>
-    </a>
+{% if isEmployeeHeader %}
+    <header class="employee-header">
+        <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
+            <img
+                src="{{ asset('assets/logo.png') }}"
+                alt="Logo Vite et Gourmand"
+                class="employee-header__logo"
+            >
 
-    <nav class="header-nav" aria-label="Navigation principale">
-        <a href="{{ path('home_show') }}">Accueil</a>
-        <a href="{{ path('menu_index') }}">Menus</a>
-        <a href="{{ path('contact_index') }}">Contact</a>
-        {% if app.session.get('utilisateur_id') %}
-            <a href="{{ path('logout') }}">Déconnexion</a>
-        {% else %}
-            <a href="{{ path('login') }}">Connexion</a>
-        {% endif %}
-    </nav>
+            <span class="employee-header__title">Vite et gourmand</span>
+        </a>
 
-    <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
-        Panier
-    </a>
-</header>
+        <div class="employee-header__actions">
+            <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
+            <button class="employee-header__burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="employee-menu-overlay" data-employee-menu-open>
+                <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
+                    <path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="employee-menu-overlay" id="employee-menu-overlay" hidden data-employee-menu-overlay>
+        <div class="employee-menu-panel" role="dialog" aria-modal="true" aria-label="Menu">
+            <div class="employee-menu-panel__top">
+                <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
+                    <img
+                        src="{{ asset('assets/logo.png') }}"
+                        alt="Logo Vite et Gourmand"
+                        class="employee-header__logo"
+                    >
+
+                    <span class="employee-header__title">Vite et gourmand</span>
+                </a>
+
+                <div class="employee-header__actions">
+                    <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
+                    <button class="employee-header__close" type="button" aria-label="Fermer le menu" data-employee-menu-close>
+                        <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
+                            <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <nav class="employee-menu-panel__nav" aria-label="Navigation">
+                <a href="{{ path(dashboardRoute) }}">Accueil</a>
+                <a href="{{ path('employee_orders') }}">Gestion des commandes</a>
+                <a href="{{ path('employee_menus') }}">Gestion des menus et plats</a>
+                <a href="{{ path('employee_hours') }}">Gestion des horaires</a>
+                <a href="{{ path('employee_reviews') }}">Gestion des avis clients</a>
+                {% if isAdminHeader %}
+                    <a href="{{ path('admin_employees') }}">Gestion des employ&eacute;s</a>
+                    <a href="{{ path('admin_orders_by_menu') }}">Commandes par menu</a>
+                    <a href="{{ path('admin_revenue_by_menu') }}">Chiffre d'affaires par menu</a>
+                {% endif %}
+                <a href="{{ path('logout') }}">D&eacute;connexion</a>
+            </nav>
+        </div>
+    </div>
+{% else %}
+    <header class="header-desktop">
+        <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
+            <img
+                src="{{ asset('assets/logo.png') }}"
+                alt="Logo Vite et Gourmand"
+                class="header-logo"
+            >
+
+            <span class="header-title">Vite et Gourmand</span>
+        </a>
+
+        <nav class="header-nav" aria-label="Navigation principale">
+            <a href="{{ path('home_show') }}">Accueil</a>
+            <a href="{{ path('menu_index') }}">Menu</a>
+            <a href="{{ path('contact_index') }}">Contact</a>
+            {% if app.session.get('utilisateur_id') %}
+                <a href="{{ path('customer_account') }}">Mon compte</a>
+                <a href="{{ path('logout') }}">D&eacute;connexion</a>
+            {% else %}
+                <a href="{{ path('login') }}">Connexion</a>
+            {% endif %}
+        </nav>
+
+        <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
+            Panier
+        </a>
+    </header>
+{% endif %}

@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commandes par menu - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Commandes par menu',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Commandes par menu Vite et Gourmand'
+    } %}
+
+    <main class="admin-orders-menu-page" data-orders-menu-page>
+        <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
+
+        <section class="admin-orders-menu-top">
+            <form class="admin-orders-menu-filters" data-orders-menu-filters>
+                <h1>Filtres</h1>
+
+                <label>
+                    <span>Date de d&eacute;but</span>
+                    <input type="date" name="start_date" data-orders-menu-start>
+                </label>
+
+                <label>
+                    <span>Date de fin</span>
+                    <input type="date" name="end_date" data-orders-menu-end>
+                </label>
+
+                <label>
+                    <span>Th&egrave;me</span>
+                    <select name="theme" data-orders-menu-theme>
+                        <option value="">Tous les th&egrave;mes</option>
+                        {% for theme in themes %}
+                            <option value="{{ theme }}">{{ theme }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <div class="admin-orders-menu-field">
+                    <span>Menus</span>
+                    <div class="admin-orders-menu-checkboxes" data-orders-menu-select>
+                        {% for menu in menus %}
+                            <label>
+                                <input type="checkbox" name="menus[]" value="{{ menu.menu_id }}">
+                                <span>{{ menu.nom_menu }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="admin-orders-menu-filter-actions">
+                    <button type="button" class="buttonprimary" data-orders-menu-apply>Appliquer les filtres</button>
+                    <button type="button" class="buttonoffwhite" data-orders-menu-reset>R&eacute;initialiser</button>
+                </div>
+            </form>
+
+            <div class="admin-orders-menu-stats">
+                <article>
+                    <strong data-orders-menu-total>{{ initialStats.orders_count }}</strong>
+                    <span>Commandes en {{ initialStats.year }}</span>
+                </article>
+
+                <article>
+                    <strong data-orders-menu-active>{{ initialStats.active_menus_count }}</strong>
+                    <span>Menus disponibles</span>
+                </article>
+
+                <article class="admin-orders-menu-stats-wide">
+                    <strong>{{ initialStats.themes_count }}</strong>
+                    <span>Th&egrave;mes</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="admin-orders-menu-charts" aria-label="Graphiques des commandes par menu">
+            <article class="admin-orders-menu-panel">
+                <h2>R&eacute;partition des commandes par th&egrave;me</h2>
+                <div class="admin-orders-menu-donut-layout">
+                    <div class="admin-orders-menu-donut" data-orders-menu-donut>
+                        <span data-orders-menu-donut-total>0</span>
+                        <small>total</small>
+                    </div>
+                    <div class="admin-orders-menu-legend" data-orders-menu-legend></div>
+                </div>
+            </article>
+
+            <article class="admin-orders-menu-panel">
+                <h2>Nombre de commandes par menu</h2>
+                <div class="admin-orders-menu-bar-chart" data-orders-menu-bars></div>
+            </article>
+        </section>
+
+        <section class="admin-orders-menu-panel admin-orders-menu-detail">
+            <h2>D&eacute;tail par menu</h2>
+
+            <div class="admin-orders-menu-table-wrap">
+                <table class="admin-orders-menu-table">
+                    <thead>
+                        <tr>
+                            <th>Menu</th>
+                            <th>Th&egrave;me</th>
+                            <th>Nombre</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody data-orders-menu-table></tbody>
+                </table>
+            </div>
+
+            <p class="employee-empty" data-orders-menu-empty hidden>Aucune commande ne correspond aux filtres.</p>
+        </section>
+
+        <section class="admin-orders-menu-info">
+            <span aria-hidden="true">i</span>
+            <div>
+                <p>Les statistiques sont g&eacute;n&eacute;r&eacute;es automatiquement &agrave; chaque commande pass&eacute;e par un client.</p>
+                <p>Les commandes annul&eacute;es ne sont pas comptabilis&eacute;es dans ces rapports.</p>
+            </div>
+        </section>
+    </main>
+
+    <script type="application/json" id="orders-menu-documents">{{ documentsJson|raw }}</script>
+    <script type="application/json" id="orders-menu-default-stats">{{ initialStats|json_encode|raw }}</script>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/admin-orders-by-menu.js') }}" defer></script>
+{% endblock %}

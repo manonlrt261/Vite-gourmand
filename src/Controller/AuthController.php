@@ -18,9 +18,10 @@ class AuthController extends AbstractController
             $password = (string) $request->request->get('password');
 
             $user = $connection->fetchAssociative(
-                'SELECT id, nom, prenom, email, telephone, mot_de_passe, adresse_postale, ville, code_postal, role_id, actif
-                 FROM utilisateurs
-                 WHERE email = ?',
+                'SELECT u.id, u.nom, u.prenom, u.email, u.telephone, u.mot_de_passe, u.adresse_postale, u.ville, u.code_postal, u.role_id, u.actif, r.libelle AS role_libelle
+                 FROM utilisateurs u
+                 LEFT JOIN roles r ON r.role_id = u.role_id
+                 WHERE u.email = ?',
                 [$email]
             );
 
@@ -32,6 +33,8 @@ class AuthController extends AbstractController
 
             $session = $request->getSession();
             $session->set('utilisateur_id', (int) $user['id']);
+            $roleLibelle = strtolower((string) ($user['role_libelle'] ?? 'utilisateur'));
+
             $session->set('utilisateur', [
                 'id' => (int) $user['id'],
                 'nom' => $user['nom'],
@@ -42,6 +45,8 @@ class AuthController extends AbstractController
                 'ville' => $user['ville'],
                 'code_postal' => $user['code_postal'],
                 'role_id' => (int) $user['role_id'],
+                'role_libelle' => $roleLibelle,
+                'actif' => (int) $user['actif'],
             ]);
 
             $targetPath = (string) $request->query->get('target');
@@ -49,7 +54,7 @@ class AuthController extends AbstractController
                 $targetPath = '';
             }
 
-            return $this->redirect($targetPath ?: $this->generateUrl('home_show'));
+            return $this->redirect($targetPath ?: $this->generateUrl($this->getDefaultRouteForRole($roleLibelle)));
         }
 
         return $this->render('auth/login.html.twig');
@@ -142,6 +147,8 @@ class AuthController extends AbstractController
                 'ville' => $data['ville'],
                 'code_postal' => $data['code_postal'],
                 'role_id' => (int) $roleId,
+                'role_libelle' => 'utilisateur',
+                'actif' => 1,
             ]);
 
             $this->addFlash('success', 'Votre compte a bien été créé.');
@@ -274,6 +281,18 @@ class AuthController extends AbstractController
         }
 
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
+    }
+
+    private function getDefaultRouteForRole(string $roleLibelle): string
+    {
+        if ($roleLibelle === 'administrateur') {
+            return 'admin_dashboard';
+        }
+
+        return match ($roleLibelle) {
+            'employe', 'employé', 'administrateur' => 'employee_dashboard',
+            default => 'customer_account',
+        };
     }
 
     private function isStrongPassword(string $password): bool

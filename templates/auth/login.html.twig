@@ -34,13 +34,12 @@
             <label class="auth-field">
                 <span>Mot de passe</span>
                 <span class="auth-password-control">
-                    <input type="hidden" name="password" data-password-value>
                     <input
-                        type="text"
-                        name="password_display"
+                        type="password"
+                        name="password"
                         placeholder="Votre Mot de Passe"
                         autocomplete="current-password"
-                        data-password-mask
+                        data-password-input
                         required
                     >
                     <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
@@ -71,52 +70,18 @@
 
 <script>
     (() => {
-        const visibleInput = document.querySelector('[data-password-mask]');
-        const hiddenInput = document.querySelector('[data-password-value]');
+        const passwordInput = document.querySelector('[data-password-input]');
         const toggleButton = document.querySelector('[data-password-toggle]');
 
-        if (!visibleInput || !hiddenInput || !toggleButton) {
+        if (!passwordInput || !toggleButton) {
             return;
         }
 
-        let realPassword = '';
-        let isVisible = false;
-
-        const refreshPasswordDisplay = () => {
-            hiddenInput.value = realPassword;
-            visibleInput.value = isVisible ? realPassword : '*'.repeat(realPassword.length);
-            toggleButton.textContent = isVisible ? 'Masquer' : 'Afficher';
-        };
-
-        visibleInput.addEventListener('beforeinput', (event) => {
-            if (event.inputType === 'insertText') {
-                realPassword += event.data || '';
-                event.preventDefault();
-            }
-
-            if (event.inputType === 'deleteContentBackward') {
-                realPassword = realPassword.slice(0, -1);
-                event.preventDefault();
-            }
-
-            if (event.inputType === 'deleteContentForward') {
-                realPassword = realPassword.slice(1);
-                event.preventDefault();
-            }
-
-            refreshPasswordDisplay();
-        });
-
-        visibleInput.addEventListener('paste', (event) => {
-            event.preventDefault();
-            realPassword += event.clipboardData.getData('text');
-            refreshPasswordDisplay();
-        });
-
         toggleButton.addEventListener('click', () => {
-            isVisible = !isVisible;
-            refreshPasswordDisplay();
-            visibleInput.focus();
+            const isVisible = passwordInput.type === 'text';
+            passwordInput.type = isVisible ? 'password' : 'text';
+            toggleButton.textContent = isVisible ? 'Afficher' : 'Masquer';
+            passwordInput.focus();
         });
     })();
 </script>

@@ -2,6 +2,10 @@
 
 {% block title %}Panier - Vite & Gourmand{% endblock %}
 
+{% block javascripts %}
+    <script src="{{ asset('assets/scripts/cart.js') }}" defer></script>
+{% endblock %}
+
 {% block body %}
 {% include 'components/_big_title.html.twig' with {
     title: 'Panier',
@@ -10,11 +14,11 @@
 } %}
 
 <main class="cart-page">
-    <a href="{{ path('menu_index') }}" class="cart-back-link">Retour aux menus</a>
+    <a href="{{ path('menu_index') }}" class="cart-back-link">&larr; Retour aux menus</a>
 
     {% if not isConnected %}
         <section class="cart-login-notice">
-            <p>Vous devez vous connecter ou créer un compte pour valider votre panier.</p>
+            <p>Vous devez vous connecter ou cr&eacute;er un compte pour valider votre panier.</p>
             <div>
                 <a href="{{ path('login', { target: app.request.pathInfo }) }}" class="buttonprimary">Connexion</a>
                 <a href="{{ path('register', { target: app.request.pathInfo }) }}" class="buttonwhite">Inscription</a>
@@ -22,7 +26,13 @@
         </section>
     {% endif %}
 
-    <form class="cart-layout" method="post">
+    {% for message in app.flashes('cart_error') %}
+        <section class="cart-login-notice cart-login-notice--error">
+            <p>{{ message }}</p>
+        </section>
+    {% endfor %}
+
+    <form class="cart-layout" method="post" action="{{ path('cart_update') }}" data-cart-form>
         <div class="cart-left-column">
             <section class="cart-card">
                 <h2>Vos informations</h2>
@@ -31,24 +41,24 @@
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Nom *</span>
-                        <input type="text" name="nom" placeholder="Votre nom" value="{{ customer.nom|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <input type="text" name="nom" placeholder="Votre nom" value="{{ customer.nom|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
 
                     <label class="cart-field">
-                        <span>Prénom *</span>
-                        <input type="text" name="prenom" placeholder="Votre prénom" value="{{ customer.prenom|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <span>Pr&eacute;nom *</span>
+                        <input type="text" name="prenom" placeholder="Votre pr&eacute;nom" value="{{ customer.prenom|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
 
                 <div class="cart-fields">
                     <label class="cart-field">
                         <span>Email *</span>
-                        <input type="email" name="email" placeholder="votre.mail@exemple.fr" value="{{ customer.email|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <input type="email" name="email" placeholder="votre.mail@exemple.fr" value="{{ customer.email|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
 
                     <label class="cart-field">
-                        <span>Numéro de téléphone *</span>
-                        <input type="tel" name="telephone" placeholder="Votre numéro" value="{{ customer.telephone|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <span>Num&eacute;ro de t&eacute;l&eacute;phone *</span>
+                        <input type="tel" name="telephone" placeholder="Votre num&eacute;ro" value="{{ customer.telephone|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
             </section>
@@ -60,31 +70,31 @@
                 <div class="cart-fields">
                     <label class="cart-field">
                         <span>Adresse postale *</span>
-                        <input type="text" name="adresse_livraison" placeholder="Votre adresse" value="{{ customer.adresse_postale|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <input type="text" name="adresse_livraison" placeholder="Votre adresse" value="{{ customer.adresse_postale|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
 
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Code postal *</span>
-                        <input type="text" name="code_postal_livraison" placeholder="Code postal" value="{{ customer.code_postal|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <input type="text" name="code_postal_livraison" placeholder="Code postal" value="{{ customer.code_postal|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
 
                     <label class="cart-field">
                         <span>Ville *</span>
-                        <input type="text" name="ville_livraison" placeholder="Ville" value="{{ customer.ville|default('') }}" {{ not isConnected ? 'disabled' }}>
+                        <input type="text" name="ville_livraison" placeholder="Ville" value="{{ customer.ville|default('') }}" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
 
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Date de livraison</span>
-                        <input type="date" name="date_prestation" {{ not isConnected ? 'disabled' }}>
+                        <input type="date" name="date_prestation" required {{ not isConnected ? 'disabled' }}>
                     </label>
 
                     <label class="cart-field">
-                        <span>Heure souhaitée</span>
-                        <input type="time" name="heure_livraison" {{ not isConnected ? 'disabled' }}>
+                        <span>Heure souhait&eacute;e</span>
+                        <input type="time" name="heure_livraison" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
 
@@ -92,7 +102,7 @@
                     <span>i</span>
                     <p>
                         La livraison est offerte sur Bordeaux.<br>
-                        En dehors de Bordeaux : 5,00 € + 0,59 € par kilomètre.
+                        En dehors de Bordeaux : 5,00 &euro; + 0,59 &euro; par kilom&egrave;tre.
                     </p>
                 </div>
             </section>
@@ -106,62 +116,103 @@
                 <div class="cart-order-list">
                     {% for item in cartItems %}
                         {% set menu = item.menu %}
-                        <article class="cart-order-card__content">
+                        <article class="cart-order-card__content" data-cart-item="{{ menu.menu_id }}">
                             {% if menu.image_url %}
                                 <img src="{{ asset(menu.image_url) }}" alt="{{ menu.image_alt ?: menu.nom_menu }}">
                             {% endif %}
 
                             <div class="cart-order-card__details">
                                 <h3>{{ menu.nom_menu }}</h3>
-                                <p>{{ item.nombrePersonnes }} personnes minimum</p>
-                                <small>{{ menu.prix_par_personne|number_format(2, ',', ' ') }} € / pers</small>
+                                <small>{{ menu.prix_par_personne|number_format(2, ',', ' ') }} &euro; / pers</small>
+                                <label class="cart-quantity-field">
+                                    <span>Nombre de personnes</span>
+                                    <input
+                                        type="number"
+                                        name="quantities[{{ menu.menu_id }}]"
+                                        value="{{ item.nombrePersonnes }}"
+                                        min="{{ item.nombrePersonnesMinimum }}"
+                                        step="1"
+                                        data-cart-quantity
+                                        data-menu-id="{{ menu.menu_id }}"
+                                    >
+                                </label>
+                                <p data-cart-order-quantity="{{ menu.menu_id }}">Minimum {{ item.nombrePersonnesMinimum }} personnes</p>
                             </div>
 
-                            <button
-                                type="submit"
-                                form="cart-remove-{{ menu.menu_id }}"
-                                class="cart-remove-button"
-                            >
-                                Supprimer
-                            </button>
+                            <div class="cart-item-actions">
+                                <button type="submit" class="cart-update-button" data-cart-update-button formnovalidate>
+                                    Mettre &agrave; jour
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    form="cart-remove-{{ menu.menu_id }}"
+                                    class="cart-remove-button"
+                                    data-cart-remove-button
+                                    data-menu-id="{{ menu.menu_id }}"
+                                >
+                                    Supprimer
+                                </button>
+                            </div>
                         </article>
                     {% endfor %}
                 </div>
             </section>
 
             <section class="cart-card cart-recap-card">
-                <h2>Récapitulatif</h2>
+                <h2>R&eacute;capitulatif</h2>
                 <div class="cart-card__line"></div>
 
                 {% for item in cartItems %}
-                    <div class="cart-recap-line">
-                        <span>{{ item.menu.nom_menu }} - {{ item.nombrePersonnes }} personnes</span>
-                        <strong>{{ item.prixLigne|number_format(2, ',', ' ') }} €</strong>
+                    <div class="cart-recap-line" data-cart-line="{{ item.menu.menu_id }}">
+                        <span>
+                            <strong class="cart-recap-menu-name">{{ item.menu.nom_menu }}</strong>
+                            <small
+                                data-cart-quantity-label
+                                data-menu-name="{{ item.menu.nom_menu }}"
+                            >
+                                {{ item.nombrePersonnes }} personnes &times; {{ item.menu.prix_par_personne|number_format(2, ',', ' ') }} &euro; / pers.
+                            </small>
+                        </span>
+                        <strong data-cart-line-total>{{ item.prixLigne|number_format(2, ',', ' ') }} &euro;</strong>
+                    </div>
+
+                    <div class="cart-recap-line cart-recap-line--discount" data-cart-discount-line="{{ item.menu.menu_id }}" {% if item.reductionLigne <= 0 %}hidden{% endif %}>
+                        <span>R&eacute;duction 10 % {{ item.menu.nom_menu }}</span>
+                        <strong data-cart-line-discount>-{{ item.reductionLigne|number_format(2, ',', ' ') }} &euro;</strong>
                     </div>
                 {% endfor %}
 
                 <div class="cart-recap-line">
-                    <span>Réduction</span>
-                    <strong>-{{ reduction|number_format(2, ',', ' ') }} €</strong>
+                    <span>Total r&eacute;ductions</span>
+                    <strong data-cart-total-discount>-{{ reduction|number_format(2, ',', ' ') }} &euro;</strong>
                 </div>
 
                 <div class="cart-recap-line">
                     <span>Livraison</span>
-                    <strong>{{ prixLivraison == 0 ? 'Offerte' : prixLivraison|number_format(2, ',', ' ') ~ ' €' }}</strong>
+                    <strong data-cart-delivery>{{ prixLivraison == 0 ? 'Offerte' : prixLivraison|number_format(2, ',', ' ') ~ ' &euro;' }}</strong>
                 </div>
 
                 <div class="cart-card__line"></div>
 
                 <div class="cart-recap-line cart-recap-line--total">
                     <span>Total TTC</span>
-                    <strong>{{ prixTotal|number_format(2, ',', ' ') }} €</strong>
+                    <strong data-cart-total>{{ prixTotal|number_format(2, ',', ' ') }} &euro;</strong>
                 </div>
             </section>
         </aside>
 
         <section class="cart-validation">
-            <button type="submit" class="buttonprimary" {{ not isConnected ? 'disabled' }}>Commander</button>
-            <p>Après validation, vous recevrez un email de confirmation.</p>
+            <button
+                type="submit"
+                class="buttonprimary"
+                formaction="{{ path('cart_checkout') }}"
+                {{ not isConnected ? 'disabled' }}
+            >
+                Commander
+            </button>
+            <p class="cart-update-message" data-cart-update-message hidden>Panier mis &agrave; jour.</p>
+            <p>Apr&egrave;s validation, vous recevrez un email de confirmation.</p>
         </section>
     </form>
 

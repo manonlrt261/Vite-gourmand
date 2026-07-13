@@ -1,0 +1,8 @@
+{% set workspaceUser = app.session.get('utilisateur') %}
+{% set workspaceRole = workspaceUser.role_libelle|default('') %}
+{% set workspaceRoleId = workspaceUser.role_id|default(0) %}
+{% set isAdminWorkspace = workspaceRole == 'administrateur' or workspaceRoleId == 3 %}
+
+<a href="{{ path(isAdminWorkspace ? 'admin_dashboard' : 'employee_dashboard') }}" class="cart-back-link">
+    &larr; Retour &agrave; mon espace {{ isAdminWorkspace ? 'administrateur' : 'employ&eacute;' }}
+</a>

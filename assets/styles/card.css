@@ -147,11 +147,40 @@
   line-height: 1.25;
 }
 
-.menucard-button {
-  width: 140px;
+.menucard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.menucard-button,
+.menucard-cart-button {
+  width: 118px;
   height: 32px;
-  align-self: center;
+  min-width: 0;
+  padding: 0 8px;
   flex-shrink: 0;
+  font-size: 14px;
+}
+
+.menucard-cart-button {
+  white-space: nowrap;
+}
+
+.menucard-cart-button:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.menucard-cart-button.is-added {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.menucard-cart-button.is-error {
+  background-color: var(--offwhite);
+  color: var(--primary);
 }
 
 /* Description de la commande vue par le client*/

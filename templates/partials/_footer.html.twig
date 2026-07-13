@@ -3,8 +3,9 @@
         <h2 class="footer-title">Horaires :</h2>
 
         <p class="footer-text">
-            Du lundi au vendredi : de 09h a 18h<br>
-            Le samedi : de 09h a 16h
+            {% for line in business_hours_lines() %}
+                {{ line }}{% if not loop.last %}<br>{% endif %}
+            {% endfor %}
         </p>
     </div>
 
@@ -22,6 +23,7 @@
         <a href="{{ path('menu_index') }}">Menus</a>
         <a href="{{ path('contact_index') }}">Contact</a>
         {% if app.session.get('utilisateur_id') %}
+            <a href="{{ path('customer_account') }}">Mon compte</a>
             <a href="{{ path('logout') }}">Déconnexion</a>
         {% else %}
             <a href="{{ path('login') }}">Connexion</a>

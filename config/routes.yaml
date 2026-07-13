@@ -52,13 +52,179 @@ logout:
     path: /deconnexion
     controller: App\Controller\AuthController::logout
 
+customer_account:
+    path: /mon-compte
+    controller: App\Controller\CustomerController::account
+
+customer_orders:
+    path: /mon-compte/commandes
+    controller: App\Controller\CustomerController::orders
+
+customer_order_detail:
+    path: /mon-compte/commandes/{id}
+    controller: App\Controller\CustomerController::orderDetail
+    requirements:
+        id: '\d+'
+
+customer_profile:
+    path: /mon-compte/mes-informations
+    controller: App\Controller\CustomerController::profile
+
 cart_index:
     path: /panier
     controller: App\Controller\CartController::index
 
+cart_add:
+    path: /panier/ajouter/{id}
+    controller: App\Controller\CartController::add
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
 cart_remove:
     path: /panier/supprimer/{id}
     controller: App\Controller\CartController::remove
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+cart_update:
+    path: /panier/modifier
+    controller: App\Controller\CartController::update
+    methods: [POST]
+
+cart_checkout:
+    path: /panier/commander
+    controller: App\Controller\CartController::checkout
+    methods: [POST]
+
+order_confirmation:
+    path: /commande/confirmation
+    controller: App\Controller\CartController::confirmation
+
+employee_dashboard:
+    path: /espace-employe
+    controller: App\Controller\EmployeeController::dashboard
+
+admin_dashboard:
+    path: /espace-administrateur
+    controller: App\Controller\AdminController::dashboard
+
+admin_employees:
+    path: /espace-administrateur/employes
+    controller: App\Controller\AdminController::employees
+
+admin_employee_create:
+    path: /espace-administrateur/employes/ajouter
+    controller: App\Controller\AdminController::createEmployee
+
+admin_employee_toggle:
+    path: /espace-administrateur/employes/{id}/actif
+    controller: App\Controller\AdminController::toggleEmployeeStatus
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+admin_employee_update:
+    path: /espace-administrateur/employes/{id}/modifier
+    controller: App\Controller\AdminController::updateEmployee
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+admin_employee_delete:
+    path: /espace-administrateur/employes/{id}/supprimer
+    controller: App\Controller\AdminController::deleteEmployee
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+admin_orders_by_menu:
+    path: /espace-administrateur/commandes-par-menu
+    controller: App\Controller\AdminController::ordersByMenu
+
+admin_revenue_by_menu:
+    path: /espace-administrateur/chiffre-affaires-par-menu
+    controller: App\Controller\AdminController::revenueByMenu
+
+employee_orders:
+    path: /espace-employe/commandes
+    controller: App\Controller\EmployeeController::orders
+
+employee_order_advance_status:
+    path: /espace-employe/commandes/{id}/statut-suivant
+    controller: App\Controller\EmployeeController::advanceOrderStatus
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_menus:
+    path: /espace-employe/menus-et-plats
+    controller: App\Controller\EmployeeController::menus
+
+employee_items_all:
+    path: /espace-employe/menus-et-plats/tous
+    controller: App\Controller\EmployeeController::allMenusAndMeals
+
+employee_menu_create:
+    path: /espace-employe/menus-et-plats/ajouter-menu
+    controller: App\Controller\EmployeeController::createMenu
+    methods: [GET, POST]
+
+employee_meal_create:
+    path: /espace-employe/menus-et-plats/ajouter-{type}
+    controller: App\Controller\EmployeeController::createMealItem
+    methods: [GET, POST]
+    requirements:
+        type: 'entree|plat|dessert'
+
+employee_item_edit:
+    path: /espace-employe/menus-et-plats/{type}/{id}/modifier
+    controller: App\Controller\EmployeeController::editItem
+    methods: [GET, POST]
+    requirements:
+        type: 'menu|entree|plat|dessert'
+        id: '\d+'
+
+employee_item_toggle:
+    path: /espace-employe/menus-et-plats/{type}/{id}/actif
+    controller: App\Controller\EmployeeController::toggleItem
+    methods: [POST]
+    requirements:
+        type: 'menu|entree|plat|dessert'
+        id: '\d+'
+
+employee_item_delete:
+    path: /espace-employe/menus-et-plats/{type}/{id}/supprimer
+    controller: App\Controller\EmployeeController::deleteItem
+    methods: [POST]
+    requirements:
+        type: 'menu|entree|plat|dessert'
+        id: '\d+'
+
+employee_hours:
+    path: /espace-employe/horaires
+    controller: App\Controller\EmployeeController::hours
+    methods: [GET, POST]
+
+employee_closure_delete:
+    path: /espace-employe/horaires/fermetures/{id}/supprimer
+    controller: App\Controller\EmployeeController::deleteClosure
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_reviews:
+    path: /espace-employe/avis-clients
+    controller: App\Controller\EmployeeController::reviews
+
+employee_reviews_all:
+    path: /espace-employe/avis-clients/tous
+    controller: App\Controller\EmployeeController::allReviews
+
+employee_review_status:
+    path: /espace-employe/avis-clients/{id}/statut
+    controller: App\Controller\EmployeeController::updateReviewStatus
     methods: [POST]
     requirements:
         id: '\d+'

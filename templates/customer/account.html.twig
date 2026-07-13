@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon espace client - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Mon espace client',
+    image_alt: 'Espace client Vite et Gourmand'
+} %}
+
+<main class="customer-page">
+    <section class="customer-dashboard">
+        <div class="customer-welcome">
+            <div class="customer-welcome__text">
+                <h2>Bienvenue{% if customer.prenom is defined and customer.prenom %} {{ customer.prenom }}{% endif %} !</h2>
+                <p>Retrouvez ici vos commandes et gérez vos informations personnelles.</p>
+            </div>
+
+            <div class="customer-profile-card">
+                <span class="customer-profile-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" focusable="false">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                        <path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1z"/>
+                    </svg>
+                </span>
+                <span>
+                    <strong>Mon profil</strong>
+                    <small>Consulter et modifier mes informations.</small>
+                </span>
+                <a href="{{ path('customer_profile') }}" class="buttonoffwhite customer-profile-card__button">Accéder</a>
+            </div>
+        </div>
+
+        <div class="customer-orders">
+            <hr class="customer-orders-separator">
+
+            <div class="customer-section-heading">
+                <h2>Mes commandes</h2>
+            </div>
+
+            {% if latestOrders is empty %}
+                <p class="customer-empty">Vous n'avez pas encore passé de commande.</p>
+            {% else %}
+                <div class="customer-order-grid">
+                    {% for order in latestOrders %}
+                        {% set statusCode = order.statut_code|default('en_attente') %}
+                        {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
+
+                        <article class="cardvieworder">
+                            <h3 class="cardvieworder-title">N° {{ order.commande_id }}</h3>
+                            <span class="{{ statusClass }} cardvieworder-status">{{ order.statut_libelle|default('En attente') }}</span>
+                            <p class="cardvieworder-date">
+                                Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
+                            </p>
+                            <div class="cardvieworder-actions">
+                                <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
+                                {% if statusCode == 'en_attente' %}
+                                    <a href="{{ path('customer_orders') }}" class="buttonedit cardvieworder-edit">Modifier</a>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                <p class="customer-history-info">Vous pouvez consulter vos commandes passées dans l'historique.</p>
+            {% endif %}
+
+            <div class="customer-orders-link">
+                <a href="{{ path('customer_orders') }}">Voir toutes mes commandes</a>
+            </div>
+        </div>
+    </section>
+
+    <hr class="customer-separator">
+
+    <section class="customer-review-section">
+        <h2>Donnez<br>votre avis</h2>
+
+        <form class="customer-review-card" method="post" action="{{ path('customer_account') }}">
+            <h3>Comment évalueriez-vous votre expérience ?</h3>
+
+            {% for message in app.flashes('review_success') %}
+                <p class="customer-alert customer-alert--success">{{ message }}</p>
+            {% endfor %}
+
+            {% for message in app.flashes('review_error') %}
+                <p class="customer-alert customer-alert--error">{{ message }}</p>
+            {% endfor %}
+
+            {% if reviewOrders is empty %}
+                <p class="customer-empty">Vous devez avoir passé une commande avant de laisser un avis.</p>
+            {% else %}
+                <label class="customer-review-field">
+                    <span>Commande concernée</span>
+                    <select name="commande_id" required>
+                        <option value="">Choisir une commande</option>
+                        {% for order in reviewOrders %}
+                            <option value="{{ order.commande_id }}">
+                                Commande n°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <fieldset class="customer-rating">
+                    <legend>Votre note</legend>
+                    <div class="customer-rating-stars">
+                        {% for note in 5..1 %}
+                            <input id="note-{{ note }}" type="radio" name="note" value="{{ note }}" required>
+                            <label for="note-{{ note }}" aria-label="{{ note }} étoile{{ note > 1 ? 's' : '' }}">★</label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <label class="customer-review-field">
+                    <span>Votre commentaire (facultatif)</span>
+                    <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
+                </label>
+
+                <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
+            {% endif %}
+        </form>
+    </section>
+
+    <div class="customer-logout">
+        <a href="{{ path('logout') }}" class="buttonprimary">Se déconnecter</a>
+    </div>
+</main>
+{% endblock %}

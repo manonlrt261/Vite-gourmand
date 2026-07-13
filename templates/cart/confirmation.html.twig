@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande confirmée - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Commande confirmée',
+    image: asset('assets/bigtittle.png'),
+    image_alt: 'Table gourmande Vite et Gourmand'
+} %}
+
+<main class="cart-page">
+    <section class="cart-card cart-empty-card">
+        <h2>Merci pour votre commande</h2>
+        <div class="cart-card__line"></div>
+        <p>Votre commande a bien été enregistrée. Elle est maintenant en attente de validation.</p>
+
+        {% if orderIds is not empty %}
+            <p>Référence{% if orderIds|length > 1 %}s{% endif %} : {{ orderIds|join(', ') }}</p>
+        {% endif %}
+
+        <a href="{{ path('menu_index') }}" class="buttonprimary">Retour aux menus</a>
+    </section>
+</main>
+{% endblock %}

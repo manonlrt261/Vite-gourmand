@@ -1,0 +1,221 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des employ&eacute;s - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Gestion des employ&eacute;s',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Gestion des employ&eacute;s Vite et Gourmand'
+    } %}
+
+    <main class="admin-employees-page" data-admin-employees-page>
+        <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
+
+        <section class="admin-employees-heading">
+            <div>
+                <h1>Gestion des employ&eacute;s</h1>
+                <p>Cr&eacute;ez, modifiez ou d&eacute;sactivez les comptes employ&eacute;s. Un email sera envoy&eacute; &agrave; chaque nouvel employ&eacute;.</p>
+            </div>
+
+            <a href="{{ path('admin_employee_create') }}" class="buttonprimary admin-employee-add">Ajouter un employ&eacute;</a>
+        </section>
+
+        <section class="admin-employees-filters" data-admin-employee-filters>
+            <label class="admin-employee-filter admin-employee-filter--search">
+                <input type="search" placeholder="Rechercher un employ&eacute;" data-employee-search>
+            </label>
+
+            <label class="admin-employee-filter">
+                <select data-employee-status>
+                    <option value="">Statut</option>
+                    <option value="1">Actif</option>
+                    <option value="0">Inactif</option>
+                </select>
+            </label>
+
+            <label class="admin-employee-filter">
+                <select data-employee-job>
+                    <option value="">Tous les postes</option>
+                    {% for job in jobs %}
+                        <option value="{{ job }}">{{ job }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="admin-employee-filter-actions">
+                <button type="button" class="buttonprimary admin-employee-apply" data-employee-apply>Appliquer les filtres</button>
+                <button type="button" class="buttonoffwhite admin-employee-reset" data-employee-reset>R&eacute;initialiser tous les filtres</button>
+            </div>
+        </section>
+
+        <section class="admin-employees-list-frame">
+            <div class="admin-employees-list" data-employee-list>
+                {% for employee in employees %}
+                    {% set fullName = (employee.prenom ~ ' ' ~ employee.nom)|trim %}
+                    {% set isActive = employee.actif == 1 %}
+
+                    <article
+                        class="admin-employee-row"
+                        data-employee-card
+                        data-employee-id="{{ employee.id }}"
+                        data-search="{{ (employee.id ~ ' ' ~ employee.nom ~ ' ' ~ employee.prenom ~ ' ' ~ employee.email)|lower }}"
+                        data-status="{{ employee.actif }}"
+                        data-job="{{ employee.poste }}"
+                    >
+                        <form method="post" action="{{ path('admin_employee_toggle', { id: employee.id }) }}" data-employee-toggle-form>
+                            <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-employee-status-button>
+                                {{ isActive ? 'Actif' : 'Inactif' }}
+                            </button>
+                        </form>
+
+                        <div class="admin-employee-row__main">
+                            <h2 data-employee-name>{{ fullName }}</h2>
+                            <p data-employee-identity>ID {{ employee.id }} &middot; {{ employee.email }}</p>
+                        </div>
+
+                        <p class="admin-employee-row__job" data-employee-job-label>{{ employee.poste }}</p>
+
+                        <div class="admin-employee-row__meta">
+                            <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="buttonedit"
+                            data-employee-edit
+                            data-update-url="{{ path('admin_employee_update', { id: employee.id }) }}"
+                            data-id="{{ employee.id }}"
+                            data-prenom="{{ employee.prenom }}"
+                            data-nom="{{ employee.nom }}"
+                            data-email="{{ employee.email }}"
+                            data-telephone="{{ employee.telephone }}"
+                            data-adresse="{{ employee.adresse_postale }}"
+                            data-ville="{{ employee.ville }}"
+                            data-code-postal="{{ employee.code_postal }}"
+                            data-poste="{{ employee.poste }}"
+                        >
+                            Modifier
+                        </button>
+
+                        <button
+                            type="button"
+                            class="buttondelete"
+                            data-employee-delete
+                            data-delete-url="{{ path('admin_employee_delete', { id: employee.id }) }}"
+                        >
+                            Supprimer
+                        </button>
+                    </article>
+                {% else %}
+                    <p class="employee-empty">Aucun employ&eacute; pour le moment.</p>
+                {% endfor %}
+
+                <p class="employee-empty" data-employee-empty hidden>Aucun employ&eacute; ne correspond aux filtres.</p>
+            </div>
+        </section>
+
+        <section class="admin-employees-info">
+            <div class="admin-employees-info__heading">
+                <span aria-hidden="true">?</span>
+                <h2>Informations importantes</h2>
+            </div>
+
+            <ul>
+                <li>L'employ&eacute; re&ccedil;oit un email informant qu'un compte a &eacute;t&eacute; cr&eacute;&eacute; pour lui.</li>
+                <li>Le mot de passe n'est pas communiqu&eacute; dans cet email.</li>
+                <li>L'employ&eacute; doit se rapprocher de vous pour obtenir ce mot de passe.</li>
+                <li>D&eacute;sactivez un compte en cas de d&eacute;part de l'employ&eacute; ou d'acc&egrave;s multiples.</li>
+            </ul>
+        </section>
+
+        <div class="admin-employee-modal" data-employee-edit-modal hidden>
+            <div class="admin-employee-modal__overlay" data-employee-modal-close></div>
+
+            <form class="admin-employee-modal__dialog" method="post" data-employee-edit-form>
+                <div class="admin-employee-modal__header">
+                    <h2>Modifier l'employ&eacute;</h2>
+                    <button type="button" aria-label="Fermer" data-employee-modal-close>&times;</button>
+                </div>
+
+                <input type="hidden" name="id" data-edit-id>
+
+                <div class="admin-employee-modal__grid">
+                    <label>
+                        <span>Pr&eacute;nom</span>
+                        <input type="text" name="prenom" required data-edit-prenom>
+                    </label>
+
+                    <label>
+                        <span>Nom</span>
+                        <input type="text" name="nom" required data-edit-nom>
+                    </label>
+
+                    <label>
+                        <span>Email</span>
+                        <input type="email" name="email" required data-edit-email>
+                    </label>
+
+                    <label>
+                        <span>T&eacute;l&eacute;phone</span>
+                        <input type="text" name="telephone" data-edit-telephone>
+                    </label>
+
+                    <label>
+                        <span>Adresse</span>
+                        <input type="text" name="adresse_postale" data-edit-adresse>
+                    </label>
+
+                    <label>
+                        <span>Ville</span>
+                        <input type="text" name="ville" data-edit-ville>
+                    </label>
+
+                    <label>
+                        <span>Code postal</span>
+                        <input type="text" name="code_postal" data-edit-code-postal>
+                    </label>
+
+                    <label>
+                        <span>Poste</span>
+                        <select name="poste" required data-edit-poste>
+                            {% for job in jobs %}
+                                <option value="{{ job }}">{{ job }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <p class="admin-employee-modal__error" data-edit-error hidden></p>
+
+                <div class="admin-employee-modal__actions">
+                    <button type="submit" class="buttonprimary">Valider</button>
+                    <button type="button" class="buttonoffwhite" data-employee-modal-close>Annuler</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-employee-modal" data-employee-delete-modal hidden>
+            <div class="admin-employee-modal__overlay" data-delete-modal-close></div>
+
+            <section class="admin-employee-modal__dialog admin-employee-modal__dialog--small" role="dialog" aria-modal="true">
+                <div class="admin-employee-modal__header">
+                    <h2>Attention</h2>
+                    <button type="button" aria-label="Fermer" data-delete-modal-close>&times;</button>
+                </div>
+
+                <p>Voulez-vous vraiment supprimer cet employ&eacute; ? Cette action retirera son compte.</p>
+
+                <div class="admin-employee-modal__actions">
+                    <button type="button" class="buttonoffwhite" data-delete-confirm>Supprimer</button>
+                    <button type="button" class="buttonprimary" data-delete-modal-close>Annuler</button>
+                </div>
+            </section>
+        </div>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/admin-employees.js') }}" defer></script>
+{% endblock %}

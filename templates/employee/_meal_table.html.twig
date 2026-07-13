@@ -1,0 +1,45 @@
+<div class="employee-table-wrap">
+    <table class="employee-management-table employee-management-table--meal">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Menu associ&eacute;</th>
+                <th>Cat&eacute;gorie</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                {% set isActive = item.actif|default(1) == 1 %}
+                {% set hasInactiveMenu = item.menu_id|default(null) and item.menu_actif|default(1) == 0 %}
+
+                <tr data-management-card data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.nom_menu|default('Ind&eacute;pendant') ?: 'Ind&eacute;pendant' }}</td>
+                    <td><span class="employee-category-badge">{{ item.theme }}</span></td>
+                    <td>
+                        <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
+                            <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button title="{{ hasInactiveMenu ? 'Le menu associ&eacute; est inactif.' : '' }}">
+                                {{ isActive ? 'Actif' : 'Inactif' }}
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <div class="employee-table-actions">
+                            <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
+
+                            <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
+                                <button type="submit" class="buttondelete">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">{{ empty }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

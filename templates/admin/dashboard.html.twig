@@ -1,0 +1,174 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Espace administrateur - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Espace administrateur',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Tableau de bord administrateur Vite et Gourmand'
+    } %}
+
+    {% set maxOrders = ordersByMenu[0].total_commandes|default(1) %}
+    {% set maxRevenue = revenueByMenu[0].chiffre_affaires|default(1) %}
+
+    <main class="admin-dashboard-page">
+        <section class="employee-action-grid admin-action-grid" aria-label="Actions administrateur">
+            <article class="employee-action-card">
+                <h2>Menus &amp; plats</h2>
+                <p>Modifiez les menus,<br>les plats et les stocks</p>
+                <a href="{{ path('employee_menus') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
+            </article>
+
+            <article class="employee-action-card">
+                <h2>Horaires</h2>
+                <p>Consultez et g&eacute;rez<br>les horaires</p>
+                <a href="{{ path('employee_hours') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
+            </article>
+
+            <article class="employee-action-card">
+                <h2>Employ&eacute;s</h2>
+                <p>Consultez les derniers<br>employ&eacute;s inscrits</p>
+                <a href="{{ path('admin_employees') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
+            </article>
+
+            <article class="employee-action-card">
+                <h2>Commandes</h2>
+                <p>Consultez et g&eacute;rez<br>toutes les commandes</p>
+                <a href="{{ path('employee_orders') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
+            </article>
+
+            <article class="employee-action-card">
+                <h2>Avis clients</h2>
+                <p>Consultez et mod&eacute;rez<br>les avis clients</p>
+                <a href="{{ path('employee_reviews') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
+            </article>
+        </section>
+
+        <section class="admin-dashboard-grid">
+            <div class="admin-dashboard-main">
+                <section class="admin-section">
+                    <div class="employee-section-heading">
+                        <h2>Tableau de bord</h2>
+                    </div>
+
+                    <div class="admindashboardwidget admin-kpi-grid">
+                        <article class="admindashboardwidget-card">
+                            <span class="admindashboardwidget-icon" aria-hidden="true">#</span>
+                            <div>
+                                <p class="admindashboardwidget-value">{{ stats.orders_count }}</p>
+                                <p class="admindashboardwidget-label">Commandes re&ccedil;ues cette ann&eacute;e</p>
+                            </div>
+                        </article>
+
+                        <article class="admindashboardwidget-card">
+                            <span class="admindashboardwidget-icon" aria-hidden="true">&euro;</span>
+                            <div>
+                                <p class="admindashboardwidget-value">{{ stats.revenue|number_format(2, ',', ' ') }} &euro;</p>
+                                <p class="admindashboardwidget-label">CA de l'ann&eacute;e</p>
+                            </div>
+                        </article>
+
+                        <article class="admindashboardwidget-card">
+                            <span class="admindashboardwidget-icon" aria-hidden="true">+</span>
+                            <div>
+                                <p class="admindashboardwidget-value">{{ stats.customers_count }}</p>
+                                <p class="admindashboardwidget-label">Clients inscrits cette ann&eacute;e</p>
+                            </div>
+                        </article>
+
+                        <article class="admindashboardwidget-card">
+                            <span class="admindashboardwidget-icon" aria-hidden="true">&starf;</span>
+                            <div>
+                                <p class="admindashboardwidget-value">{{ stats.average_rating|number_format(1, ',', ' ') }}/5</p>
+                                <p class="admindashboardwidget-label">Note moyenne des avis</p>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="admin-section admin-chart-section">
+                    <div class="employee-section-heading">
+                        <h2>
+                            Commandes par menu
+                            <a href="{{ path('admin_orders_by_menu') }}" class="admin-heading-arrow" aria-label="Voir les commandes par menu">&rarr;</a>
+                        </h2>
+                    </div>
+
+                    <div class="admin-bar-chart">
+                        {% for item in ordersByMenu %}
+                            {% set percent = maxOrders > 0 ? (item.total_commandes / maxOrders * 100) : 0 %}
+                            <article class="admin-bar-row">
+                                <div class="admin-bar-row__label">
+                                    <span>{{ item.nom_menu }}</span>
+                                    <strong>{{ item.total_commandes }}</strong>
+                                </div>
+                                <div class="admin-bar-row__track">
+                                    <span style="width: {{ percent }}%"></span>
+                                </div>
+                            </article>
+                        {% else %}
+                            <p class="employee-empty">Aucune commande pour le moment.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <aside class="admin-dashboard-side" id="admin-employees">
+                <section class="admin-section">
+                    <div class="employee-section-heading employee-section-heading--reviews">
+                        <h2>
+                            Gestion des employ&eacute;s
+                            <a href="{{ path('admin_employees') }}" class="admin-heading-arrow" aria-label="Voir la gestion des employ&eacute;s">&rarr;</a>
+                        </h2>
+                    </div>
+
+                    <div class="admin-employee-list">
+                        {% for employee in latestEmployees %}
+                            <article class="admin-employee-card">
+                                <div>
+                                    <h3>{{ employee.prenom }} {{ employee.nom }}</h3>
+                                    <p>{{ employee.email }}</p>
+                                </div>
+                                <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
+                            </article>
+                        {% else %}
+                            <p class="employee-empty">Aucun employ&eacute; inscrit pour le moment.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </aside>
+        </section>
+
+        <section class="admin-section admin-revenue-section">
+            <div class="employee-section-heading">
+                <h2>
+                    Chiffre d'affaires par menu
+                    <a href="{{ path('admin_revenue_by_menu') }}" class="admin-heading-arrow" aria-label="Voir le chiffre d'affaires par menu">&rarr;</a>
+                </h2>
+            </div>
+
+            <div class="admin-revenue-list">
+                {% for item in revenueByMenu %}
+                    {% set percent = maxRevenue > 0 ? (item.chiffre_affaires / maxRevenue * 100) : 0 %}
+                    <article class="admin-revenue-card">
+                        <div>
+                            <h3>{{ item.nom_menu }}</h3>
+                            <p>{{ item.chiffre_affaires|number_format(2, ',', ' ') }} &euro;</p>
+                        </div>
+                        <div class="admin-revenue-track">
+                            <span style="width: {{ percent }}%"></span>
+                        </div>
+                    </article>
+                {% else %}
+                    <p class="employee-empty">Aucun chiffre d'affaires &agrave; afficher.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="admin-dashboard-actions">
+            <a href="{{ path('employee_dashboard') }}" class="buttonoffwhite">Espace employ&eacute;</a>
+            <a href="{{ path('logout') }}" class="buttonprimary">Se d&eacute;connecter</a>
+        </div>
+    </main>
+{% endblock %}

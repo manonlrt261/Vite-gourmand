@@ -1,0 +1,112 @@
+﻿{% extends 'base.html.twig' %}
+
+{% block title %}Mes commandes - Vite & Gourmand{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Mes commandes',
+    image_alt: 'Historique des commandes Vite et Gourmand'
+} %}
+
+<main class="customer-page customer-orders-page">
+    <a href="{{ path('customer_account') }}" class="cart-back-link">← Retour à mon espace client</a>
+
+    <section class="customer-profile-intro">
+        <h1>Toutes mes commandes</h1>
+        <p>Retrouvez ici l'historique de vos commandes passÃ©es chez Vite & Gourmand.</p>
+    </section>
+
+    {% for message in app.flashes('review_success') %}
+        <p class="customer-alert customer-alert--success">{{ message }}</p>
+    {% endfor %}
+
+    {% for message in app.flashes('review_error') %}
+        <p class="customer-alert customer-alert--error">{{ message }}</p>
+    {% endfor %}
+
+    {% if orders is empty %}
+        <section class="cart-empty-card">
+            <h2>Aucune commande pour le moment</h2>
+            <p>Vos commandes apparaÃ®tront ici dÃ¨s que vous aurez validÃ© un panier.</p>
+            <a href="{{ path('menu_index') }}" class="buttonprimary">Voir les menus</a>
+        </section>
+    {% else %}
+        <section class="customer-all-orders">
+            {% for order in orders %}
+                {% set statusCode = order.statut_code|default('en_attente') %}
+                {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
+                {% set hasReview = order.avis_count|default(0) > 0 %}
+
+                <article class="customer-order-row">
+                    <div class="customer-order-row__main">
+                        <h2>Commande nÂ°{{ order.commande_id }}</h2>
+                        <p>{{ order.nom_menu|default('Menu') }}</p>
+                        <p>CommandÃ©e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
+                        {% if order.date_prestation %}
+                            <p>Prestation le {{ order.date_prestation|date('d/m/Y') }}</p>
+                        {% endif %}
+                    </div>
+
+                    <span class="{{ statusClass }}">{{ order.statut_libelle|default('En attente') }}</span>
+                    <strong>{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} â‚¬</strong>
+
+                    <div class="customer-order-row__actions">
+                        <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary">Voir le dÃ©tail</a>
+                        {% if not hasReview %}
+                            <button
+                                type="button"
+                                class="buttonwhite"
+                                data-review-open
+                                data-order-id="{{ order.commande_id }}"
+                                data-order-label="Commande nÂ°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}"
+                            >
+                                Laisser un avis
+                            </button>
+                        {% else %}
+                            <span class="customer-review-done">Avis envoyÃ©</span>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+    {% endif %}
+</main>
+
+<div class="customer-review-modal" data-review-modal hidden>
+    <div class="customer-review-modal__overlay" data-review-close></div>
+
+    <section class="customer-review-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+        <button type="button" class="customer-review-modal__close" aria-label="Fermer la fenÃªtre" data-review-close>Ã—</button>
+
+        <form class="customer-review-card customer-review-card--modal" method="post" action="{{ path('customer_orders') }}">
+            <h3 id="review-modal-title">Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
+
+            <input type="hidden" name="commande_id" data-review-order-id>
+            <p class="customer-review-modal__order" data-review-order-label></p>
+
+            <fieldset class="customer-rating">
+                <legend>Votre note</legend>
+                <div class="customer-rating-stars">
+                    {% for note in 5..1 %}
+                        <input id="orders-note-{{ note }}" type="radio" name="note" value="{{ note }}" required>
+                        <label for="orders-note-{{ note }}" aria-label="{{ note }} Ã©toile{{ note > 1 ? 's' : '' }}">â˜…</label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <label class="customer-review-field">
+                <span>Votre commentaire (facultatif)</span>
+                <textarea name="commentaire" placeholder="Ã‰crivez votre commentaire ici."></textarea>
+            </label>
+
+            <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/customer-orders.js') }}" defer></script>
+{% endblock %}
+

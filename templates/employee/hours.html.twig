@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des horaires - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Gestion des horaires',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Plat Vite et Gourmand'
+    } %}
+
+    <main class="employee-hours-page">
+        {% include 'components/_workspace_back_link.html.twig' %}
+
+        <section class="employee-hours-intro">
+            <h1>Horaires d'ouverture</h1>
+            <p>Modifiez les jours et horaires d'ouverture de l'entreprise. Ces horaires seront visibles par les clients sur le site.</p>
+        </section>
+
+        <div class="employee-hours-layout">
+            <form method="post" class="employee-schedule-card" data-hours-form>
+                <input type="hidden" name="action" value="save_hours">
+
+                <h2>Horaires de la semaine</h2>
+
+                <div class="employee-schedule-list">
+                    {% for day in weeklyHours %}
+                        {% set isOpen = day.est_ouvert == 1 %}
+
+                        <div class="employee-schedule-row" data-hours-row>
+                            <span class="employee-schedule-day">{{ day.jour_label }}</span>
+
+                            <label class="employee-switch">
+                                <input type="checkbox" name="hours[{{ day.jour_code }}][est_ouvert]" value="1" {{ isOpen ? 'checked' : '' }} data-hours-toggle>
+                                <span></span>
+                            </label>
+
+                            <input type="time" name="hours[{{ day.jour_code }}][heure_ouverture]" value="{{ day.heure_ouverture|default('') }}" {{ not isOpen ? 'disabled' : '' }} data-hours-input aria-label="Heure d'ouverture {{ day.jour_label }}">
+                            <span class="employee-schedule-separator">&agrave;</span>
+                            <input type="time" name="hours[{{ day.jour_code }}][heure_fermeture]" value="{{ day.heure_fermeture|default('') }}" {{ not isOpen ? 'disabled' : '' }} data-hours-input aria-label="Heure de fermeture {{ day.jour_label }}">
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="buttonprimary employee-hours-save">Enregistrer les modifications</button>
+            </form>
+
+            <aside class="employee-hours-sidebar">
+                <section class="employee-hours-info">
+                    <h2>
+                        <span aria-hidden="true">i</span>
+                        Informations importantes
+                    </h2>
+                    <p>Les horaires modifi&eacute;s sont appliqu&eacute;s imm&eacute;diatement sur le site.</p>
+                    <p>Pensez &agrave; les mettre &agrave; jour apr&egrave;s les jours f&eacute;ri&eacute;s ou vos fermetures exceptionnelles.</p>
+                </section>
+
+                <section class="employee-closures">
+                    <div class="employee-closures-heading">
+                        <h2>Fermetures exceptionnelles</h2>
+                    </div>
+
+                    <form method="post" class="employee-closure-form">
+                        <input type="hidden" name="action" value="add_closure">
+
+                        <label>
+                            <span>Date</span>
+                            <input type="date" name="date_fermeture" required>
+                        </label>
+
+                        <label>
+                            <span>Motif</span>
+                            <input type="text" name="motif" value="Fermeture exceptionnelle" required>
+                        </label>
+
+                        <button type="submit" class="buttonwhite">Ajouter une fermeture</button>
+                    </form>
+
+                    <div class="employee-closure-list">
+                        {% for closure in closures %}
+                            <article class="employee-closure-card">
+                                <div>
+                                    <h3>{{ closure.date_fermeture|date('d/m/Y') }}</h3>
+                                    <p>{{ closure.motif }}</p>
+                                </div>
+
+                                <form method="post" action="{{ path('employee_closure_delete', { id: closure.fermeture_id }) }}">
+                                    <button type="submit" class="employee-icon-button" aria-label="Supprimer cette fermeture">Suppr.</button>
+                                </form>
+                            </article>
+                        {% else %}
+                            <p class="employee-hours-empty">Aucune fermeture exceptionnelle enregistr&eacute;e.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/employee-hours.js') }}" defer></script>
+{% endblock %}

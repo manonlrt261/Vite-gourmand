@@ -37,8 +37,18 @@
             {{ menu.prix_par_personne|number_format(2, ',', ' ') }} € par personne
         </p>
 
-        <a href="{{ path('menu_show', { id: menu.menu_id }) }}" class="buttonwhite menucard-button">
-            Découvrir
-        </a>
+        <div class="menucard-actions">
+            <a href="{{ path('menu_show', { id: menu.menu_id }) }}" class="buttonwhite menucard-button">
+                Découvrir
+            </a>
+            <button
+                type="button"
+                class="buttonprimary menucard-cart-button"
+                data-add-to-cart
+                data-cart-url="{{ path('cart_add', { id: menu.menu_id }) }}"
+            >
+                Ajouter au panier
+            </button>
+        </div>
     </div>
 </article>

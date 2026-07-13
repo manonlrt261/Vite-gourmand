@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tous les avis - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Tous les avis',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Plat Vite et Gourmand'
+    } %}
+
+    <main class="employee-reviews-page">
+        <a href="{{ path('employee_reviews') }}" class="cart-back-link">&larr; Retour &agrave; la gestion des avis</a>
+
+        <section class="employee-reviews-intro">
+            <h1>Tous les avis</h1>
+            <p>Retrouvez les avis en attente, les avis accept&eacute;s et les avis refus&eacute;s.</p>
+        </section>
+
+        <section class="employee-review-filters" data-review-filters>
+            <input type="search" name="search" placeholder="Rechercher par client ou num&eacute;ro de commande" data-review-search>
+
+            <div class="employee-review-filter-row">
+                <select name="note" data-review-note>
+                    <option value="">Note</option>
+                    {% for note in 1..5 %}
+                        <option value="{{ note }}">{{ note }}/5</option>
+                    {% endfor %}
+                </select>
+
+                <select name="period" data-review-period>
+                    <option value="">P&eacute;riode</option>
+                    <option value="10days">10 derniers jours</option>
+                    <option value="previous_month">Mois pr&eacute;c&eacute;dent</option>
+                    <option value="6months">6 derniers mois</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="other">Autres</option>
+                </select>
+
+                <select name="menu" data-review-menu>
+                    <option value="">Menu</option>
+                    {% for menu in menus %}
+                        <option value="{{ menu.menu_id }}">{{ menu.nom_menu }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="employee-review-filter-actions">
+                <button type="button" class="buttonprimary" data-review-apply>Appliquer les filtres</button>
+                <button type="button" class="buttonoffwhite" data-review-reset>R&eacute;initialiser les filtres</button>
+            </div>
+
+            <p><span data-review-count>{{ reviews|length }}</span> avis affich&eacute;s</p>
+        </section>
+
+        {% set pendingReviews = reviews|filter(review => review.statut == 'en_attente') %}
+        {% set acceptedReviews = reviews|filter(review => review.statut == 'valide') %}
+        {% set refusedReviews = reviews|filter(review => review.statut == 'refuse') %}
+
+        <div class="employee-review-all-list" data-review-list>
+            <section class="employee-review-group">
+                <h2>En attente</h2>
+                {% for review in pendingReviews %}
+                    {% include 'employee/_review_card.html.twig' with { review: review } %}
+                {% else %}
+                    <p class="employee-empty">Aucun avis en attente.</p>
+                {% endfor %}
+            </section>
+
+            <section class="employee-review-group">
+                <h2>Accept&eacute;s</h2>
+                {% for review in acceptedReviews %}
+                    {% include 'employee/_review_card.html.twig' with { review: review } %}
+                {% else %}
+                    <p class="employee-empty">Aucun avis accept&eacute;.</p>
+                {% endfor %}
+            </section>
+
+            <section class="employee-review-group">
+                <h2>Refus&eacute;s</h2>
+                {% for review in refusedReviews %}
+                    {% include 'employee/_review_card.html.twig' with { review: review } %}
+                {% else %}
+                    <p class="employee-empty">Aucun avis refus&eacute;.</p>
+                {% endfor %}
+            </section>
+
+            <p class="employee-empty" data-review-empty hidden>Aucun avis ne correspond aux filtres.</p>
+        </div>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/employee-reviews.js') }}" defer></script>
+{% endblock %}

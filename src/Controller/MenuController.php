@@ -24,17 +24,19 @@ class MenuController extends AbstractController
 
         $groupedMenus = [
             'Menus intemporels' => [],
-            'Menus événementiels' => [],
+            'Menus evenementiels' => [],
             'Menus saisonniers' => [],
-            'Régimes particuliers' => [],
+            'Regime particulier' => [],
         ];
 
         foreach ($menus as $menu) {
+            $menu['theme'] = $this->normalizeTheme((string) $menu['theme']);
+
             $section = match ($menu['theme']) {
-                'Classiques' => 'Menus intemporels',
-                'Evénementiels' => 'Menus événementiels',
-                'Régimes particuliers' => 'Régimes particuliers',
-                'Saisonniers' => 'Menus saisonniers',
+                'Classique' => 'Menus intemporels',
+                'Evenementiel' => 'Menus evenementiels',
+                'Regime particulier' => 'Regime particulier',
+                'Saisonnier' => 'Menus saisonniers',
                 default => $menu['theme'],
             };
 
@@ -61,10 +63,12 @@ class MenuController extends AbstractController
             throw $this->createNotFoundException('Menu introuvable.');
         }
 
+        $menu['theme'] = $this->normalizeTheme((string) $menu['theme']);
+
         $entree = $connection->fetchAssociative(
             'SELECT nom_entree AS nom, description, allergenes, image_url, image_alt
              FROM entree
-             WHERE menu_id = ?
+             WHERE menu_id = ? AND actif = 1
              LIMIT 1',
             [$id]
         );
@@ -72,7 +76,7 @@ class MenuController extends AbstractController
         $plat = $connection->fetchAssociative(
             'SELECT nom_plat AS nom, description, allergenes, image_url, image_alt
              FROM plat
-             WHERE menu_id = ?
+             WHERE menu_id = ? AND actif = 1
              LIMIT 1',
             [$id]
         );
@@ -80,7 +84,7 @@ class MenuController extends AbstractController
         $dessert = $connection->fetchAssociative(
             'SELECT nom_dessert AS nom, description, allergenes, image_url, image_alt
              FROM dessert
-             WHERE menu_id = ?
+             WHERE menu_id = ? AND actif = 1
              LIMIT 1',
             [$id]
         );
@@ -88,10 +92,21 @@ class MenuController extends AbstractController
         return $this->render('menu/show.html.twig', [
             'menu' => $menu,
             'mealItems' => [
-                'Entrée' => $entree,
+                'Entree' => $entree,
                 'Plat' => $plat,
                 'Dessert' => $dessert,
             ],
         ]);
+    }
+
+    private function normalizeTheme(string $theme): string
+    {
+        return match ($theme) {
+            'Classiques', 'Classique' => 'Classique',
+            'Événementiels', 'Evénementiels', 'Evenementiels', 'Evènementiels', 'Événementiel', 'Evenementiel', 'Evénementiel', 'Evènementiel' => 'Evenementiel',
+            'Saisonniers', 'Saisonnier' => 'Saisonnier',
+            'Régimes particuliers', 'Regimes particuliers', 'Régime particulier', 'Regime particulier' => 'Regime particulier',
+            default => $theme,
+        };
     }
 }
