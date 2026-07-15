@@ -290,7 +290,7 @@ class CartController extends AbstractController
         return $orders;
     }
 
-    // Prepare et envoie l email recapitulatif de commande.
+    // Email 3 : prepare et envoie au client le recapitulatif complet de sa commande.
     private function sendOrderConfirmationEmail(MailerInterface $mailer, array $orders, array $checkoutData): void
     {
         if ($orders === []) {
@@ -303,10 +303,15 @@ class CartController extends AbstractController
             return;
         }
 
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $firstName = htmlspecialchars((string) ($checkoutData['prenom'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $totalOrder = array_sum(array_map(static fn (array $order): float => (float) $order['prix_total'], $orders));
+
         $lines = [
-            '<h1>Confirmation de commande - Vite & Gourmand</h1>',
-            '<p>Bonjour ' . htmlspecialchars((string) ($checkoutData['prenom'] ?? ''), ENT_QUOTES, 'UTF-8') . ',</p>',
-            '<p>Votre commande a bien ete enregistree. Elle est maintenant en attente de validation.</p>',
+            '<h1>Confirmation de votre commande</h1>',
+            '<p>Bonjour ' . $firstName . ',</p>',
+            '<p>Nous avons bien recu votre commande Vite & Gourmand.</p>',
+            '<p>Elle est actuellement en attente de validation par notre equipe. Vous trouverez ci-dessous le recapitulatif de votre demande.</p>',
         ];
 
         foreach ($orders as $order) {
@@ -316,17 +321,12 @@ class CartController extends AbstractController
             $lines[] = '<hr>';
             $lines[] = '<h2>Commande n&deg;' . (int) $order['commande_id'] . '</h2>';
             $lines[] = '<p><strong>Menu :</strong> ' . htmlspecialchars((string) $order['nom_menu'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<h3>Prestation</h3>';
             $lines[] = '<p><strong>Date de prestation :</strong> ' . htmlspecialchars((string) $order['date_prestation'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Heure de livraison :</strong> ' . htmlspecialchars((string) $order['heure_de_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Adresse :</strong> ' . htmlspecialchars((string) $order['adresse_livraison'], ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars((string) $order['code_postal_livraison'], ENT_QUOTES, 'UTF-8') . ' ' . htmlspecialchars((string) $order['ville_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Nombre de personnes :</strong> ' . (int) $order['nombre_personnes'] . '</p>';
-            $lines[] = '<p><strong>Prix par personne :</strong> ' . number_format((float) $order['prix_par_personne'], 2, ',', ' ') . ' &euro;</p>';
-            $lines[] = '<p><strong>Sous-total :</strong> ' . number_format($subtotal, 2, ',', ' ') . ' &euro;</p>';
-            $lines[] = '<p><strong>Reduction :</strong> - ' . number_format(max(0, $discount), 2, ',', ' ') . ' &euro;</p>';
-            $lines[] = '<p><strong>Livraison :</strong> ' . number_format((float) $order['prix_livraison'], 2, ',', ' ') . ' &euro;</p>';
-            $lines[] = '<p><strong>Total TTC :</strong> ' . number_format((float) $order['prix_total'], 2, ',', ' ') . ' &euro;</p>';
-            $lines[] = '<p><strong>Statut :</strong> ' . htmlspecialchars((string) $order['statut_libelle'], ENT_QUOTES, 'UTF-8') . '</p>';
-
+            $lines[] = '<h3>Detail du menu</h3>';
             foreach (($order['mealItems'] ?? []) as $category => $item) {
                 if (!$item) {
                     continue;
@@ -334,18 +334,31 @@ class CartController extends AbstractController
 
                 $lines[] = '<p><strong>' . htmlspecialchars((string) $category, ENT_QUOTES, 'UTF-8') . ' :</strong> ' . htmlspecialchars((string) $item['nom'], ENT_QUOTES, 'UTF-8') . '</p>';
             }
+            $lines[] = '<h3>Tarifs</h3>';
+            $lines[] = '<p><strong>Prix par personne :</strong> ' . number_format((float) $order['prix_par_personne'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Sous-total :</strong> ' . number_format($subtotal, 2, ',', ' ') . ' &euro;</p>';
+            if ($discount > 0) {
+                $lines[] = '<p><strong>Reduction :</strong> - ' . number_format($discount, 2, ',', ' ') . ' &euro;</p>';
+            }
+            $lines[] = '<p><strong>Livraison :</strong> ' . number_format((float) $order['prix_livraison'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Total TTC :</strong> ' . number_format((float) $order['prix_total'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Statut :</strong> ' . htmlspecialchars((string) $order['statut_libelle'], ENT_QUOTES, 'UTF-8') . '</p>';
         }
 
-        $lines[] = '<p>A tres bientot,<br>Vite & Gourmand</p>';
+        $lines[] = '<hr>';
+        $lines[] = '<p><strong>Total de votre commande :</strong> ' . number_format($totalOrder, 2, ',', ' ') . ' &euro;</p>';
+        $lines[] = '<p>Vous pouvez suivre votre commande depuis votre espace client.</p>';
+        $lines[] = '<p>A tres bientot,<br>L equipe Vite & Gourmand</p>';
 
         try {
+            // L'email reprend les informations visibles sur la page de confirmation de commande.
             $mailer->send((new Email())
-                ->from('noreply@vite-et-gourmand.local')
+                ->from($from)
                 ->to($to)
                 ->subject('Confirmation de votre commande - Vite & Gourmand')
                 ->html(implode("\n", $lines)));
         } catch (\Throwable) {
-            // The order must stay valid even if the local SMTP configuration is not ready.
+            // La commande doit rester valide meme si le SMTP local n'est pas encore configure.
         }
     }
 

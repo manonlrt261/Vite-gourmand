@@ -7,6 +7,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class EmployeeController extends AbstractController
 {
@@ -23,14 +26,14 @@ class EmployeeController extends AbstractController
         ]);
     }
 
-    public function orders(Request $request, Connection $connection): Response
+    public function orders(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
         $this->ensureOrderStatuses($connection);
-        $this->completeDeliveredOrders($connection);
+        $this->completeDeliveredOrders($connection, $mailer);
 
         return $this->render('employee/orders.html.twig', [
             'orders' => $this->getEmployeeOrders($connection),
@@ -38,7 +41,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
-    public function advanceOrderStatus(int $id, Request $request, Connection $connection): Response
+    public function advanceOrderStatus(int $id, Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->json(['success' => false], 403);
@@ -62,6 +65,7 @@ class EmployeeController extends AbstractController
             'en_attente' => 'acceptee',
             'acceptee' => 'en_preparation',
             'en_preparation' => 'en_livraison',
+            'en_livraison' => 'terminee',
             default => null,
         };
 
@@ -90,6 +94,11 @@ class EmployeeController extends AbstractController
         ]);
 
         $this->addOrderStatusHistory($connection, $id, (int) $nextStatus['statut_id'], 'Statut mis a jour par un employe.');
+
+        if ((string) $nextStatus['code'] === 'terminee') {
+            $this->sendReviewRequestEmail($connection, $mailer, $id);
+            $this->sendMaterialReturnReminderEmail($connection, $mailer, $id);
+        }
 
         return $this->json([
             'success' => true,
@@ -526,7 +535,7 @@ class EmployeeController extends AbstractController
         }
     }
 
-    private function completeDeliveredOrders(Connection $connection): void
+    private function completeDeliveredOrders(Connection $connection, MailerInterface $mailer): void
     {
         $termineeId = (int) $connection->fetchOne('SELECT statut_id FROM statuts_commande WHERE code = ? LIMIT 1', ['terminee']);
         if ($termineeId === 0) {
@@ -554,6 +563,187 @@ class EmployeeController extends AbstractController
             ]);
 
             $this->addOrderStatusHistory($connection, $orderId, $termineeId, 'Commande terminee automatiquement apres livraison.');
+            $this->sendReviewRequestEmail($connection, $mailer, $orderId);
+            $this->sendMaterialReturnReminderEmail($connection, $mailer, $orderId);
+        }
+    }
+
+    // Email 5 : rappelle au client de rendre le materiel prete quand une commande avec materiel est terminee.
+    private function sendMaterialReturnReminderEmail(Connection $connection, MailerInterface $mailer, int $orderId): void
+    {
+        $this->ensureMaterialReturnEmailLogTable($connection);
+
+        $alreadySent = (bool) $connection->fetchOne(
+            'SELECT 1 FROM materiel_email_log WHERE commande_id = ? LIMIT 1',
+            [$orderId]
+        );
+
+        if ($alreadySent) {
+            return;
+        }
+
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, c.date_prestation, c.heure_de_livraison, c.adresse_livraison,
+                    c.code_postal_livraison, c.ville_livraison, c.pret_materiel,
+                    u.email, u.prenom, u.nom,
+                    m.nom_menu
+             FROM commandes c
+             LEFT JOIN utilisateurs u ON u.id = c.utilisateur_id
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             WHERE c.commande_id = ?',
+            [$orderId]
+        );
+
+        if (!$order || (int) ($order['pret_materiel'] ?? 0) !== 1) {
+            return;
+        }
+
+        $to = (string) ($order['email'] ?? '');
+
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $firstName = htmlspecialchars((string) ($order['prenom'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $menuName = htmlspecialchars((string) ($order['nom_menu'] ?? 'votre menu'), ENT_QUOTES, 'UTF-8');
+        $returnDate = (new \DateTimeImmutable('+7 days'))->format('d/m/Y');
+
+        $lines = [
+            '<h1>Rappel de retour de materiel</h1>',
+            '<p>Bonjour ' . $firstName . ',</p>',
+            '<p>Votre commande n&deg;' . (int) $order['commande_id'] . ' est maintenant terminee.</p>',
+            '<p>Cette prestation incluait du materiel prete par Vite & Gourmand pour le menu <strong>' . $menuName . '</strong>.</p>',
+            '<p>Nous vous rappelons que le materiel doit etre retourne propre, complet et en bon etat.</p>',
+            '<p><strong>Date de retour conseillee :</strong> au plus tard le ' . $returnDate . '.</p>',
+            '<p>En cas de casse, de perte ou de retard important, des frais supplementaires pourront etre appliques selon les conditions de prestation.</p>',
+            '<p>Si vous avez deja rendu le materiel, vous pouvez ne pas tenir compte de ce message.</p>',
+            '<p>Merci pour votre confiance,<br>L equipe Vite & Gourmand</p>',
+        ];
+
+        try {
+            // La table materiel_email_log evite d'envoyer plusieurs rappels pour la meme commande.
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($to)
+                ->subject('Retour du materiel prete - Vite & Gourmand')
+                ->html(implode("\n", $lines)));
+
+            $connection->insert('materiel_email_log', [
+                'commande_id' => $orderId,
+                'email' => $to,
+                'sent_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable) {
+            // Le changement de statut ne doit pas etre bloque si l email ne peut pas partir.
+        }
+    }
+
+    private function ensureMaterialReturnEmailLogTable(Connection $connection): void
+    {
+        try {
+            $connection->executeStatement(
+                'CREATE TABLE IF NOT EXISTS materiel_email_log (
+                    log_id INT AUTO_INCREMENT NOT NULL,
+                    commande_id INT NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    sent_at DATETIME NOT NULL,
+                    PRIMARY KEY(log_id),
+                    UNIQUE INDEX UNIQ_MATERIEL_EMAIL_COMMANDE (commande_id)
+                ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB'
+            );
+        } catch (\Throwable) {
+        }
+    }
+
+    // Email 6 : invite le client a laisser un avis des que sa commande passe au statut terminee.
+    private function sendReviewRequestEmail(Connection $connection, MailerInterface $mailer, int $orderId): void
+    {
+        $this->ensureReviewEmailLogTable($connection);
+
+        $alreadySent = (bool) $connection->fetchOne(
+            'SELECT 1 FROM avis_email_log WHERE commande_id = ? LIMIT 1',
+            [$orderId]
+        );
+
+        if ($alreadySent) {
+            return;
+        }
+
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, c.utilisateur_id, u.email, u.prenom, u.nom, m.nom_menu
+             FROM commandes c
+             LEFT JOIN utilisateurs u ON u.id = c.utilisateur_id
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             WHERE c.commande_id = ?',
+            [$orderId]
+        );
+
+        if (!$order || !filter_var((string) ($order['email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $reviewAlreadyExists = (bool) $connection->fetchOne(
+            'SELECT 1 FROM avis WHERE commande_id = ? AND utilisateur_id = ? LIMIT 1',
+            [$orderId, (int) $order['utilisateur_id']]
+        );
+
+        if ($reviewAlreadyExists) {
+            return;
+        }
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $to = (string) $order['email'];
+        $firstName = trim((string) ($order['prenom'] ?? ''));
+        $greeting = $firstName !== '' ? 'Bonjour ' . htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8') . ',' : 'Bonjour,';
+        $menuName = htmlspecialchars((string) ($order['nom_menu'] ?? 'votre menu'), ENT_QUOTES, 'UTF-8');
+        $reviewUrl = $this->generateUrl('customer_account', [], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        try {
+            // La table avis_email_log evite d'envoyer deux fois l'invitation pour la meme commande.
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($to)
+                ->subject('Votre avis nous interesse - Vite & Gourmand')
+                ->html(sprintf(
+                    '<h1>Votre avis compte beaucoup pour nous</h1>
+                    <p>%s</p>
+                    <p>Votre commande n&deg;%d est maintenant termin&eacute;e.</p>
+                    <p>Nous esp&eacute;rons que le menu <strong>%s</strong> a contribu&eacute; &agrave; rendre votre &eacute;v&eacute;nement gourmand et agr&eacute;able.</p>
+                    <p>Vous pouvez laisser un avis depuis votre espace client. Cela aide les futurs clients &agrave; choisir leur menu et nous permet d am&eacute;liorer continuellement notre service.</p>
+                    <p><a href="%s">Laisser mon avis</a></p>
+                    <p>Merci pour votre confiance.</p>
+                    <p>L equipe Vite & Gourmand</p>',
+                    $greeting,
+                    (int) $order['commande_id'],
+                    $menuName,
+                    htmlspecialchars($reviewUrl, ENT_QUOTES, 'UTF-8')
+                )));
+
+            $connection->insert('avis_email_log', [
+                'commande_id' => $orderId,
+                'email' => $to,
+                'sent_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable) {
+            // Le changement de statut ne doit pas etre bloque si l email ne peut pas partir.
+        }
+    }
+
+    private function ensureReviewEmailLogTable(Connection $connection): void
+    {
+        try {
+            $connection->executeStatement(
+                'CREATE TABLE IF NOT EXISTS avis_email_log (
+                    log_id INT AUTO_INCREMENT NOT NULL,
+                    commande_id INT NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    sent_at DATETIME NOT NULL,
+                    PRIMARY KEY(log_id),
+                    UNIQUE INDEX UNIQ_AVIS_EMAIL_COMMANDE (commande_id)
+                ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB'
+            );
+        } catch (\Throwable) {
         }
     }
 

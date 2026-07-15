@@ -6,6 +6,8 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 // Controleur de la connexion, de l inscription et de la reinitialisation du mot de passe.
 class AuthController extends AbstractController
@@ -70,7 +72,7 @@ class AuthController extends AbstractController
     }
 
     // Cree un compte client avec controle de l email et du mot de passe.
-    public function register(Request $request, Connection $connection): Response
+    public function register(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
             $data = [
@@ -153,6 +155,8 @@ class AuthController extends AbstractController
                 'actif' => 1,
             ]);
 
+            $this->sendWelcomeEmail($mailer, $data);
+
             $this->addFlash('success', 'Votre compte a bien Ã©tÃ© crÃ©Ã©.');
             $targetPath = (string) $request->query->get('target');
             if (!str_starts_with($targetPath, '/') || str_starts_with($targetPath, '//')) {
@@ -167,8 +171,8 @@ class AuthController extends AbstractController
         ]);
     }
 
-    // Genere un lien local de reinitialisation de mot de passe.
-    public function forgotPassword(Request $request, Connection $connection): Response
+    // Genere et envoie un lien de reinitialisation de mot de passe par email.
+    public function forgotPassword(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
             $email = trim((string) $request->request->get('email'));
@@ -201,10 +205,10 @@ class AuthController extends AbstractController
 
                 $absoluteResetUrl = $this->generateUrl('reset_password', ['token' => $token], 0);
 
-                $this->addFlash('reset_link', $absoluteResetUrl);
+                $this->sendPasswordResetEmail($mailer, (string) $user['email'], $absoluteResetUrl);
             }
 
-            $this->addFlash('forgot_success', 'Si un compte existe avec cette adresse email, un lien de réinitialisation est disponible ci-dessous.');
+            $this->addFlash('forgot_success', "Si un compte existe avec cette adresse email, un lien de reinitialisation vient d'etre envoye.");
 
             return $this->redirectToRoute('forgot_password');
         }
@@ -280,6 +284,71 @@ class AuthController extends AbstractController
         }
 
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
+    }
+
+    // Email 1 : envoie un message de bienvenue au client apres la creation de son compte.
+    private function sendWelcomeEmail(MailerInterface $mailer, array $userData): void
+    {
+        $to = (string) ($userData['email'] ?? '');
+
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $firstName = htmlspecialchars((string) ($userData['prenom'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+
+        $html = <<<HTML
+            <h1>Bienvenue chez Vite & Gourmand</h1>
+            <p>Bonjour {$firstName},</p>
+            <p>Votre compte client a bien ete cree.</p>
+            <p>Vous pouvez maintenant vous connecter, consulter nos menus, preparer votre panier et suivre vos commandes depuis votre espace client.</p>
+            <p>A tres bientot,<br>L'equipe Vite & Gourmand</p>
+        HTML;
+
+        try {
+            // Le SMTP configure dans .env.local est utilise automatiquement par Symfony Mailer.
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($to)
+                ->subject('Bienvenue chez Vite & Gourmand')
+                ->html($html));
+        } catch (\Throwable) {
+            // L'inscription doit rester valide meme si l'envoi d'email n'est pas configure en local.
+        }
+    }
+
+    // Email 2 : envoie au client le lien securise permettant de definir un nouveau mot de passe.
+    private function sendPasswordResetEmail(MailerInterface $mailer, string $to, string $resetUrl): void
+    {
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $safeResetUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+
+        $html = <<<HTML
+            <h1>Réinitialisation de votre mot de passe</h1>
+            <p>Bonjour,</p>
+            <p>Vous avez demandé à réinitialiser votre mot de passe Vite & Gourmand.</p>
+            <p>Pour créer un nouveau mot de passe, cliquez sur le lien ci-dessous :</p>
+            <p><a href="{$safeResetUrl}">Réinitialiser mon mot de passe</a></p>
+            <p>Ce lien est valable pendant 1 heure.</p>
+            <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
+            <p>À très bientôt,<br>L'équipe Vite & Gourmand</p>
+        HTML;
+
+        try {
+            // Le lien contient un token unique et expire apres la duree definie lors de la demande.
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($to)
+                ->subject('Réinitialisation de votre mot de passe - Vite & Gourmand')
+                ->html($html));
+        } catch (\Throwable) {
+            // La demande reste valide meme si le SMTP local n'est pas encore configure.
+        }
     }
 
     // Determine la page de redirection selon le role de l utilisateur.
