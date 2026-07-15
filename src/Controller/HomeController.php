@@ -5,11 +5,12 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
-// Classe qui gère les fonctions la page d'accueil
-// AbstractController -> Controller Symfony qui génère des fonctions qui seront souvent utilisées dans le projet
+// Controleur de la page d'accueil publique.
+// AbstractController donne acces aux fonctions Symfony utiles, comme render().
 class HomeController extends AbstractController
 {
-   
+    // Affiche la page d'accueil du site.
+    // Affiche la page d accueil du site.
     public function show(): Response
     {
         return $this->render('home/home.html.twig');

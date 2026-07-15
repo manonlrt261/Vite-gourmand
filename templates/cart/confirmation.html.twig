@@ -1,25 +1,178 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Commande confirmée - Vite & Gourmand{% endblock %}
+{# Titre affiche dans l'onglet du navigateur pour la confirmation de commande. #}
+{% block title %}Confirmation de commande - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
-    title: 'Commande confirmée',
+    title: 'Confirmation de commande',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
-<main class="cart-page">
-    <section class="cart-card cart-empty-card">
+{# Page affichee apres la validation du panier. #}
+<main class="customer-page order-detail-page order-confirmation-page">
+    {# Bloc d'introduction confirmant que la commande a bien ete enregistree. #}
+    <section class="cart-card cart-empty-card order-confirmation-intro">
         <h2>Merci pour votre commande</h2>
         <div class="cart-card__line"></div>
         <p>Votre commande a bien été enregistrée. Elle est maintenant en attente de validation.</p>
 
+        {# Affiche la ou les references de commande creees. #}
         {% if orderIds is not empty %}
             <p>Référence{% if orderIds|length > 1 %}s{% endif %} : {{ orderIds|join(', ') }}</p>
         {% endif %}
-
-        <a href="{{ path('menu_index') }}" class="buttonprimary">Retour aux menus</a>
     </section>
+
+    {# Cas de secours : si les details ne sont plus disponibles, on redirige vers l'historique client. #}
+    {% if orders is empty %}
+        <section class="cart-card cart-empty-card">
+            <h2>Détail indisponible</h2>
+            <div class="cart-card__line"></div>
+            <p>Le récapitulatif de commande n'est plus disponible sur cette page.</p>
+            <a href="{{ path('customer_orders') }}" class="buttonprimary">Voir mes commandes</a>
+        </section>
+    {% else %}
+        {# Boucle sur toutes les commandes creees depuis le panier valide. #}
+        {% for order in orders %}
+            {# Calculs locaux pour afficher le recapitulatif financier de chaque commande. #}
+            {% set subtotal = order.prix_par_personne * order.nombre_personnes %}
+            {% set discount = subtotal - order.prix_menu %}
+            {% set statusCode = order.statut_code|default('en_attente') %}
+            {# Classe du badge choisie selon le statut actuel de la commande. #}
+            {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
+
+            {# Carte de resume : image, informations principales et statut de la commande. #}
+            <section class="order-detail-summary-card">
+                {# Image du menu commande, ou bloc vide si aucune image n'est disponible. #}
+                {% if order.menu_image_url %}
+                    <img src="{{ asset(order.menu_image_url) }}" alt="{{ order.menu_image_alt ?: order.nom_menu }}" class="order-detail-summary-card__image">
+                {% else %}
+                    <div class="order-detail-summary-card__image order-detail-summary-card__image--empty"></div>
+                {% endif %}
+
+                {# Informations principales de la commande : dates, livraison, menu, personnes et total. #}
+                <div class="order-detail-summary-card__content">
+                    <h2>Commande n°{{ order.commande_id }}</h2>
+                    <p>Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
+                    <p>Prestation le {{ order.date_prestation ? order.date_prestation|date('d/m/Y') : 'date inconnue' }} à {{ order.heure_de_livraison ? order.heure_de_livraison|date('H\\hi') : 'heure inconnue' }}</p>
+                    <p>Livraison à domicile : {{ order.adresse_livraison }}, {{ order.code_postal_livraison }} {{ order.ville_livraison }}</p>
+                    <p>{{ order.nom_menu }}</p>
+                    <p>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</p>
+                    <p>{{ order.prix_total|number_format(2, ',', ' ') }} &euro;</p>
+                </div>
+
+                {# Badge affichant le statut lisible de la commande. #}
+                <span class="{{ statusClass }} order-detail-status">{{ order.statut_libelle|default('En attente') }}</span>
+            </section>
+
+            <hr class="order-detail-separator">
+
+            {# Section recapitulant les montants de la commande. #}
+            <section class="order-detail-section">
+                <h2>Récapitulatif de la commande</h2>
+
+                {# Liste descriptive des informations financieres. #}
+                <div class="order-detail-recap-card">
+                    <dl>
+                        <div>
+                            <dt>Menu choisi</dt>
+                            <dd>{{ order.nom_menu }}</dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</dd>
+                        </div>
+                        <div>
+                            <dt>Prix unitaire</dt>
+                            <dd>{{ order.prix_par_personne|number_format(2, ',', ' ') }} &euro;</dd>
+                        </div>
+                        <div>
+                            <dt>Sous-total</dt>
+                            <dd>{{ subtotal|number_format(2, ',', ' ') }} &euro;</dd>
+                        </div>
+                        <div>
+                            <dt>Réduction</dt>
+                            <dd>- {{ discount > 0 ? discount|number_format(2, ',', ' ') : '0,00' }} &euro;</dd>
+                        </div>
+                        <div>
+                            <dt>Frais de livraison</dt>
+                            <dd>{{ order.prix_livraison|number_format(2, ',', ' ') }} &euro;</dd>
+                        </div>
+                        <div>
+                            <dt>Total de la commande</dt>
+                            <dd>{{ order.prix_total|number_format(2, ',', ' ') }} &euro;</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+
+            <hr class="order-detail-separator">
+
+            {# Section qui detaille les elements composant le menu : entree, plat, dessert. #}
+            <section class="order-detail-section">
+                <h2>Détail du menu</h2>
+
+                <div class="order-detail-meal-list">
+                    {# Boucle sur les categories du menu. Les elements absents ne sont pas affiches. #}
+                    {% for category, item in order.mealItems %}
+                        {% if item %}
+                            <article class="order-detail-meal-card">
+                                {# Image de l'entree, du plat ou du dessert. #}
+                                {% if item.image_url %}
+                                    <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
+                                {% else %}
+                                    <div class="order-detail-meal-card__image-empty"></div>
+                                {% endif %}
+
+                                {# Texte descriptif de l'element du menu. #}
+                                <div>
+                                    <h3>{{ category }}</h3>
+                                    <h4>{{ item.nom }}</h4>
+                                    <p>{{ item.description }}</p>
+                                </div>
+                            </article>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+
+            <hr class="order-detail-separator">
+
+            {# Section de suivi : elle affiche l'historique des statuts de la commande. #}
+            <section class="order-detail-section">
+                <h2>Suivi de la commande</h2>
+
+                <div class="order-detail-timeline">
+                    {# Chaque etape correspond a un changement de statut enregistre en base. #}
+                    {% for step in order.statusHistory %}
+                        <article class="order-detail-timeline__step">
+                            <span aria-hidden="true"></span>
+                            <div>
+                                <h3>{{ step.statut_libelle }}</h3>
+                                <p>{{ step.date_changement ? step.date_changement|date('d/m/Y à H\\hi') : 'Date non renseignée' }}</p>
+                                {% if step.commentaire %}
+                                    {# Commentaire eventuel associe au changement de statut. #}
+                                    <p>{{ step.commentaire }}</p>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {# Separateur entre deux commandes, sauf apres la derniere. #}
+            {% if not loop.last %}
+                <hr class="order-detail-separator order-confirmation-order-separator">
+            {% endif %}
+        {% endfor %}
+
+        {# Actions finales : voir l'historique des commandes ou retourner aux menus. #}
+        <div class="order-confirmation-actions">
+            <a href="{{ path('customer_orders') }}" class="buttonprimary">Voir mes commandes</a>
+            <a href="{{ path('menu_index') }}" class="buttonoffwhite">Retour aux menus</a>
+        </div>
+    {% endif %}
 </main>
 {% endblock %}

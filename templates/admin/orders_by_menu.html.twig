@@ -1,44 +1,56 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiché dans l'onglet du navigateur pour la page de statistiques des commandes. #}
 {% block title %}Commandes par menu - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Commandes par menu',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Commandes par menu Vite et Gourmand'
     } %}
 
+    {# Contenu principal. L'attribut data permet au script JavaScript de retrouver la page. #}
     <main class="admin-orders-menu-page" data-orders-menu-page>
+        {# Lien de retour vers l'espace administrateur. #}
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
+        {# Partie haute : filtres à gauche et indicateurs rapides à droite. #}
         <section class="admin-orders-menu-top">
+            {# Formulaire de filtres. Il est traité en JavaScript pour éviter le rechargement de la page. #}
             <form class="admin-orders-menu-filters" data-orders-menu-filters>
                 <h1>Filtres</h1>
 
+                {# Date de début de la période analysée. #}
                 <label>
                     <span>Date de d&eacute;but</span>
                     <input type="date" name="start_date" data-orders-menu-start>
                 </label>
 
+                {# Date de fin de la période analysée. #}
                 <label>
                     <span>Date de fin</span>
                     <input type="date" name="end_date" data-orders-menu-end>
                 </label>
 
+                {# Filtre par thème de menu, alimenté avec les thèmes existants. #}
                 <label>
                     <span>Th&egrave;me</span>
                     <select name="theme" data-orders-menu-theme>
                         <option value="">Tous les th&egrave;mes</option>
+                        {# Chaque option correspond à un thème récupéré depuis la base de données. #}
                         {% for theme in themes %}
                             <option value="{{ theme }}">{{ theme }}</option>
                         {% endfor %}
                     </select>
                 </label>
 
+                {# Filtre multi-sélection : l'administrateur peut choisir un ou plusieurs menus. #}
                 <div class="admin-orders-menu-field">
                     <span>Menus</span>
                     <div class="admin-orders-menu-checkboxes" data-orders-menu-select>
+                        {# Liste des menus existants, chacun représenté par une case à cocher. #}
                         {% for menu in menus %}
                             <label>
                                 <input type="checkbox" name="menus[]" value="{{ menu.menu_id }}">
@@ -48,23 +60,28 @@
                     </div>
                 </div>
 
+                {# Boutons pour appliquer les filtres ou revenir à l'affichage initial. #}
                 <div class="admin-orders-menu-filter-actions">
                     <button type="button" class="buttonprimary" data-orders-menu-apply>Appliquer les filtres</button>
                     <button type="button" class="buttonoffwhite" data-orders-menu-reset>R&eacute;initialiser</button>
                 </div>
             </form>
 
+            {# Indicateurs résumés affichés dès l'arrivée sur la page. #}
             <div class="admin-orders-menu-stats">
+                {# Nombre de commandes passées sur l'année courante. #}
                 <article>
                     <strong data-orders-menu-total>{{ initialStats.orders_count }}</strong>
                     <span>Commandes en {{ initialStats.year }}</span>
                 </article>
 
+                {# Nombre de menus actifs disponibles sur le site. #}
                 <article>
                     <strong data-orders-menu-active>{{ initialStats.active_menus_count }}</strong>
                     <span>Menus disponibles</span>
                 </article>
 
+                {# Nombre de thèmes utilisés par les menus. #}
                 <article class="admin-orders-menu-stats-wide">
                     <strong>{{ initialStats.themes_count }}</strong>
                     <span>Th&egrave;mes</span>
@@ -72,7 +89,9 @@
             </div>
         </section>
 
+        {# Zone des graphiques générés côté navigateur à partir des données JSON. #}
         <section class="admin-orders-menu-charts" aria-label="Graphiques des commandes par menu">
+            {# Graphique circulaire : répartition des commandes par thème. #}
             <article class="admin-orders-menu-panel">
                 <h2>R&eacute;partition des commandes par th&egrave;me</h2>
                 <div class="admin-orders-menu-donut-layout">
@@ -84,12 +103,14 @@
                 </div>
             </article>
 
+            {# Graphique en barres : comparaison du nombre de commandes par menu. #}
             <article class="admin-orders-menu-panel">
                 <h2>Nombre de commandes par menu</h2>
                 <div class="admin-orders-menu-bar-chart" data-orders-menu-bars></div>
             </article>
         </section>
 
+        {# Tableau détaillé : il reprend les chiffres utilisés dans les graphiques. #}
         <section class="admin-orders-menu-panel admin-orders-menu-detail">
             <h2>D&eacute;tail par menu</h2>
 
@@ -107,9 +128,11 @@
                 </table>
             </div>
 
+            {# Message affiché quand les filtres ne retournent aucune commande. #}
             <p class="employee-empty" data-orders-menu-empty hidden>Aucune commande ne correspond aux filtres.</p>
         </section>
 
+        {# Encadré d'information pour expliquer la logique de génération des statistiques. #}
         <section class="admin-orders-menu-info">
             <span aria-hidden="true">i</span>
             <div>
@@ -119,11 +142,14 @@
         </section>
     </main>
 
+    {# Données MongoDB préparées par Symfony et transmises au script JavaScript. #}
     <script type="application/json" id="orders-menu-documents">{{ documentsJson|raw }}</script>
+    {# Statistiques initiales utilisées au chargement de la page. #}
     <script type="application/json" id="orders-menu-default-stats">{{ initialStats|json_encode|raw }}</script>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script qui applique les filtres et construit les graphiques sans recharger la page. #}
     <script src="{{ asset('assets/scripts/admin-orders-by-menu.js') }}" defer></script>
 {% endblock %}

@@ -1,8 +1,11 @@
 {% extends 'base.html.twig' %}
 
+{# Macro qui affiche le formulaire actif/inactif d'un element. #}
 {% macro status_form(item, type) %}
+    {# Etat courant de l'element. #}
     {% set isActive = item.actif|default(1) == 1 %}
 
+    {# Formulaire de bascule actif/inactif utilise dans les tableaux. #}
     <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}">
         <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button>
             {{ isActive ? 'Actif' : 'Inactif' }}
@@ -10,30 +13,39 @@
     </form>
 {% endmacro %}
 
+{# Macro qui affiche les actions modifier et supprimer. #}
 {% macro actions(item, type) %}
     <div class="employee-table-actions">
+        {# Lien vers le formulaire de modification. #}
         <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
 
+        {# Formulaire de suppression, intercepte par JavaScript pour afficher une confirmation. #}
         <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
             <button type="submit" class="buttondelete">Supprimer</button>
         </form>
     </div>
 {% endmacro %}
 
+{# Import des macros du fichier courant. #}
 {% import _self as ui %}
 
+{# Titre affiche dans l'onglet du navigateur. #}
 {% block title %}Liste des menus et plats - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal reutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Liste des menus et plats',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Plat Vite et Gourmand'
     } %}
 
+    {# Contenu principal de la liste complete des elements culinaires. #}
     <main class="employee-management-page employee-list-page">
+        {# Lien de retour vers la page de gestion resumee. #}
         <a href="{{ path('employee_menus') }}" class="cart-back-link">&larr; Retour aux menus et plats</a>
 
+        {# Section complete des menus. #}
         <section class="employee-list-section" id="menus">
             <div class="employee-list-heading">
                 <div>
@@ -45,6 +57,7 @@
             </div>
 
             <div class="employee-table-wrap">
+                {# Tableau listant tous les menus. #}
                 <table class="employee-management-table">
                     <thead>
                         <tr>
@@ -57,7 +70,9 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {# Boucle sur chaque menu. #}
                         {% for menu in menus %}
+                            {# Ligne d'un menu avec ses informations principales et actions. #}
                             <tr data-management-card data-item-type="menu" data-item-id="{{ menu.id }}">
                                 <td>{{ menu.title }}</td>
                                 <td>{{ menu.personnes_minimum }} personnes</td>
@@ -67,6 +82,7 @@
                                 <td>{{ ui.actions(menu, 'menu') }}</td>
                             </tr>
                         {% else %}
+                            {# Message affiche si aucun menu n'existe. #}
                             <tr>
                                 <td colspan="6">Aucun menu &agrave; afficher.</td>
                             </tr>
@@ -76,6 +92,7 @@
             </div>
         </section>
 
+        {# Section complete des entrees. #}
         <section class="employee-list-section" id="entrees">
             <div class="employee-list-heading">
                 <div>
@@ -86,9 +103,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'entree' }) }}" class="buttonprimary employee-add-button">Ajouter une entr&eacute;e</a>
             </div>
 
+            {# Tableau reutilisable pour les entrees. #}
             {% include 'employee/_meal_table.html.twig' with { items: entrees, type: 'entree', empty: 'Aucune entr&eacute;e &agrave; afficher.' } %}
         </section>
 
+        {# Section complete des plats. #}
         <section class="employee-list-section" id="plats">
             <div class="employee-list-heading">
                 <div>
@@ -99,9 +118,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'plat' }) }}" class="buttonprimary employee-add-button">Ajouter un plat</a>
             </div>
 
+            {# Tableau reutilisable pour les plats. #}
             {% include 'employee/_meal_table.html.twig' with { items: plats, type: 'plat', empty: 'Aucun plat &agrave; afficher.' } %}
         </section>
 
+        {# Section complete des desserts. #}
         <section class="employee-list-section" id="desserts">
             <div class="employee-list-heading">
                 <div>
@@ -112,9 +133,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'dessert' }) }}" class="buttonprimary employee-add-button">Ajouter un dessert</a>
             </div>
 
+            {# Tableau reutilisable pour les desserts. #}
             {% include 'employee/_meal_table.html.twig' with { items: desserts, type: 'dessert', empty: 'Aucun dessert &agrave; afficher.' } %}
         </section>
 
+        {# Encadre informatif sur l'impact des modifications. #}
         <aside class="employee-info-box">
             <span class="employee-info-box__icon" aria-hidden="true">i</span>
             <div>
@@ -124,9 +147,12 @@
         </aside>
     </main>
 
+    {# Modale de confirmation avant suppression d'un element. #}
     <div class="employee-delete-modal" data-delete-modal hidden>
+        {# Overlay permettant de fermer la modale. #}
         <div class="employee-delete-modal__overlay" data-delete-cancel></div>
 
+        {# Boite de dialogue de suppression. #}
         <section class="employee-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
             <h2 id="delete-modal-title">Attention</h2>
             <p>Voulez-vous vraiment supprimer cet &eacute;l&eacute;ment ? Il ne sera plus visible sur le site.</p>
@@ -141,5 +167,6 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script qui gere les changements actif/inactif et les suppressions confirmees. #}
     <script src="{{ asset('assets/scripts/employee-management.js') }}" defer></script>
 {% endblock %}

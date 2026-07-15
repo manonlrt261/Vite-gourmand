@@ -7,8 +7,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Controleur de l espace client et des commandes client.
 class CustomerController extends AbstractController
 {
+    // Affiche le tableau de bord client avec profil, commandes recentes et avis.
     public function account(Request $request, Connection $connection): Response
     {
         $session = $request->getSession();
@@ -31,6 +33,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
+    // Affiche toutes les commandes du client connecte.
     public function orders(Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -50,6 +53,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
+    // Affiche le detail d une commande appartenant au client.
     public function orderDetail(int $id, Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -90,9 +94,188 @@ class CustomerController extends AbstractController
             'order' => $order,
             'mealItems' => $this->getOrderMealItems($connection, (int) $order['menu_id']),
             'statusHistory' => $this->getOrderStatusHistory($connection, (int) $order['commande_id'], $order),
+            'availableMenus' => $this->getAvailableMenus($connection),
         ]);
     }
 
+    // Permet au client de modifier une commande encore en attente.
+    public function updateOrder(int $id, Request $request, Connection $connection): Response
+    {
+        $userId = (int) $request->getSession()->get('utilisateur_id');
+
+        if ($userId <= 0) {
+            return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
+        }
+
+        $order = $this->getPendingCustomerOrder($connection, $id, $userId);
+
+        if (!$order) {
+            $this->addFlash('order_error', 'Cette commande ne peut plus etre modifiee car elle a deja ete acceptee.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        $datePrestation = trim((string) $request->request->get('date_prestation'));
+        $heureLivraison = trim((string) $request->request->get('heure_de_livraison'));
+        $adresse = trim((string) $request->request->get('adresse_livraison'));
+        $ville = trim((string) $request->request->get('ville_livraison'));
+        $codePostal = trim((string) $request->request->get('code_postal_livraison'));
+        $nombrePersonnes = max((int) $order['personnes_minimum'], (int) $request->request->get('nombre_personnes'));
+
+        if ($datePrestation === '' || $heureLivraison === '' || $adresse === '' || $ville === '' || $codePostal === '') {
+            $this->addFlash('order_error', 'Tous les champs de livraison doivent etre renseignes.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        $lineTotal = (float) $order['prix_par_personne'] * $nombrePersonnes;
+        $discount = $nombrePersonnes >= (int) $order['personnes_minimum'] + 5 ? $lineTotal * 0.10 : 0;
+        $deliveryPrice = (float) $order['prix_livraison'];
+        $priceMenu = $lineTotal - $discount;
+
+        $connection->update('commandes', [
+            'date_prestation' => $datePrestation,
+            'heure_de_livraison' => $heureLivraison,
+            'adresse_livraison' => $adresse,
+            'ville_livraison' => $ville,
+            'code_postal_livraison' => $codePostal,
+            'nombre_personnes' => $nombrePersonnes,
+            'prix_menu' => $priceMenu,
+            'prix_total' => $priceMenu + $deliveryPrice,
+            'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ], [
+            'commande_id' => $id,
+            'utilisateur_id' => $userId,
+        ]);
+
+        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiee par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien ete modifiee.');
+
+        return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+    }
+
+    // Ajoute un menu a une commande client encore modifiable.
+    public function addMenuToOrder(int $id, Request $request, Connection $connection): Response
+    {
+        $userId = (int) $request->getSession()->get('utilisateur_id');
+
+        if ($userId <= 0) {
+            return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
+        }
+
+        $order = $this->getPendingCustomerOrder($connection, $id, $userId);
+
+        if (!$order) {
+            $this->addFlash('order_error', 'Vous ne pouvez plus ajouter de menu car cette commande a deja ete acceptee.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        $menuId = (int) $request->request->get('menu_id');
+        $menu = $connection->fetchAssociative(
+            'SELECT menu_id, prix_par_personne, personnes_minimum
+             FROM menus
+             WHERE menu_id = ? AND actif = 1',
+            [$menuId]
+        );
+
+        if (!$menu) {
+            $this->addFlash('order_error', 'Le menu selectionne est introuvable.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        $nombrePersonnes = max((int) $menu['personnes_minimum'], (int) $request->request->get('nombre_personnes'));
+        $lineTotal = (float) $menu['prix_par_personne'] * $nombrePersonnes;
+        $discount = $nombrePersonnes >= (int) $menu['personnes_minimum'] + 5 ? $lineTotal * 0.10 : 0;
+        $priceMenu = $lineTotal - $discount;
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $statusId = (int) $order['statut_id'];
+
+        $connection->insert('commandes', [
+            'utilisateur_id' => $userId,
+            'menu_id' => $menuId,
+            'date_commande' => $now,
+            'date_prestation' => $order['date_prestation'],
+            'heure_de_livraison' => $order['heure_de_livraison'],
+            'adresse_livraison' => $order['adresse_livraison'],
+            'ville_livraison' => $order['ville_livraison'],
+            'code_postal_livraison' => $order['code_postal_livraison'],
+            'nombre_personnes' => $nombrePersonnes,
+            'prix_menu' => $priceMenu,
+            'prix_livraison' => 0,
+            'prix_total' => $priceMenu,
+            'pret_materiel' => 0,
+            'motif_annulation' => '',
+            'created_at' => $now,
+            'updated_at' => $now,
+            'statut_id' => $statusId,
+        ]);
+
+        $newOrderId = (int) $connection->lastInsertId();
+        $this->addOrderStatusHistory($connection, $newOrderId, $statusId, 'Menu ajoute par le client depuis le detail de commande.');
+        $this->addFlash('order_success', 'Le menu a bien ete ajoute a vos commandes.');
+
+        return $this->redirectToRoute('customer_order_detail', ['id' => $newOrderId]);
+    }
+
+    // Permet au client d annuler une commande tant qu elle est en attente.
+    public function cancelOrder(int $id, Request $request, Connection $connection): Response
+    {
+        $userId = (int) $request->getSession()->get('utilisateur_id');
+
+        if ($userId <= 0) {
+            return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_orders')]);
+        }
+
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, c.statut_id, COALESCE(sc.code, "en_attente") AS statut_code
+             FROM commandes c
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+             WHERE c.commande_id = ? AND c.utilisateur_id = ?',
+            [$id, $userId]
+        );
+
+        if (!$order) {
+            $this->addFlash('order_error', 'Commande introuvable.');
+
+            return $this->redirectToRoute('customer_orders');
+        }
+
+        if ((string) $order['statut_code'] !== 'en_attente') {
+            $this->addFlash('order_error', 'Cette commande ne peut plus etre annulee car elle a deja ete acceptee.');
+
+            return $this->redirectToRoute('customer_orders');
+        }
+
+        $cancelStatusId = (int) $connection->fetchOne(
+            'SELECT statut_id FROM statuts_commande WHERE code = ? LIMIT 1',
+            ['annulee']
+        );
+
+        if ($cancelStatusId === 0) {
+            $this->addFlash('order_error', 'Le statut d annulation est introuvable.');
+
+            return $this->redirectToRoute('customer_orders');
+        }
+
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $connection->update('commandes', [
+            'statut_id' => $cancelStatusId,
+            'motif_annulation' => 'Annulation demandee par le client depuis son espace personnel.',
+            'updated_at' => $now,
+        ], [
+            'commande_id' => $id,
+            'utilisateur_id' => $userId,
+        ]);
+
+        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien ete annulee.');
+
+        return $this->redirectToRoute('customer_orders');
+    }
+
+    // Affiche et traite la page Mes informations du client.
     public function profile(Request $request, Connection $connection): Response
     {
         $session = $request->getSession();
@@ -124,9 +307,53 @@ class CustomerController extends AbstractController
         ]);
     }
 
+    // Enregistre les modifications des informations personnelles ou du mot de passe.
     private function handleProfileSubmit(Request $request, Connection $connection, array $customer): void
     {
         $userId = (int) $customer['id'];
+        $profileAction = (string) $request->request->get('profile_action', 'information');
+
+        if ($profileAction === 'password') {
+            $passwordData = [
+                'current' => (string) $request->request->get('current_password'),
+                'new' => (string) $request->request->get('new_password'),
+                'confirm' => (string) $request->request->get('new_password_confirm'),
+            ];
+
+            if ($passwordData['current'] === '' || $passwordData['new'] === '' || $passwordData['confirm'] === '') {
+                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent etre renseignes.');
+
+                return;
+            }
+
+            if (!$this->isPasswordValid($passwordData['current'], (string) $customer['mot_de_passe'])) {
+                $this->addFlash('profile_error', 'Le mot de passe actuel est incorrect.');
+
+                return;
+            }
+
+            if ($passwordData['new'] !== $passwordData['confirm']) {
+                $this->addFlash('profile_error', 'Les deux nouveaux mots de passe ne sont pas identiques.');
+
+                return;
+            }
+
+            if (!$this->isStrongPassword($passwordData['new'])) {
+                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquees.');
+
+                return;
+            }
+
+            $connection->update('utilisateurs', [
+                'mot_de_passe' => password_hash($passwordData['new'], PASSWORD_DEFAULT),
+                'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ], ['id' => $userId]);
+
+            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien ete enregistre.');
+
+            return;
+        }
+
         $data = [
             'prenom' => trim((string) $request->request->get('prenom')),
             'nom' => trim((string) $request->request->get('nom')),
@@ -200,6 +427,7 @@ class CustomerController extends AbstractController
         $this->addFlash('profile_success', 'Vos informations ont bien été mises à jour.');
     }
 
+    // Enregistre un avis client pour une commande terminee.
     private function handleReviewSubmit(Request $request, Connection $connection, int $userId): void
     {
         $commandeId = (int) $request->request->get('commande_id');
@@ -212,13 +440,22 @@ class CustomerController extends AbstractController
             return;
         }
 
-        $commandeExists = (bool) $connection->fetchOne(
-            'SELECT 1 FROM commandes WHERE commande_id = ? AND utilisateur_id = ?',
+        $orderStatusCode = $connection->fetchOne(
+            'SELECT COALESCE(sc.code, "en_attente")
+             FROM commandes c
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+             WHERE c.commande_id = ? AND c.utilisateur_id = ?',
             [$commandeId, $userId]
         );
 
-        if (!$commandeExists) {
+        if (!$orderStatusCode) {
             $this->addFlash('review_error', 'La commande sélectionnée est introuvable.');
+
+            return;
+        }
+
+        if ((string) $orderStatusCode !== 'terminee') {
+            $this->addFlash('review_error', 'Vous pourrez laisser un avis lorsque la commande sera terminee.');
 
             return;
         }
@@ -252,6 +489,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere les dernieres commandes a afficher dans l espace client.
     private function getLatestOrders(Connection $connection, int $userId, int $limit): array
     {
         return $connection->fetchAllAssociative(
@@ -275,13 +513,16 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere les commandes terminees pouvant recevoir un avis.
     private function getReviewableOrders(Connection $connection, int $userId): array
     {
         return $connection->fetchAllAssociative(
             'SELECT c.commande_id, c.date_commande, m.nom_menu
              FROM commandes c
              LEFT JOIN menus m ON m.menu_id = c.menu_id
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
              WHERE c.utilisateur_id = ?
+               AND COALESCE(sc.code, "en_attente") = "terminee"
                AND NOT EXISTS (
                    SELECT 1
                    FROM avis a
@@ -293,9 +534,47 @@ class CustomerController extends AbstractController
         );
     }
 
+    // Recupere une commande du client seulement si elle est encore en attente.
+    private function getPendingCustomerOrder(Connection $connection, int $orderId, int $userId): array|false
+    {
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, c.utilisateur_id, c.menu_id, c.date_prestation, c.heure_de_livraison,
+                    c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
+                    c.nombre_personnes, c.prix_livraison, c.statut_id,
+                    m.prix_par_personne, m.personnes_minimum,
+                    COALESCE(sc.code, "en_attente") AS statut_code
+             FROM commandes c
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+             WHERE c.commande_id = ? AND c.utilisateur_id = ?',
+            [$orderId, $userId]
+        );
+
+        if (!$order || (string) $order['statut_code'] !== 'en_attente') {
+            return false;
+        }
+
+        return $order;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    // Recupere les menus actifs disponibles pour modification de commande.
+    private function getAvailableMenus(Connection $connection): array
+    {
+        return $connection->fetchAllAssociative(
+            'SELECT menu_id, nom_menu, personnes_minimum, prix_par_personne
+             FROM menus
+             WHERE actif = 1
+             ORDER BY nom_menu ASC'
+        );
+    }
+
     /**
      * @return array<string, array<string, mixed>|false>
      */
+    // Recupere la composition du menu associe a une commande.
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
@@ -326,6 +605,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Construit le suivi chronologique de la commande.
     private function getOrderStatusHistory(Connection $connection, int $orderId, array $order): array
     {
         $history = $connection->fetchAllAssociative(
@@ -338,6 +618,15 @@ class CustomerController extends AbstractController
              ORDER BY h.date_changement ASC, h.historique_id ASC',
             [$orderId]
         );
+
+        if ((string) ($order['statut_code'] ?? '') === 'annulee') {
+            return $history !== [] ? $history : [[
+                'date_changement' => $order['date_commande'] ?? null,
+                'commentaire' => $order['motif_annulation'] ?? null,
+                'statut_libelle' => $order['statut_libelle'] ?? 'Annulee',
+                'statut_code' => 'annulee',
+            ]];
+        }
 
         $currentStatusId = (int) ($order['statut_id'] ?? 0);
         $statusSteps = [];
@@ -379,6 +668,21 @@ class CustomerController extends AbstractController
         return $timeline;
     }
 
+    // Ajoute une ligne dans l historique des statuts de commande.
+    private function addOrderStatusHistory(Connection $connection, int $orderId, int $statusId, string $comment): void
+    {
+        try {
+            $connection->insert('historique_statuts_commande', [
+                'commande_id' => $orderId,
+                'statut_id' => $statusId,
+                'date_changement' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+                'commentaire' => $comment,
+            ]);
+        } catch (\Throwable) {
+        }
+    }
+
+    // Met a jour les informations du client stockees en session.
     private function refreshCustomerSession(Request $request, Connection $connection, int $userId): void
     {
         $user = $connection->fetchAssociative(
@@ -407,6 +711,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
+    // Verifie le mot de passe saisi avec le mot de passe stocke.
     private function isPasswordValid(string $password, string $storedPassword): bool
     {
         if ($storedPassword === '') {
@@ -416,6 +721,7 @@ class CustomerController extends AbstractController
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
     }
 
+    // Controle que le nouveau mot de passe respecte les regles de securite.
     private function isStrongPassword(string $password): bool
     {
         return strlen($password) >= 10

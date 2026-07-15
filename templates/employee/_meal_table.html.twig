@@ -1,5 +1,7 @@
+{# Tableau reutilisable pour lister les entrees, plats ou desserts dans l'espace employe. #}
 <div class="employee-table-wrap">
     <table class="employee-management-table employee-management-table--meal">
+        {# En-tete du tableau : informations principales et actions disponibles. #}
         <thead>
             <tr>
                 <th>Nom</th>
@@ -10,15 +12,20 @@
             </tr>
         </thead>
         <tbody>
+            {# Boucle sur les elements culinaires transmis par la page parente. #}
             {% for item in items %}
+                {# Etat actif/inactif de l'element. #}
                 {% set isActive = item.actif|default(1) == 1 %}
+                {# Indique si l'element depend d'un menu actuellement inactif. #}
                 {% set hasInactiveMenu = item.menu_id|default(null) and item.menu_actif|default(1) == 0 %}
 
+                {# Ligne d'un element, avec data-* pour les actions JavaScript de gestion. #}
                 <tr data-management-card data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
                     <td>{{ item.title }}</td>
                     <td>{{ item.nom_menu|default('Ind&eacute;pendant') ?: 'Ind&eacute;pendant' }}</td>
                     <td><span class="employee-category-badge">{{ item.theme }}</span></td>
                     <td>
+                        {# Formulaire permettant d'activer ou desactiver l'element. #}
                         <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
                             <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button title="{{ hasInactiveMenu ? 'Le menu associ&eacute; est inactif.' : '' }}">
                                 {{ isActive ? 'Actif' : 'Inactif' }}
@@ -26,9 +33,11 @@
                         </form>
                     </td>
                     <td>
+                        {# Actions de modification ou suppression de l'element. #}
                         <div class="employee-table-actions">
                             <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
 
+                            {# Suppression protegee par une confirmation JavaScript. #}
                             <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
                                 <button type="submit" class="buttondelete">Supprimer</button>
                             </form>
@@ -36,6 +45,7 @@
                     </td>
                 </tr>
             {% else %}
+                {# Message affiche si aucun element n'existe dans cette categorie. #}
                 <tr>
                     <td colspan="5">{{ empty }}</td>
                 </tr>

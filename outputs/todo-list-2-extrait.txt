@@ -1,0 +1,445 @@
+1. Analyse Du Sujet
+1. Lire le besoin de l’entreprise Vite & Gourmand.
+2. Identifier les utilisateurs :
+○ visiteur ;
+○ utilisateur/client ;
+○ employé ;
+○ administrateur.
+3. Identifier les grandes fonctionnalités :
+○ consultation des menus ;
+○ commande ;
+○ espace client ;
+○ espace employé ;
+○ espace administrateur ;
+○ contact ;
+○ statistiques ;
+○ déploiement.
+4. Lister les contraintes :
+○ base relationnelle obligatoire ;
+○ base non relationnelle obligatoire ;
+○ application sécurisée ;
+○ application accessible RGAA ;
+○ application déployée ;
+○ livrables obligatoires.
+2. Gestion De Projet
+1. Créer un outil de suivi : Trello, Notion, Jira ou équivalent.
+2. Découper le projet en tâches.
+3. Classer les tâches par priorité.
+4. Suivre l’avancement : à faire, en cours, terminé.
+5. Garder des traces pour la documentation de gestion de projet.
+3. Maquettes
+1. Créer les wireframes.
+2. Créer les mockups desktop.
+3. Créer les mockups mobile.
+4. Prévoir au minimum :
+○ 3 maquettes bureautiques ;
+○ 3 maquettes mobiles.
+5. Exporter les maquettes pour la charte graphique PDF.
+6. Respecter une cohérence visuelle sur toutes les pages.
+1
+
+4. Charte Graphique
+1. Définir la palette de couleurs.
+2. Définir les polices.
+3. Définir les boutons.
+4. Définir les badges.
+5. Définir les cartes.
+6. Définir les formulaires.
+7. Préparer un PDF de charte graphique.
+5. Base De Données Relationnelle
+1. Créer la base MySQL.
+2. Créer les tables principales :
+○ roles ;
+○ utilisateurs ;
+○ menus ;
+○ entree ;
+○ plat ;
+○ dessert.
+3. Créer les tables métier :
+○ commandes ;
+○ statuts_commande ;
+○ historique_statuts_commande ;
+○ avis ;
+○ contact.
+4. Créer la gestion des images des menus/plats.
+5. Ajouter les clés primaires.
+6. Ajouter les clés étrangères.
+7. Vérifier les relations dans phpMyAdmin.
+8. Préremplir :
+○ rôles ;
+○ statuts ;
+○ menus ;
+○ entrées ;
+○ plats ;
+○ desserts ;
+○ images ;
+○ comptes de test.
+9. Préparer un fichier SQL de création de base.
+10. Préparer un fichier SQL d’insertion de données.
+2
+
+6. Base De Données Non Relationnelle
+1. Mettre en place une base NoSQL ou un stockage documentaire.
+2. Stocker les statistiques administrateur :
+○ commandes par menu ;
+○ chiffre d’affaires par menu.
+3. Synchroniser les données depuis les commandes.
+4. Expliquer dans la documentation :
+○ ce qu’est une base non relationnelle ;
+○ pourquoi elle est utilisée ;
+○ comment elle est alimentée ;
+○ quelles données elle contient.
+7. Environnement Technique
+1. Installer/configurer PHP.
+2. Installer/configurer Symfony.
+3. Configurer MySQL/Laragon.
+4. Configurer les variables d’environnement.
+5. Créer les routes.
+6. Créer les contrôleurs.
+7. Créer les templates Twig.
+8. Organiser les fichiers CSS/JS.
+9. Préparer une commande claire pour lancer le projet en local.
+10. Documenter l’installation dans le README.
+8. Git Et GitHub
+1. Initialiser Git.
+2. Créer un dépôt GitHub public.
+3. Créer une branche principale.
+4. Créer une branche développement.
+5. Créer une branche par fonctionnalité.
+6. Faire des commits réguliers.
+7. Fusionner les fonctionnalités testées vers développement.
+8. Fusionner développement vers main quand le projet est stable.
+9. Ajouter le lien GitHub dans les livrables.
+9. Page Accueil
+1. Présenter l’entreprise.
+2. Mettre en avant le professionnalisme.
+3. Afficher les avis clients validés.
+4. Respecter la maquette.
+5. Vérifier responsive desktop/mobile.
+6. Vérifier accessibilité : titres, contrastes, textes alternatifs.
+3
+
+10. Header Et Footer
+1. Header visiteur/client :
+○ accueil ;
+○ menu ;
+○ contact ;
+○ connexion ou déconnexion ;
+○ panier.
+2. Header employé.
+3. Header administrateur.
+4. Menu burger pour employé/admin.
+5. Footer :
+○ horaires du lundi au dimanche ;
+○ mentions légales ;
+○ CGV ;
+○ liens utiles.
+6. Adapter les liens selon le rôle connecté.
+11. Page Menus Globale
+1. Afficher tous les menus disponibles.
+2. Afficher pour chaque menu :
+○ titre ;
+○ description ;
+○ nombre minimum de personnes ;
+○ prix ;
+○ bouton détail ;
+○ bouton ajouter au panier.
+3. Ajouter les filtres :
+○ prix maximum ;
+○ fourchette de prix ;
+○ thème ;
+○ régime ;
+○ nombre minimum de personnes.
+4. Faire fonctionner les filtres sans rechargement.
+5. Masquer les menus inactifs.
+6. Vérifier que les menus ajoutés en base remontent sur la page.
+4
+
+12. Page Détail D’un Menu
+1. Afficher toutes les informations du menu.
+2. Afficher :
+○ image du menu ;
+○ entrée ;
+○ plat ;
+○ dessert ;
+○ allergènes ;
+○ conditions ;
+○ régime ;
+○ stock ;
+○ prix ;
+○ minimum de personnes.
+3. Mettre les conditions bien visibles.
+4. Ajouter le bouton commander.
+5. Si le client n’est pas connecté, demander connexion ou inscription.
+6. Si le client est connecté, rediriger vers le panier/commande.
+13. Inscription
+1. Créer la page inscription.
+2. Demander :
+○ nom ;
+○ prénom ;
+○ GSM ;
+○ email ;
+○ adresse postale ;
+○ mot de passe.
+3. Vérifier le mot de passe :
+○ 10 caractères minimum ;
+○ 1 majuscule ;
+○ 1 minuscule ;
+○ 1 chiffre ;
+○ 1 caractère spécial.
+4. Créer le compte avec le rôle utilisateur.
+5. Envoyer un email de bienvenue.
+6. Empêcher les doublons d’email.
+5
+
+14. Connexion
+1. Créer la page connexion.
+2. Connexion avec email + mot de passe.
+3. Redirection selon rôle :
+○ client vers espace client ;
+○ employé vers espace employé ;
+○ administrateur vers espace administrateur.
+4. Ajouter afficher/masquer mot de passe.
+5. Ajouter mot de passe oublié.
+6. Sécuriser la session.
+7. Prévoir la déconnexion.
+15. Mot De Passe Oublié
+1. Créer la page mot de passe oublié.
+2. Demander l’email.
+3. Générer un lien de réinitialisation.
+4. Envoyer le lien par email.
+5. Créer la page de nouveau mot de passe.
+6. Vérifier les mêmes règles de sécurité du mot de passe.
+16. Page Contact
+1. Créer la page contact.
+2. Formulaire :
+○ email ;
+○ titre ;
+○ description/message.
+3. Enregistrer la demande en base.
+4. Envoyer la demande par email à l’entreprise.
+5. Afficher un message de confirmation.
+6. Sécuriser le formulaire.
+6
+
+17. Panier / Commande
+1. Ajouter un ou plusieurs menus au panier.
+2. Modifier le nombre de personnes.
+3. Bloquer si inférieur au minimum.
+4. Calculer :
+○ prix menu ;
+○ réduction ;
+○ livraison ;
+○ total.
+5. Appliquer 10 % de réduction si la commande dépasse de 5 personnes le minimum.
+6. Demander les informations de prestation :
+○ nom ;
+○ prénom ;
+○ email ;
+○ GSM ;
+○ adresse ;
+○ ville ;
+○ code postal ;
+○ date ;
+○ heure.
+7. Préremplir avec le compte connecté.
+8. Ajouter la livraison :
+○ gratuite ou normale à Bordeaux selon ton choix ;
+○ hors Bordeaux : 5 € + 0,59 €/km si tu implémentes le calcul complet.
+9. Bloquer la validation si champs obligatoires vides.
+10. Enregistrer la commande en base.
+11. Créer le statut initial.
+12. Créer l’historique du statut.
+13. Envoyer un email de confirmation.
+14. Créer la page confirmation.
+7
+
+18. Espace Client
+1. Créer l’espace client.
+2. Afficher les dernières commandes.
+3. Afficher toutes les commandes.
+4. Voir le détail d’une commande.
+5. Modifier une commande tant qu’elle n’est pas acceptée.
+6. Annuler une commande tant qu’elle n’est pas acceptée.
+7. Modifier les informations personnelles.
+8. Afficher le suivi de commande.
+9. Afficher l’historique des statuts avec date et heure.
+10. Quand la commande est terminée, permettre de laisser un avis.
+11. Avis :
+○ note entre 1 et 5 ;
+○ commentaire ;
+○ lié à une commande.
+12. Empêcher plusieurs avis pour la même commande.
+19. Espace Employé
+1. Créer l’espace employé.
+2. Modifier/supprimer :
+○ menus ;
+○ plats ;
+○ horaires.
+3. Gérer les commandes.
+4. Filtrer les commandes :
+○ par statut ;
+○ par client ;
+○ par période ;
+○ par date ;
+○ par lieu.
+5. Modifier/annuler une commande seulement après contact client.
+6. Enregistrer le motif d’annulation.
+7. Faire évoluer les statuts :
+○ accepté ;
+○ en préparation ;
+○ en cours de livraison ;
+○ livré ;
+○ en attente retour matériel ;
+○ terminée.
+8. Envoyer un email si retour matériel attendu.
+9. Valider ou refuser les avis.
+10. Les avis validés peuvent apparaître sur l’accueil.
+8
+
+20. Gestion Menus / Plats
+1. Ajouter un menu.
+2. Modifier un menu.
+3. Supprimer ou désactiver un menu.
+4. Ajouter/modifier/supprimer :
+○ entrée ;
+○ plat ;
+○ dessert.
+5. Gérer :
+○ titre ;
+○ description ;
+○ thème ;
+○ régime ;
+○ allergènes ;
+○ conditions ;
+○ stock ;
+○ prix ;
+○ images.
+6. Permettre à une entrée/plat/dessert d’être dans plusieurs menus si possible.
+7. Gérer actif/inactif.
+8. Masquer les éléments inactifs côté visiteur.
+21. Gestion Horaires
+1. Afficher les horaires.
+2. Modifier les horaires.
+3. Ajouter des fermetures exceptionnelles.
+4. Supprimer des fermetures exceptionnelles.
+5. Afficher les horaires dans le footer.
+22. Gestion Avis
+1. Voir les avis en attente.
+2. Valider un avis.
+3. Refuser un avis.
+4. Filtrer par :
+○ note ;
+○ période ;
+○ menu ;
+○ client ;
+○ commande.
+5. Afficher les avis validés côté accueil.
+6. Empêcher les avis non validés d’être visibles publiquement.
+9
+
+23. Espace Administrateur
+1. Créer l’espace administrateur.
+2. Créer le compte administrateur unique.
+3. Empêcher la création d’un nouvel administrateur depuis l’application.
+4. Créer des comptes employés.
+5. Désactiver un compte employé.
+6. Modifier/supprimer un employé.
+7. Faire tout ce qu’un employé peut faire.
+8. Afficher les statistiques :
+○ commandes par menu ;
+○ chiffre d’affaires par menu ;
+○ graphiques comparatifs.
+9. Brancher ces statistiques sur la base non relationnelle.
+10. Ajouter les filtres :
+○ menu ;
+○ durée ;
+○ thème ;
+○ dates.
+24. Sécurité
+1. Hacher les mots de passe.
+2. Protéger les routes selon les rôles.
+3. Empêcher un visiteur d’accéder aux espaces privés.
+4. Vérifier les données côté serveur.
+5. Protéger les formulaires.
+6. Prévenir les injections SQL.
+7. Prévoir les règles RGPD :
+○ données nécessaires uniquement ;
+○ informations personnelles modifiables ;
+○ sécurité des accès.
+8. Ne jamais afficher les mots de passe.
+9. Protéger les actions sensibles.
+25. Accessibilité RGAA
+1. Ajouter des textes alternatifs aux images.
+2. Utiliser une structure correcte de titres.
+3. Vérifier les contrastes.
+4. Rendre les boutons compréhensibles.
+5. Permettre la navigation clavier.
+6. Ajouter des labels aux formulaires.
+7. Éviter les textes trop petits.
+8. Tester les pages principales.
+10
+
+26. Emails
+1. Email de bienvenue à l’inscription.
+2. Email de réinitialisation du mot de passe.
+3. Email de confirmation de commande.
+4. Email quand commande terminée pour laisser un avis.
+5. Email retour matériel si nécessaire.
+6. Email de contact vers l’entreprise.
+7. Configurer un SMTP réel ou documenter le fonctionnement de test.
+27. Déploiement
+1. Choisir la plateforme.
+2. Configurer l’environnement de production.
+3. Déployer l’application.
+4. Déployer/configurer la base relationnelle.
+5. Déployer/configurer la base non relationnelle.
+6. Vérifier que l’application fonctionne en ligne.
+7. Ajouter le lien déployé dans les livrables.
+28. Documentation
+1. README avec installation locale.
+2. Documentation technique :
+○ choix technologiques ;
+○ environnement ;
+○ base de données ;
+○ diagrammes ;
+○ déploiement.
+3. Documentation de gestion de projet.
+4. Manuel utilisateur PDF :
+○ présentation ;
+○ comptes de test ;
+○ parcours visiteur/client/employé/admin.
+5. Charte graphique PDF.
+6. Fichiers SQL.
+7. Lien GitHub public.
+8. Lien application déployée.
+9. Lien outil de gestion de projet.
+11
+
+29. Tests Finaux
+1. Tester parcours visiteur.
+2. Tester inscription.
+3. Tester connexion.
+4. Tester commande complète.
+5. Tester espace client.
+6. Tester espace employé.
+7. Tester espace administrateur.
+8. Tester filtres dynamiques.
+9. Tester emails.
+10. Tester responsive.
+11. Tester accessibilité.
+12. Tester sécurité des accès.
+13. Corriger les bugs.
+14. Faire une sauvegarde Git propre.
+30. Préparation Oral
+1. Préparer le scénario de démonstration.
+2. Expliquer le besoin client.
+3. Expliquer les choix techniques.
+4. Expliquer la base relationnelle.
+5. Expliquer la base non relationnelle.
+6. Expliquer la sécurité.
+7. Expliquer l’accessibilité.
+8. Expliquer les difficultés rencontrées.
+9. Expliquer ce qui pourrait être amélioré.
+10. Répéter la démonstration complète.
+12

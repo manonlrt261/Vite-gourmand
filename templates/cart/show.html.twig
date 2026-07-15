@@ -1,43 +1,55 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page panier. #}
 {% block title %}Panier - Vite & Gourmand{% endblock %}
 
 {% block javascripts %}
+    {# Script qui gere les mises a jour du panier sans rechargement complet de la page. #}
     <script src="{{ asset('assets/scripts/cart.js') }}" defer></script>
 {% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Panier',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
+{# Contenu principal du panier. #}
 <main class="cart-page">
+    {# Lien permettant au client de revenir a la page des menus. #}
     <a href="{{ path('menu_index') }}" class="cart-back-link">&larr; Retour aux menus</a>
 
+    {# Message affiche si le client n'est pas connecte : il doit se connecter ou creer un compte. #}
     {% if not isConnected %}
         <section class="cart-login-notice">
             <p>Vous devez vous connecter ou cr&eacute;er un compte pour valider votre panier.</p>
             <div>
+                {# Le parametre target permet de revenir au panier apres connexion. #}
                 <a href="{{ path('login', { target: app.request.pathInfo }) }}" class="buttonprimary">Connexion</a>
                 <a href="{{ path('register', { target: app.request.pathInfo }) }}" class="buttonwhite">Inscription</a>
             </div>
         </section>
     {% endif %}
 
+    {# Messages d'erreur lies au panier ou a la validation de commande. #}
     {% for message in app.flashes('cart_error') %}
         <section class="cart-login-notice cart-login-notice--error">
             <p>{{ message }}</p>
         </section>
     {% endfor %}
 
+    {# Formulaire principal du panier : il sert a mettre a jour les quantites et a commander. #}
     <form class="cart-layout" method="post" action="{{ path('cart_update') }}" data-cart-form>
+        {# Colonne gauche : informations client et adresse de livraison. #}
         <div class="cart-left-column">
+            {# Bloc des informations personnelles du client. #}
             <section class="cart-card">
                 <h2>Vos informations</h2>
                 <div class="cart-card__line"></div>
 
+                {# Nom et prenom pre-remplis si le client est connecte. #}
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Nom *</span>
@@ -50,6 +62,7 @@
                     </label>
                 </div>
 
+                {# Coordonnees de contact du client. #}
                 <div class="cart-fields">
                     <label class="cart-field">
                         <span>Email *</span>
@@ -63,10 +76,12 @@
                 </div>
             </section>
 
+            {# Bloc de l'adresse et des informations de livraison. #}
             <section class="cart-card">
                 <h2>Adresse de livraison</h2>
                 <div class="cart-card__line"></div>
 
+                {# Adresse postale de livraison. #}
                 <div class="cart-fields">
                     <label class="cart-field">
                         <span>Adresse postale *</span>
@@ -74,6 +89,7 @@
                     </label>
                 </div>
 
+                {# Code postal et ville de livraison. #}
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Code postal *</span>
@@ -86,6 +102,7 @@
                     </label>
                 </div>
 
+                {# Date de prestation et heure souhaitee pour la livraison. #}
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Date de livraison</span>
@@ -98,6 +115,7 @@
                     </label>
                 </div>
 
+                {# Information sur les frais de livraison selon la zone. #}
                 <div class="cart-delivery-info">
                     <span>i</span>
                     <p>
@@ -108,22 +126,30 @@
             </section>
         </div>
 
+        {# Colonne droite : contenu du panier et recapitulatif financier. #}
         <aside class="cart-right-column">
+            {# Liste des menus ajoutes au panier. #}
             <section class="cart-card cart-order-card">
                 <h2>Votre commande</h2>
                 <div class="cart-card__line"></div>
 
                 <div class="cart-order-list">
+                    {# Boucle sur chaque menu present dans le panier. #}
                     {% for item in cartItems %}
+                        {# Variable de confort pour acceder plus facilement au menu de la ligne. #}
                         {% set menu = item.menu %}
+                        {# Carte d'un menu du panier, identifiee par son id pour le JavaScript. #}
                         <article class="cart-order-card__content" data-cart-item="{{ menu.menu_id }}">
+                            {# Image du menu si elle existe en base. #}
                             {% if menu.image_url %}
                                 <img src="{{ asset(menu.image_url) }}" alt="{{ menu.image_alt ?: menu.nom_menu }}">
                             {% endif %}
 
+                            {# Details du menu : nom, prix par personne et nombre de personnes. #}
                             <div class="cart-order-card__details">
                                 <h3>{{ menu.nom_menu }}</h3>
                                 <small>{{ menu.prix_par_personne|number_format(2, ',', ' ') }} &euro; / pers</small>
+                                {# Champ modifiable pour choisir le nombre de personnes, avec minimum impose. #}
                                 <label class="cart-quantity-field">
                                     <span>Nombre de personnes</span>
                                     <input
@@ -136,9 +162,11 @@
                                         data-menu-id="{{ menu.menu_id }}"
                                     >
                                 </label>
+                                {# Rappel du minimum de personnes pour ce menu. #}
                                 <p data-cart-order-quantity="{{ menu.menu_id }}">Minimum {{ item.nombrePersonnesMinimum }} personnes</p>
                             </div>
 
+                            {# Actions possibles sur la ligne : mettre a jour ou supprimer le menu. #}
                             <div class="cart-item-actions">
                                 <button type="submit" class="cart-update-button" data-cart-update-button formnovalidate>
                                     Mettre &agrave; jour
@@ -159,10 +187,12 @@
                 </div>
             </section>
 
+            {# Recapitulatif du prix total du panier. #}
             <section class="cart-card cart-recap-card">
                 <h2>R&eacute;capitulatif</h2>
                 <div class="cart-card__line"></div>
 
+                {# Details financiers pour chaque menu du panier. #}
                 {% for item in cartItems %}
                     <div class="cart-recap-line" data-cart-line="{{ item.menu.menu_id }}">
                         <span>
@@ -177,17 +207,20 @@
                         <strong data-cart-line-total>{{ item.prixLigne|number_format(2, ',', ' ') }} &euro;</strong>
                     </div>
 
+                    {# Ligne de reduction affichee seulement si une reduction existe pour ce menu. #}
                     <div class="cart-recap-line cart-recap-line--discount" data-cart-discount-line="{{ item.menu.menu_id }}" {% if item.reductionLigne <= 0 %}hidden{% endif %}>
                         <span>R&eacute;duction 10 % {{ item.menu.nom_menu }}</span>
                         <strong data-cart-line-discount>-{{ item.reductionLigne|number_format(2, ',', ' ') }} &euro;</strong>
                     </div>
                 {% endfor %}
 
+                {# Total de toutes les reductions du panier. #}
                 <div class="cart-recap-line">
                     <span>Total r&eacute;ductions</span>
                     <strong data-cart-total-discount>-{{ reduction|number_format(2, ',', ' ') }} &euro;</strong>
                 </div>
 
+                {# Frais de livraison, affiches comme offerts si leur montant est a zero. #}
                 <div class="cart-recap-line">
                     <span>Livraison</span>
                     <strong data-cart-delivery>{{ prixLivraison == 0 ? 'Offerte' : prixLivraison|number_format(2, ',', ' ') ~ ' &euro;' }}</strong>
@@ -195,6 +228,7 @@
 
                 <div class="cart-card__line"></div>
 
+                {# Total final TTC a payer par le client. #}
                 <div class="cart-recap-line cart-recap-line--total">
                     <span>Total TTC</span>
                     <strong data-cart-total>{{ prixTotal|number_format(2, ',', ' ') }} &euro;</strong>
@@ -202,7 +236,9 @@
             </section>
         </aside>
 
+        {# Zone de validation finale du panier. #}
         <section class="cart-validation">
+            {# Bouton Commander : il envoie le formulaire vers la route de validation de commande. #}
             <button
                 type="submit"
                 class="buttonprimary"
@@ -211,11 +247,13 @@
             >
                 Commander
             </button>
+            {# Message affiche par JavaScript apres une mise a jour reussie du panier. #}
             <p class="cart-update-message" data-cart-update-message hidden>Panier mis &agrave; jour.</p>
             <p>Apr&egrave;s validation, vous recevrez un email de confirmation.</p>
         </section>
     </form>
 
+    {# Formulaires separes de suppression : chaque bouton supprimer cible son propre formulaire. #}
     {% for item in cartItems %}
         <form id="cart-remove-{{ item.menu.menu_id }}" method="post" action="{{ path('cart_remove', { id: item.menu.menu_id }) }}"></form>
     {% endfor %}

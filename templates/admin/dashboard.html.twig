@@ -1,43 +1,53 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page administrateur. #}
 {% block title %}Espace administrateur - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal reutilisable : il affiche le grand titre de la page avec l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Espace administrateur',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Tableau de bord administrateur Vite et Gourmand'
     } %}
 
+    {# Valeurs maximales utilisees pour calculer la largeur proportionnelle des barres statistiques. #}
     {% set maxOrders = ordersByMenu[0].total_commandes|default(1) %}
     {% set maxRevenue = revenueByMenu[0].chiffre_affaires|default(1) %}
 
+    {# Contenu principal de l'espace administrateur. #}
     <main class="admin-dashboard-page">
+        {# Raccourcis vers les grandes fonctionnalites que l'administrateur peut gerer. #}
         <section class="employee-action-grid admin-action-grid" aria-label="Actions administrateur">
+            {# Carte d'acces a la gestion des menus, plats, entrees, desserts et stocks. #}
             <article class="employee-action-card">
                 <h2>Menus &amp; plats</h2>
                 <p>Modifiez les menus,<br>les plats et les stocks</p>
                 <a href="{{ path('employee_menus') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
             </article>
 
+            {# Carte d'acces a la gestion des horaires et fermetures. #}
             <article class="employee-action-card">
                 <h2>Horaires</h2>
                 <p>Consultez et g&eacute;rez<br>les horaires</p>
                 <a href="{{ path('employee_hours') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
             </article>
 
+            {# Carte d'acces a la gestion des comptes employes. #}
             <article class="employee-action-card">
                 <h2>Employ&eacute;s</h2>
                 <p>Consultez les derniers<br>employ&eacute;s inscrits</p>
                 <a href="{{ path('admin_employees') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
             </article>
 
+            {# Carte d'acces a la gestion des commandes clients. #}
             <article class="employee-action-card">
                 <h2>Commandes</h2>
                 <p>Consultez et g&eacute;rez<br>toutes les commandes</p>
                 <a href="{{ path('employee_orders') }}" class="buttonprimary employee-card-button">Acc&eacute;der</a>
             </article>
 
+            {# Carte d'acces a la moderation des avis clients. #}
             <article class="employee-action-card">
                 <h2>Avis clients</h2>
                 <p>Consultez et mod&eacute;rez<br>les avis clients</p>
@@ -45,13 +55,16 @@
             </article>
         </section>
 
+        {# Zone principale du tableau de bord : indicateurs, graphique et derniers employes. #}
         <section class="admin-dashboard-grid">
             <div class="admin-dashboard-main">
+                {# Indicateurs cles calcules automatiquement depuis les donnees du projet. #}
                 <section class="admin-section">
                     <div class="employee-section-heading">
                         <h2>Tableau de bord</h2>
                     </div>
 
+                    {# Cartes de statistiques globales : commandes, chiffre d'affaires, clients et note moyenne. #}
                     <div class="admindashboardwidget admin-kpi-grid">
                         <article class="admindashboardwidget-card">
                             <span class="admindashboardwidget-icon" aria-hidden="true">#</span>
@@ -87,6 +100,7 @@
                     </div>
                 </section>
 
+                {# Graphique simplifie du nombre de commandes par menu. #}
                 <section class="admin-section admin-chart-section">
                     <div class="employee-section-heading">
                         <h2>
@@ -96,6 +110,7 @@
                     </div>
 
                     <div class="admin-bar-chart">
+                        {# Chaque menu est affiche avec une barre proportionnelle au menu le plus commande. #}
                         {% for item in ordersByMenu %}
                             {% set percent = maxOrders > 0 ? (item.total_commandes / maxOrders * 100) : 0 %}
                             <article class="admin-bar-row">
@@ -108,12 +123,14 @@
                                 </div>
                             </article>
                         {% else %}
+                            {# Message affiche quand aucune commande n'existe encore. #}
                             <p class="employee-empty">Aucune commande pour le moment.</p>
                         {% endfor %}
                     </div>
                 </section>
             </div>
 
+            {# Colonne laterale : apercu des derniers employes crees par l'administrateur. #}
             <aside class="admin-dashboard-side" id="admin-employees">
                 <section class="admin-section">
                     <div class="employee-section-heading employee-section-heading--reviews">
@@ -124,6 +141,7 @@
                     </div>
 
                     <div class="admin-employee-list">
+                        {# Liste des derniers employes inscrits, avec leur email et leur date de creation. #}
                         {% for employee in latestEmployees %}
                             <article class="admin-employee-card">
                                 <div>
@@ -133,6 +151,7 @@
                                 <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
                             </article>
                         {% else %}
+                            {# Message affiche si aucun employe n'a encore ete ajoute. #}
                             <p class="employee-empty">Aucun employ&eacute; inscrit pour le moment.</p>
                         {% endfor %}
                     </div>
@@ -140,6 +159,7 @@
             </aside>
         </section>
 
+        {# Section dediee au chiffre d'affaires genere par chaque menu. #}
         <section class="admin-section admin-revenue-section">
             <div class="employee-section-heading">
                 <h2>
@@ -149,6 +169,7 @@
             </div>
 
             <div class="admin-revenue-list">
+                {# Chaque menu affiche son chiffre d'affaires et une barre de comparaison. #}
                 {% for item in revenueByMenu %}
                     {% set percent = maxRevenue > 0 ? (item.chiffre_affaires / maxRevenue * 100) : 0 %}
                     <article class="admin-revenue-card">
@@ -161,11 +182,13 @@
                         </div>
                     </article>
                 {% else %}
+                    {# Message affiche si aucun chiffre d'affaires n'est encore disponible. #}
                     <p class="employee-empty">Aucun chiffre d'affaires &agrave; afficher.</p>
                 {% endfor %}
             </div>
         </section>
 
+        {# Actions de bas de page : acces a l'espace employe et deconnexion. #}
         <div class="admin-dashboard-actions">
             <a href="{{ path('employee_dashboard') }}" class="buttonoffwhite">Espace employ&eacute;</a>
             <a href="{{ path('logout') }}" class="buttonprimary">Se d&eacute;connecter</a>

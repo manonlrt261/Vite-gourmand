@@ -1,22 +1,30 @@
 ﻿{% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page detail de commande. #}
 {% block title %}DÃ©tails des commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'DÃ©tails des commandes',
     image_alt: 'DÃ©tail de commande Vite et Gourmand'
 } %}
 
+{# Calculs utiles pour afficher le recapitulatif financier de la commande. #}
 {% set subtotal = order.prix_par_personne * order.nombre_personnes %}
 {% set discount = subtotal - order.prix_menu %}
+{# Indique si le client a deja laisse un avis pour cette commande. #}
 {% set hasReview = order.avis_count|default(0) > 0 %}
+{# Preparation du statut et de la classe CSS du badge. #}
 {% set statusCode = order.statut_code|default('en_attente') %}
 {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
 
+{# Contenu principal du detail de commande. #}
 <main class="customer-page order-detail-page">
+    {# Lien de retour vers la liste des commandes du client. #}
     <a href="{{ path('customer_orders') }}" class="cart-back-link">← Retour vers mes commandes</a>
 
+    {# Messages de succes ou d'erreur lies aux avis et aux actions sur la commande. #}
     {% for message in app.flashes('review_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
@@ -25,13 +33,24 @@
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
+    {% for message in app.flashes('order_success') %}
+        <p class="customer-alert customer-alert--success">{{ message }}</p>
+    {% endfor %}
+
+    {% for message in app.flashes('order_error') %}
+        <p class="customer-alert customer-alert--error">{{ message }}</p>
+    {% endfor %}
+
+    {# Carte de synthese : image du menu, informations principales et statut. #}
     <section class="order-detail-summary-card">
+        {# Image du menu commande, ou emplacement vide si aucune image n'est disponible. #}
         {% if order.menu_image_url %}
             <img src="{{ asset(order.menu_image_url) }}" alt="{{ order.menu_image_alt ?: order.nom_menu }}" class="order-detail-summary-card__image">
         {% else %}
             <div class="order-detail-summary-card__image order-detail-summary-card__image--empty"></div>
         {% endif %}
 
+        {# Informations principales de la commande. #}
         <div class="order-detail-summary-card__content">
             <h2>Commande nÂ°{{ order.commande_id }}</h2>
             <p>CommandÃ©e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
@@ -41,14 +60,101 @@
             <p>{{ order.prix_total|number_format(2, ',', ' ') }} â‚¬</p>
         </div>
 
+        {# Badge affichant le statut actuel de la commande. #}
         <span class="{{ statusClass }} order-detail-status">{{ order.statut_libelle|default('En attente') }}</span>
     </section>
 
+    {# Bloc de modification affiche uniquement si la commande est encore en attente. #}
+    {% if statusCode == 'en_attente' %}
+        <section class="customer-order-edit-card">
+            <div class="customer-order-edit-card__intro">
+                <h2>Modifier ma commande</h2>
+                <p>Vous pouvez modifier cette commande tant qu'elle n'a pas encore &eacute;t&eacute; accept&eacute;e par l'&eacute;quipe.</p>
+            </div>
+
+            {# Formulaire de modification des informations de livraison et du nombre de personnes. #}
+            <form method="post" action="{{ path('customer_order_update', { id: order.commande_id }) }}" class="customer-order-edit-form">
+                <div class="customer-order-edit-grid">
+                    <label>
+                        <span>Jour de livraison</span>
+                        <input type="date" name="date_prestation" value="{{ order.date_prestation ? order.date_prestation|date('Y-m-d') : '' }}" required>
+                    </label>
+                    <label>
+                        <span>Heure de livraison</span>
+                        <input type="time" name="heure_de_livraison" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
+                    </label>
+                    <label>
+                        <span>Nombre de personnes</span>
+                        <input type="number" name="nombre_personnes" min="1" value="{{ order.nombre_personnes }}" required>
+                    </label>
+                </div>
+
+                <label>
+                    <span>Adresse de livraison</span>
+                    <input type="text" name="adresse_livraison" value="{{ order.adresse_livraison }}" required>
+                </label>
+
+                <div class="customer-order-edit-grid customer-order-edit-grid--two">
+                    <label>
+                        <span>Code postal</span>
+                        <input type="text" name="code_postal_livraison" value="{{ order.code_postal_livraison }}" required>
+                    </label>
+                    <label>
+                        <span>Ville</span>
+                        <input type="text" name="ville_livraison" value="{{ order.ville_livraison }}" required>
+                    </label>
+                </div>
+
+                <button type="submit" class="buttonprimary">Enregistrer les modifications</button>
+            </form>
+
+            <hr>
+
+            {# Formulaire permettant d'ajouter un autre menu a la commande. #}
+            <form method="post" action="{{ path('customer_order_add_menu', { id: order.commande_id }) }}" class="customer-order-edit-form">
+                <h3>Ajouter un menu</h3>
+                <div class="customer-order-edit-grid customer-order-edit-grid--two">
+                    <label>
+                        <span>Menu &agrave; ajouter</span>
+                        <select name="menu_id" required>
+                            <option value="">Choisir un menu</option>
+                            {% for menuChoice in availableMenus %}
+                                <option value="{{ menuChoice.menu_id }}">
+                                    {{ menuChoice.nom_menu }} - {{ menuChoice.prix_par_personne|number_format(2, ',', ' ') }} &euro; / pers.
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        <span>Nombre de personnes</span>
+                        <input type="number" name="nombre_personnes" min="1" value="{{ order.nombre_personnes }}" required>
+                    </label>
+                </div>
+                <button type="submit" class="buttonprimary">Ajouter ce menu</button>
+            </form>
+
+            <hr>
+
+            {# Zone permettant d'annuler cette ligne de commande. #}
+            <div class="customer-order-remove-menu">
+                <div>
+                    <h3>Supprimer ce menu</h3>
+                    <p>Cette action annule uniquement cette ligne de commande.</p>
+                </div>
+                <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce menu de votre commande ?');">
+                    <button type="submit" class="buttonoffwhite">Supprimer ce menu</button>
+                </form>
+            </div>
+        </section>
+    {% endif %}
+
     <hr class="order-detail-separator">
 
+    {# Section de contenu detaille de la commande. #}
     <section class="order-detail-section">
         <h2>RÃ©capitulatif de ma commande</h2>
 
+        {# Liste descriptive du menu, des quantites, des reductions et du total. #}
         <div class="order-detail-recap-card">
             <dl>
                 <div>
@@ -85,13 +191,17 @@
 
     <hr class="order-detail-separator">
 
+    {# Section de contenu detaille de la commande. #}
     <section class="order-detail-section">
         <h2>DÃ©tail du menu</h2>
 
+        {# Liste des elements du menu commande. #}
         <div class="order-detail-meal-list">
+            {# Boucle sur l'entree, le plat et le dessert. #}
             {% for category, item in mealItems %}
                 {% if item %}
                     <article class="order-detail-meal-card">
+                        {# Image de l'element du menu, ou emplacement vide si aucune image n'existe. #}
                         {% if item.image_url %}
                             <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
                         {% else %}
@@ -111,16 +221,20 @@
 
     <hr class="order-detail-separator">
 
+    {# Section de contenu detaille de la commande. #}
     <section class="order-detail-section">
         <h2>Suivi de la commande</h2>
 
+        {# Historique des statuts de la commande. #}
         <div class="order-detail-timeline">
+            {# Chaque etape correspond a un changement de statut enregistre. #}
             {% for step in statusHistory %}
                 <article class="order-detail-timeline__step">
                     <span aria-hidden="true"></span>
                     <div>
                         <h3>{{ step.statut_libelle }}</h3>
                         <p>{{ step.date_changement ? step.date_changement|date('d/m/Y Ã  H\\hi') : 'Date non renseignÃ©e' }}</p>
+                        {# Commentaire eventuel associe au changement de statut. #}
                         {% if step.commentaire %}
                             <p>{{ step.commentaire }}</p>
                         {% endif %}
@@ -132,18 +246,27 @@
 
     <hr class="order-detail-separator">
 
+    {# Section d'avis liee a cette commande. #}
     <section class="order-detail-review-section">
         <h2>Donnez votre avis</h2>
 
-        {% if hasReview %}
+        {# L'avis est bloque tant que la commande n'est pas terminee. #}
+        {% if statusCode != 'terminee' %}
+            <div class="customer-review-card order-detail-review-card">
+                <h3>Vous pourrez laisser un avis lorsque cette commande sera termin&eacute;e.</h3>
+            </div>
+        {# Si un avis existe deja, le formulaire n'est plus affiche. #}
+        {% elseif hasReview %}
             <div class="customer-review-card order-detail-review-card">
                 <h3>Merci, votre avis a dÃ©jÃ  Ã©tÃ© envoyÃ© pour cette commande.</h3>
             </div>
         {% else %}
+            {# Formulaire d'avis pour une commande terminee sans avis existant. #}
             <form class="customer-review-card order-detail-review-card" method="post" action="{{ path('customer_order_detail', { id: order.commande_id }) }}">
                 <h3>Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
                 <input type="hidden" name="commande_id" value="{{ order.commande_id }}">
 
+                {# Note obligatoire de 1 a 5 etoiles. #}
                 <fieldset class="customer-rating">
                     <legend>Votre note</legend>
                     <div class="customer-rating-stars">
@@ -154,11 +277,13 @@
                     </div>
                 </fieldset>
 
+                {# Commentaire facultatif du client. #}
                 <label class="customer-review-field">
                     <span>Votre commentaire (facultatif)</span>
                     <textarea name="commentaire" placeholder="Ã‰crivez votre commentaire ici."></textarea>
                 </label>
 
+                {# Bouton d'envoi de l'avis. #}
                 <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
             </form>
         {% endif %}

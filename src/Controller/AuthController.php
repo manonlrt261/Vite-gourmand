@@ -6,11 +6,11 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 
+// Controleur de la connexion, de l inscription et de la reinitialisation du mot de passe.
 class AuthController extends AbstractController
 {
+    // Connecte un utilisateur et le redirige selon son role.
     public function login(Request $request, Connection $connection): Response
     {
         if ($request->isMethod('POST')) {
@@ -60,6 +60,7 @@ class AuthController extends AbstractController
         return $this->render('auth/login.html.twig');
     }
 
+    // Deconnecte l utilisateur en vidant sa session.
     public function logout(Request $request): Response
     {
         $request->getSession()->remove('utilisateur_id');
@@ -68,6 +69,7 @@ class AuthController extends AbstractController
         return $this->redirectToRoute('home_show');
     }
 
+    // Cree un compte client avec controle de l email et du mot de passe.
     public function register(Request $request, Connection $connection): Response
     {
         if ($request->isMethod('POST')) {
@@ -86,7 +88,7 @@ class AuthController extends AbstractController
             $requiredFields = ['prenom', 'nom', 'email', 'password', 'password_confirm', 'telephone', 'adresse_postale', 'code_postal', 'ville'];
             foreach ($requiredFields as $field) {
                 if ($data[$field] === '') {
-                    $this->addFlash('register_error', 'Tous les champs obligatoires doivent être renseignés.');
+                    $this->addFlash('register_error', 'Tous les champs obligatoires doivent Ãªtre renseignÃ©s.');
 
                     return $this->render('auth/register.html.twig', ['formData' => $data]);
                 }
@@ -105,14 +107,14 @@ class AuthController extends AbstractController
             }
 
             if (!$this->isStrongPassword($data['password'])) {
-                $this->addFlash('register_error', 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
+                $this->addFlash('register_error', 'Le mot de passe doit contenir au minimum 10 caractÃ¨res, une majuscule, une minuscule, un chiffre et un caractÃ¨re spÃ©cial.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
 
             $existingUser = $connection->fetchOne('SELECT id FROM utilisateurs WHERE email = ?', [$data['email']]);
             if ($existingUser) {
-                $this->addFlash('register_error', 'Un compte existe déjà avec cette adresse email.');
+                $this->addFlash('register_error', 'Un compte existe dÃ©jÃ  avec cette adresse email.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
@@ -151,7 +153,7 @@ class AuthController extends AbstractController
                 'actif' => 1,
             ]);
 
-            $this->addFlash('success', 'Votre compte a bien été créé.');
+            $this->addFlash('success', 'Votre compte a bien Ã©tÃ© crÃ©Ã©.');
             $targetPath = (string) $request->query->get('target');
             if (!str_starts_with($targetPath, '/') || str_starts_with($targetPath, '//')) {
                 $targetPath = '';
@@ -165,7 +167,8 @@ class AuthController extends AbstractController
         ]);
     }
 
-    public function forgotPassword(Request $request, Connection $connection, MailerInterface $mailer): Response
+    // Genere un lien local de reinitialisation de mot de passe.
+    public function forgotPassword(Request $request, Connection $connection): Response
     {
         if ($request->isMethod('POST')) {
             $email = trim((string) $request->request->get('email'));
@@ -196,18 +199,12 @@ class AuthController extends AbstractController
                     'created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
                 ]);
 
-                $resetUrl = $this->generateUrl('reset_password', ['token' => $token], 0);
-                $absoluteResetUrl = $request->getSchemeAndHttpHost() . $resetUrl;
+                $absoluteResetUrl = $this->generateUrl('reset_password', ['token' => $token], 0);
 
-                $mailer->send((new Email())
-                    ->from('noreply@vite-et-gourmand.local')
-                    ->to((string) $user['email'])
-                    ->subject('Réinitialisation de votre mot de passe')
-                    ->text("Bonjour,\n\nPour réinitialiser votre mot de passe, cliquez sur ce lien :\n" . $absoluteResetUrl . "\n\nCe lien est valable 1 heure.\n\nVite & Gourmand")
-                    ->html('<p>Bonjour,</p><p>Pour réinitialiser votre mot de passe, cliquez sur ce lien :</p><p><a href="' . htmlspecialchars($absoluteResetUrl, ENT_QUOTES) . '">Réinitialiser mon mot de passe</a></p><p>Ce lien est valable 1 heure.</p><p>Vite & Gourmand</p>'));
+                $this->addFlash('reset_link', $absoluteResetUrl);
             }
 
-            $this->addFlash('forgot_success', 'Si un compte existe avec cette adresse email, un lien de réinitialisation vient d’être envoyé.');
+            $this->addFlash('forgot_success', 'Si un compte existe avec cette adresse email, un lien de réinitialisation est disponible ci-dessous.');
 
             return $this->redirectToRoute('forgot_password');
         }
@@ -215,6 +212,7 @@ class AuthController extends AbstractController
         return $this->render('auth/forgot_password.html.twig');
     }
 
+    // Permet de definir un nouveau mot de passe avec un token valide.
     public function resetPassword(string $token, Request $request, Connection $connection): Response
     {
         $this->ensurePasswordResetTableExists($connection);
@@ -230,7 +228,7 @@ class AuthController extends AbstractController
         );
 
         if (!$resetRequest || $resetRequest['used_at'] !== null || new \DateTimeImmutable((string) $resetRequest['expires_at']) < new \DateTimeImmutable()) {
-            $this->addFlash('forgot_error', 'Le lien de réinitialisation est invalide ou expiré.');
+            $this->addFlash('forgot_error', 'Le lien de rÃ©initialisation est invalide ou expirÃ©.');
 
             return $this->redirectToRoute('forgot_password');
         }
@@ -239,8 +237,8 @@ class AuthController extends AbstractController
             $password = (string) $request->request->get('password');
             $passwordConfirm = (string) $request->request->get('password_confirm');
 
-            if (strlen($password) < 8) {
-                $this->addFlash('reset_error', 'Le mot de passe doit contenir au moins 8 caractères.');
+            if (!$this->isStrongPassword($password)) {
+                $this->addFlash('reset_error', 'Le mot de passe doit contenir au minimum 10 caractÃ¨res, une majuscule, une minuscule, un chiffre et un caractÃ¨re spÃ©cial.');
 
                 return $this->redirectToRoute('reset_password', ['token' => $token]);
             }
@@ -264,7 +262,7 @@ class AuthController extends AbstractController
                 'id' => (int) $resetRequest['id'],
             ]);
 
-            $this->addFlash('success', 'Votre mot de passe a bien été réinitialisé. Vous pouvez maintenant vous connecter.');
+            $this->addFlash('success', 'Votre mot de passe a bien Ã©tÃ© rÃ©initialisÃ©. Vous pouvez maintenant vous connecter.');
 
             return $this->redirectToRoute('login');
         }
@@ -274,6 +272,7 @@ class AuthController extends AbstractController
         ]);
     }
 
+    // Verifie que le mot de passe saisi correspond au mot de passe stocke.
     private function isPasswordValid(string $password, string $storedPassword): bool
     {
         if ($storedPassword === '') {
@@ -283,6 +282,7 @@ class AuthController extends AbstractController
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
     }
 
+    // Determine la page de redirection selon le role de l utilisateur.
     private function getDefaultRouteForRole(string $roleLibelle): string
     {
         if ($roleLibelle === 'administrateur') {
@@ -290,11 +290,12 @@ class AuthController extends AbstractController
         }
 
         return match ($roleLibelle) {
-            'employe', 'employé', 'administrateur' => 'employee_dashboard',
+            'employe', 'employÃ©', 'administrateur' => 'employee_dashboard',
             default => 'customer_account',
         };
     }
 
+    // Controle les regles de securite du mot de passe.
     private function isStrongPassword(string $password): bool
     {
         return strlen($password) >= 10
@@ -304,6 +305,7 @@ class AuthController extends AbstractController
             && preg_match('/[^A-Za-z0-9]/', $password);
     }
 
+    // Cree la table de reinitialisation si elle n existe pas encore.
     private function ensurePasswordResetTableExists(Connection $connection): void
     {
         $connection->executeStatement(

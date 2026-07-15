@@ -1,32 +1,41 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur. #}
 {% block title %}Les menus - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Grand bandeau de la page avec le titre "Les menus". #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Les menus',
     image_alt: 'Pr&eacute;sentation des menus Vite et Gourmand'
 } %}
 
+{# Contenu principal de la page de liste des menus. #}
 <main class="menus-page">
+    {# Panneau de filtres utilise par JavaScript pour afficher les resultats sans recharger la page. #}
     <section class="menus-filter-panel" aria-label="Filtres de recherche" data-menu-filters>
+        {# En-tete des filtres avec le bouton de remise a zero. #}
         <div class="menus-filter-panel__header">
             <h2>Filtres</h2>
             <button type="button" class="menus-reset-button" data-filter-reset>R&eacute;initialiser</button>
         </div>
 
+        {# Liste des filtres principaux disponibles pour le client. #}
         <div class="menus-filter-panel__controls">
+            {# Filtre de prix croissant ou decroissant. #}
             <select class="menus-filter-control" aria-label="Trier par prix" data-filter-price>
                 <option value="">Prix</option>
                 <option value="asc">Prix croissant</option>
                 <option value="desc">Prix d&eacute;croissant</option>
             </select>
 
+            {# Filtre qui conserve uniquement les menus avec du stock. #}
             <select class="menus-filter-control" aria-label="Filtrer par disponibilit&eacute;" data-filter-stock>
                 <option value="">Disponibilit&eacute;</option>
                 <option value="available">En stock</option>
             </select>
 
+            {# Filtre par theme du menu. #}
             <select class="menus-filter-control" aria-label="Filtrer par th&egrave;me" data-filter-theme>
                 <option value="">Th&egrave;me</option>
                 <option value="Classique">Classique</option>
@@ -35,6 +44,7 @@
                 <option value="Regime particulier">R&eacute;gime particulier</option>
             </select>
 
+            {# Filtre par regime alimentaire particulier. #}
             <select class="menus-filter-control" aria-label="Filtrer par r&eacute;gime" data-filter-regime>
                 <option value="">R&eacute;gime</option>
                 <option value="vegetarien">V&eacute;g&eacute;tarien</option>
@@ -42,6 +52,7 @@
                 <option value="sans-gluten">Sans gluten</option>
             </select>
 
+            {# Filtre selon le nombre minimum de personnes. #}
             <select class="menus-filter-control" aria-label="Filtrer par nombre minimum de personnes" data-filter-min-person>
                 <option value="">Nb pers. minimum</option>
                 <option value="1-5">1 &agrave; 5 personnes</option>
@@ -50,9 +61,11 @@
                 <option value="20-plus">20 personnes ou plus</option>
             </select>
 
+            {# Bouton qui applique les filtres choisis. #}
             <button type="button" class="buttonprimary menus-filter-submit" data-filter-submit>Appliquer les filtres</button>
         </div>
 
+        {# Tri supplementaire applique a l'ensemble des menus. #}
         <div class="menus-sort-row">
             <span>Trier par :</span>
             <select class="menus-filter-control" aria-label="Trier les menus" data-filter-sort>
@@ -66,8 +79,10 @@
         </div>
     </section>
 
+    {# Message affiche quand aucun menu ne correspond aux filtres. #}
     <p class="menus-empty-message" data-empty-message hidden>Aucun menu ne correspond &agrave; ces filtres.</p>
 
+    {# Section cachee par defaut qui affiche les resultats apres application des filtres. #}
     <section class="menus-section menus-results-section" aria-labelledby="menus-results-title" data-results-section hidden>
         <header class="menus-section__header">
             <h2 id="menus-results-title">R&eacute;sultats</h2>
@@ -78,6 +93,7 @@
         <div class="menus-section__grid" data-results-grid></div>
     </section>
 
+    {# Libelles propres affiches pour chaque categorie de menus. #}
     {% set sectionLabels = {
         'Menus intemporels': 'Menus intemporels',
         'Menus evenementiels': 'Menus &eacute;v&eacute;nementiels',
@@ -85,17 +101,22 @@
         'Regime particulier': 'R&eacute;gime particulier'
     } %}
 
+    {# Boucle sur les menus regroupes par theme. #}
     {% for title, sectionMenus in groupedMenus %}
         {% if sectionMenus is not empty %}
+            {# Section d'une categorie de menus, affichee seulement si elle contient des menus. #}
             <section class="menus-section" aria-labelledby="section-{{ loop.index }}" data-menu-section>
+                {# Titre de la categorie avec ligne decorative. #}
                 <header class="menus-section__header">
                     <h2 id="section-{{ loop.index }}">{{ sectionLabels[title]|default(title)|raw }}</h2>
                     <span class="menus-section__line" aria-hidden="true"></span>
                     <span class="menus-section__arrow" aria-hidden="true">&rsaquo;</span>
                 </header>
 
+                {# Grille des cartes de menus. #}
                 <div class="menus-section__grid" data-menu-grid>
                     {% for menu in sectionMenus %}
+                        {# Carte reutilisable qui affiche les informations principales du menu. #}
                         {% include 'components/_menu_card.html.twig' with { menu: menu } %}
                     {% endfor %}
                 </div>
@@ -103,6 +124,7 @@
         {% endif %}
     {% endfor %}
 
+    {# Bloc final qui invite le client a contacter l'entreprise pour un projet. #}
     <section class="menus-contact-card">
         <h2>Un projet en t&ecirc;te ?</h2>
         <p>Parlons-en ensemble et cr&eacute;ons un moment gourmand qui vous ressemble.</p>
@@ -113,6 +135,8 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script qui gere les filtres de menus sans rechargement. #}
     <script src="{{ asset('assets/scripts/menu-filters.js') }}" defer></script>
+    {# Script qui permet d'ajouter un menu au panier depuis une carte. #}
     <script src="{{ asset('assets/scripts/menu-cart.js') }}" defer></script>
 {% endblock %}

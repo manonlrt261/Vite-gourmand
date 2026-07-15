@@ -1,0 +1,237 @@
+﻿T?che;Section;?tiquette;Priorit?;Statut;Dur?e estim?e en minutes;Date de d?but;Date de fin
+Lire entièrement le sujet d’examen;Gestion De Projet;Gestion de projet;Haute;Done;25;2026-06-21;2026-06-21
+Identifier les fonctionnalités obligatoires;Gestion De Projet;Gestion de projet;Haute;Done;25;2026-06-21;2026-06-21
+Créer la liste complète des tâches;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Découper les tâches par espace : visiteur, client, employé, admin;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Créer le tableau Notion;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Créer les colonnes Notion;Gestion De Projet;Gestion de projet;Haute;Not started;20;2026-06-21;2026-06-21
+Créer les étiquettes Notion;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Ajouter les cartes une par une;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Estimer les durées des tâches;Gestion De Projet;Gestion de projet;Moyenne;Done;15;2026-06-21;2026-06-21
+Mettre à jour Notion chaque jour;Gestion De Projet;Gestion de projet;Haute;Done;20;2026-06-21;2026-06-21
+Créer un planning jusqu’à la date de rendu;Gestion De Projet;Gestion de projet;Haute;Not started;20;2026-06-21;2026-06-21
+Prévoir une marge pour les bugs;Gestion De Projet;Gestion de projet;Haute;Not started;20;2026-06-21;2026-06-21
+Créer la base vite_et_gourmand;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table roles;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table utilisateurs;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Ajouter les champs employés dans utilisateurs;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table menus;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table entree;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table plat;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table dessert;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table commandes;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table statuts_commande;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table historique_statuts_commande;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-21;2026-06-21
+Créer la table avis;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Créer la table contact;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les clés primaires;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les clés étrangères;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Vérifier les relations dans phpMyAdmin;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les rôles en base;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les statuts de commande;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les menus;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les entrées;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les plats;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les desserts;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les chemins d’images;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Ajouter les comptes de test;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Préparer le fichier SQL de création;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Préparer le fichier SQL d’insertion;Base De Données MySQL;Base de données;Haute;Done;15;2026-06-23;2026-06-23
+Tester la réimportation complète de la base;Base De Données MySQL;Tests;Haute;Not started;15;2026-06-23;2026-06-23
+Installer MongoDB;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Installer MongoDB Compass;Base NoSQL / MongoDB;NoSQL / MongoDB;Moyenne;Done;20;2026-06-23;2026-06-23
+Installer l’extension MongoDB pour PHP;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Installer la librairie MongoDB avec Composer;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Créer la base MongoDB;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Créer la collection commandes_par_menu;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Synchroniser les commandes MySQL vers MongoDB;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-23;2026-06-23
+Stocker le nombre de commandes par menu;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-26;2026-06-26
+Stocker le chiffre d’affaires par menu;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-26;2026-06-26
+Exclure les commandes annulées des statistiques;Base NoSQL / MongoDB;NoSQL / MongoDB;Haute;Done;25;2026-06-26;2026-06-26
+Tester la mise à jour après commande;Base NoSQL / MongoDB;Tests;Haute;Done;25;2026-06-26;2026-06-26
+Documenter le rôle de MongoDB;Base NoSQL / MongoDB;Documentation;Haute;Done;25;2026-06-26;2026-06-26
+Expliquer la différence MySQL / MongoDB;Base NoSQL / MongoDB;Documentation;Haute;Done;25;2026-06-26;2026-06-26
+Créer la page connexion;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Connecter la connexion à la base;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Gérer les rôles utilisateur / employé / admin;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Rediriger selon le rôle connecté;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Créer la page inscription;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Enregistrer un client en base;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Empêcher les doublons d’email;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Vérifier la sécurité du mot de passe;Authentification;Authentification;Haute;Not started;25;2026-06-26;2026-06-26
+Ajouter afficher / masquer mot de passe;Authentification;Front-end / Design;Moyenne;Not started;20;2026-06-26;2026-06-26
+Créer la page mot de passe oublié;Authentification;Authentification;Moyenne;Not started;20;2026-06-26;2026-06-26
+Générer un lien de réinitialisation local;Authentification;Authentification;Moyenne;Not started;20;2026-06-26;2026-06-26
+Créer la page nouveau mot de passe;Authentification;Authentification;Moyenne;Not started;20;2026-06-28;2026-06-28
+Mettre à jour le mot de passe en base;Authentification;Authentification;Haute;Not started;25;2026-06-28;2026-06-28
+Tester connexion client;Authentification;Tests;Haute;Not started;25;2026-06-28;2026-06-28
+Tester connexion employé;Authentification;Tests;Haute;Not started;25;2026-06-28;2026-06-28
+Tester connexion admin;Authentification;Tests;Haute;Not started;25;2026-06-28;2026-06-28
+Créer le header visiteur/client;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Créer le footer visiteur/client;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Créer le composant BigTitle;Pages Visiteur;Front-end / Design;Moyenne;Not started;20;2026-06-28;2026-06-28
+Créer la page accueil;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Intégrer le design Figma accueil;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Créer la page menus;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Connecter la page menus à la base;Pages Visiteur;Base de données;Haute;Done;25;2026-06-28;2026-06-28
+Afficher les cartes menus dynamiquement;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Créer les filtres menus;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Filtrer sans recharger la page;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Créer la page détail menu;Pages Visiteur;Front-end / Design;Haute;Not started;25;2026-06-28;2026-06-28
+Connecter détail menu à la base;Pages Visiteur;Base de données;Haute;Done;25;2026-06-28;2026-06-28
+Afficher entrée / plat / dessert du menu;Pages Visiteur;Base de données;Haute;Done;25;2026-06-30;2026-06-30
+Ajouter bouton commander;Pages Visiteur;Commandes;Haute;Not started;25;2026-06-30;2026-06-30
+Ajouter bouton ajouter au panier;Pages Visiteur;Commandes;Haute;Not started;25;2026-06-30;2026-06-30
+Créer la page contact;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Connecter le formulaire à la table contact;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Enregistrer un message en base;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Créer la page Messagerie employé/admin;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Afficher tous les messages reçus;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Répondre à un message;Contact / Messagerie;Contact / Messagerie;Haute;Not started;25;2026-06-30;2026-06-30
+Archiver un message;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Désarchiver un message;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Supprimer un message;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Voir les messages supprimés récemment;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Voir les messages répondus;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Envoyer la réponse par email;Contact / Messagerie;Contact / Messagerie;Moyenne;Not started;20;2026-06-30;2026-06-30
+Documenter le SMTP non configuré localement;Contact / Messagerie;Documentation;Moyenne;Not started;20;2026-06-30;2026-06-30
+Créer la page panier;Panier / Commande;Commandes;Haute;Not started;25;2026-06-30;2026-06-30
+Ajouter plusieurs menus au panier;Panier / Commande;Commandes;Haute;Not started;25;2026-06-30;2026-06-30
+Supprimer un menu sans recharger;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Modifier le nombre de personnes;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Vérifier le minimum de personnes;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Recalculer les prix automatiquement;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Appliquer la réduction de 10 %;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Afficher le récapitulatif;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Préremplir les infos client connecté;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Bloquer la commande si client non connecté;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Vérifier les champs obligatoires;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Enregistrer la commande en base;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Créer l’historique du statut initial;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Envoyer un email de confirmation;Panier / Commande;Commandes;Moyenne;Not started;20;2026-07-03;2026-07-03
+Créer la page confirmation commande;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Afficher le détail de commande confirmé;Panier / Commande;Commandes;Haute;Not started;25;2026-07-03;2026-07-03
+Tester commande complète;Panier / Commande;Tests;Haute;Not started;25;2026-07-03;2026-07-03
+Créer la page mon espace client;Espace Client;Client;Haute;Not started;25;2026-07-03;2026-07-03
+Afficher les 3 dernières commandes;Espace Client;Client;Haute;Not started;25;2026-07-03;2026-07-03
+Créer la page mes commandes;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Afficher toutes les commandes du client;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Créer la page détail commande;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Afficher le suivi de commande;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Corriger le suivi en cas d’annulation;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Permettre annulation si commande en attente;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Permettre modification si commande en attente;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier adresse de livraison;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier date de prestation;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier heure de livraison;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Ajouter un menu à une commande en attente;Espace Client;Client;Moyenne;Not started;20;2026-07-05;2026-07-05
+Supprimer un menu d’une commande en attente;Espace Client;Client;Moyenne;Not started;20;2026-07-05;2026-07-05
+Créer page mes informations;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier infos personnelles;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier adresse de livraison;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Modifier mot de passe;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Déconnexion client;Espace Client;Client;Haute;Not started;25;2026-07-05;2026-07-05
+Créer la table avis;Avis Clients;Avis;Haute;Done;25;2026-07-07;2026-07-07
+Créer formulaire avis client;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Lier avis à une commande;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Autoriser avis seulement si commande terminée;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Empêcher plusieurs avis sur une même commande;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Créer gestion des avis employé/admin;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Filtrer les avis par client;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Filtrer les avis par note;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Filtrer les avis par période;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Filtrer les avis par menu;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Accepter un avis;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Refuser un avis;Avis Clients;Avis;Haute;Not started;25;2026-07-07;2026-07-07
+Remettre un avis en attente;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Créer page tous les avis;Avis Clients;Avis;Moyenne;Not started;15;2026-07-07;2026-07-07
+Créer header employé;Espace Employé;Employé;Haute;Not started;25;2026-07-07;2026-07-07
+Créer menu burger employé;Espace Employé;Employé;Haute;Not started;25;2026-07-07;2026-07-07
+Créer footer employé;Espace Employé;Employé;Moyenne;Not started;20;2026-07-07;2026-07-07
+Créer dashboard employé;Espace Employé;Employé;Haute;Not started;25;2026-07-07;2026-07-07
+Afficher dernières commandes;Espace Employé;Employé;Haute;Not started;25;2026-07-07;2026-07-07
+Rechercher une commande;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Filtrer les commandes par statut;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Filtrer les commandes par période;Espace Employé;Employé;Moyenne;Not started;20;2026-07-10;2026-07-10
+Créer page gestion commandes;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Changer statut commande;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Bloquer modification après acceptation;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Modifier commande en attente;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Annuler commande en attente;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Enregistrer contact client avant annulation;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Envoyer mail retour matériel;Espace Employé;Employé;Moyenne;Not started;20;2026-07-10;2026-07-10
+Créer page menus et plats;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Activer / désactiver menu;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Modifier menu;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Supprimer menu avec confirmation;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Ajouter menu;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Ajouter entrée;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Ajouter plat;Espace Employé;Employé;Haute;Not started;25;2026-07-10;2026-07-10
+Ajouter dessert;Espace Employé;Employé;Haute;Not started;25;2026-07-12;2026-07-12
+Créer gestion horaires;Espace Employé;Employé;Moyenne;Not started;20;2026-07-12;2026-07-12
+Créer dashboard administrateur;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Afficher nombre commandes année;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Afficher CA annuel;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Afficher clients inscrits année;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Afficher note moyenne avis;Espace Administrateur;Administrateur;Moyenne;Not started;20;2026-07-12;2026-07-12
+Créer graphique commandes par menu;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Créer graphique CA par menu;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Créer page commandes par menu;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Ajouter filtres date début / date fin;Espace Administrateur;Administrateur;Moyenne;Not started;20;2026-07-12;2026-07-12
+Ajouter filtre thème;Espace Administrateur;Administrateur;Moyenne;Not started;20;2026-07-12;2026-07-12
+Ajouter filtre menus multiples;Espace Administrateur;Administrateur;Moyenne;Not started;20;2026-07-12;2026-07-12
+Créer page chiffre d’affaires par menu;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Créer page gestion employés;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Créer page ajout employé;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Ajouter champs complets employé;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-12;2026-07-12
+Visualiser les infos employé;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-17;2026-07-17
+Modifier les infos employé;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-17;2026-07-17
+Activer / désactiver employé;Espace Administrateur;Administrateur;Haute;Not started;25;2026-07-17;2026-07-17
+Supprimer employé;Espace Administrateur;Administrateur;Moyenne;Not started;20;2026-07-17;2026-07-17
+Tester compte employé créé;Espace Administrateur;Tests;Haute;Not started;25;2026-07-17;2026-07-17
+Créer variables CSS;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer typographies;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer boutons primary;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer boutons offwhite;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer badges actif/inactif;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer cartes menus;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer cartes commandes;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Créer composants réutilisables Twig;Front-End / Design Global;Front-end / Design;Haute;Not started;20;2026-07-17;2026-07-17
+Vérifier responsive mobile;Front-End / Design Global;Front-end / Design;Moyenne;Not started;15;2026-07-17;2026-07-17
+Corriger textes qui dépassent;Front-End / Design Global;Front-end / Design;Moyenne;Not started;15;2026-07-17;2026-07-17
+Harmoniser les couleurs;Front-End / Design Global;Front-end / Design;Moyenne;Done;15;2026-07-17;2026-07-17
+Harmoniser les boutons;Front-End / Design Global;Front-end / Design;Moyenne;Not started;15;2026-07-17;2026-07-17
+Tester inscription client;Tests;Tests;Haute;Not started;15;2026-07-17;2026-07-17
+Tester connexion client;Tests;Tests;Haute;Not started;15;2026-07-17;2026-07-17
+Tester connexion employé;Tests;Tests;Haute;Not started;15;2026-07-17;2026-07-17
+Tester connexion admin;Tests;Tests;Haute;Not started;15;2026-07-17;2026-07-17
+Tester ajout panier;Tests;Tests;Haute;Not started;15;2026-07-17;2026-07-17
+Tester validation commande;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester modification commande client;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester annulation commande client;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester changement statut employé;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester annulation employé;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester gestion avis;Tests;Tests;Moyenne;Not started;15;2026-07-19;2026-07-19
+Tester gestion menus/plats;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester gestion employés;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester MongoDB statistiques;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Tester réimport SQL;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Faire un parcours complet client;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Faire un parcours complet employé;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Faire un parcours complet admin;Tests;Tests;Haute;Not started;15;2026-07-19;2026-07-19
+Présenter le contexte du projet;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les besoins utilisateurs;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les rôles;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter la base MySQL;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les relations entre tables;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter MongoDB;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Expliquer pourquoi MongoDB est utilisé;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Expliquer la synchronisation MySQL vers MongoDB;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les fonctionnalités visiteur;Documentation;Documentation;Moyenne;Not started;15;2026-07-19;2026-07-19
+Présenter les fonctionnalités client;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les fonctionnalités employé;Documentation;Documentation;Haute;Not started;20;2026-07-19;2026-07-19
+Présenter les fonctionnalités administrateur;Documentation;Documentation;Haute;Not started;20;2026-07-21;2026-07-21
+Ajouter captures d’écran;Documentation;Documentation;Moyenne;Not started;15;2026-07-21;2026-07-21
+Préparer guide d’installation;Documentation;Documentation;Haute;Not started;20;2026-07-21;2026-07-21
+Préparer guide d’utilisation;Documentation;Documentation;Haute;Not started;20;2026-07-21;2026-07-21
+Préparer liste des tests réalisés;Documentation;Documentation;Haute;Not started;20;2026-07-21;2026-07-21

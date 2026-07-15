@@ -1,48 +1,64 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page d'inscription. #}
 {% block title %}Inscription - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Inscription',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
+{# Contenu principal de la page d'inscription. #}
 <main class="register-page">
+    {# Introduction de la page, reliee au titre par aria-labelledby pour l'accessibilite. #}
     <section class="register-intro" aria-labelledby="register-title">
         <h1 id="register-title">Créer votre compte pour accéder à vos futures commandes</h1>
         <span aria-hidden="true"></span>
         <p>Bienvenue chez Vite &amp; Gourmand !</p>
     </section>
 
+    {# Carte contenant le formulaire de creation de compte. #}
     <section class="register-card">
+        {# Messages d'erreur affiches si l'inscription est refusee. #}
         {% for message in app.flashes('register_error') %}
             <div class="auth-alert auth-alert--error">{{ message }}</div>
         {% endfor %}
 
+        {# Formulaire envoye au serveur pour creer un nouvel utilisateur. #}
         <form class="register-form" method="post" action="{{ path('register', app.request.query.all) }}">
+            {# Grille de champs : elle organise les informations personnelles et l'adresse. #}
             <div class="register-grid">
+                {# Prenom du client, conserve dans formData si le formulaire revient avec une erreur. #}
                 <label class="register-field register-field--full">
                     <span>Prénom *</span>
                     <input type="text" name="prenom" value="{{ formData.prenom|default('') }}" placeholder="Votre prénom" autocomplete="given-name" required>
                 </label>
 
+                {# Nom du client. #}
                 <label class="register-field register-field--full">
                     <span>Nom *</span>
                     <input type="text" name="nom" value="{{ formData.nom|default('') }}" placeholder="Votre nom" autocomplete="family-name" required>
                 </label>
 
+                {# Email de connexion du client. Il doit etre unique en base de donnees. #}
                 <label class="register-field register-field--full">
                     <span>Email *</span>
                     <input type="email" name="email" value="{{ formData.email|default('') }}" placeholder="votre.email@exemple.fr" autocomplete="email" required>
                 </label>
 
+                {# Mot de passe du compte avec bouton afficher/masquer. #}
                 <label class="register-field register-field--full">
                     <span>Mot de passe *</span>
-                    <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="new-password" required>
+                    <span class="auth-password-control">
+                        <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="new-password" data-password-input required>
+                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    </span>
                 </label>
 
+                {# Rappel visuel des regles de securite imposees au mot de passe. #}
                 <div class="register-password-info register-field--full">
                     <p>Le mot de passe doit contenir au minimum :</p>
                     <ul>
@@ -54,37 +70,48 @@
                     </ul>
                 </div>
 
+                {# Confirmation du mot de passe pour eviter les erreurs de saisie. #}
                 <label class="register-field register-field--full">
                     <span>Confirmation du mot de passe *</span>
-                    <input type="password" name="password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password" required>
+                    <span class="auth-password-control">
+                        <input type="password" name="password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password" data-password-input required>
+                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    </span>
                 </label>
 
+                {# Telephone du client, utile pour le suivi de commande. #}
                 <label class="register-field register-field--full">
                     <span>Numéro de téléphone *</span>
                     <input type="tel" name="telephone" value="{{ formData.telephone|default('') }}" placeholder="Votre numéro de téléphone" autocomplete="tel" required>
                 </label>
 
+                {# Adresse postale par defaut du client. #}
                 <label class="register-field register-field--full">
                     <span>Adresse postale *</span>
                     <input type="text" name="adresse_postale" value="{{ formData.adresse_postale|default('') }}" placeholder="Votre adresse postale" autocomplete="street-address" required>
                 </label>
 
+                {# Code postal de l'adresse client. #}
                 <label class="register-field register-field--full">
                     <span>Code postal *</span>
                     <input type="text" name="code_postal" value="{{ formData.code_postal|default('') }}" placeholder="Votre code postal" autocomplete="postal-code" required>
                 </label>
 
+                {# Ville de l'adresse client. #}
                 <label class="register-field register-field--full">
                     <span>Ville *</span>
                     <input type="text" name="ville" value="{{ formData.ville|default('') }}" placeholder="Votre ville" autocomplete="address-level2" required>
                 </label>
             </div>
 
+            {# Mention indiquant que les champs avec une etoile sont obligatoires. #}
             <p class="register-note">Les champs comprenant un * sont obligatoires.</p>
 
+            {# Actions de fin de formulaire : inscription ou retour vers la connexion. #}
             <div class="register-actions">
                 <button type="submit" class="buttonprimary">Inscrivez-vous</button>
 
+                {# Separateur visuel entre l'inscription et le lien de connexion. #}
                 <div class="register-separator">
                     <span></span>
                     <p>ou</p>

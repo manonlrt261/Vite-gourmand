@@ -1,12 +1,19 @@
+{# Utilisateur connecte recupere depuis la session. #}
 {% set connectedUser = app.session.get('utilisateur') %}
+{# Role de l'utilisateur utilise pour adapter le header. #}
 {% set roleLibelle = connectedUser.role_libelle|default('') %}
 {% set roleId = connectedUser.role_id|default(0) %}
+{# Verifie si l'utilisateur est administrateur. #}
 {% set isAdminHeader = roleLibelle == 'administrateur' or roleId == 3 %}
+{# Verifie si l'utilisateur doit voir le header employe/admin. #}
 {% set isEmployeeHeader = roleLibelle in ['employe', 'employé', 'administrateur'] or roleId in [2, 3] %}
+{# Route du tableau de bord selon le role. #}
 {% set dashboardRoute = isAdminHeader ? 'admin_dashboard' : 'employee_dashboard' %}
 
+{# Header specifique pour les employes et administrateurs. #}
 {% if isEmployeeHeader %}
     <header class="employee-header">
+        {# Logo et nom de marque qui renvoient vers le tableau de bord interne. #}
         <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
             <img
                 src="{{ asset('assets/logo.png') }}"
@@ -17,6 +24,7 @@
             <span class="employee-header__title">Vite et gourmand</span>
         </a>
 
+        {# Actions du header interne : acces tableau de bord et ouverture du menu burger. #}
         <div class="employee-header__actions">
             <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
             <button class="employee-header__burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="employee-menu-overlay" data-employee-menu-open>
@@ -27,8 +35,10 @@
         </div>
     </header>
 
+    {# Menu superpose ouvert par le bouton burger. #}
     <div class="employee-menu-overlay" id="employee-menu-overlay" hidden data-employee-menu-overlay>
         <div class="employee-menu-panel" role="dialog" aria-modal="true" aria-label="Menu">
+            {# Haut du menu superpose avec logo et bouton de fermeture. #}
             <div class="employee-menu-panel__top">
                 <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
                     <img
@@ -40,6 +50,7 @@
                     <span class="employee-header__title">Vite et gourmand</span>
                 </a>
 
+                {# Bouton permettant de fermer le menu superpose. #}
                 <div class="employee-header__actions">
                     <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
                     <button class="employee-header__close" type="button" aria-label="Fermer le menu" data-employee-menu-close>
@@ -50,12 +61,15 @@
                 </div>
             </div>
 
+            {# Navigation interne disponible pour les employes et administrateurs. #}
             <nav class="employee-menu-panel__nav" aria-label="Navigation">
                 <a href="{{ path(dashboardRoute) }}">Accueil</a>
                 <a href="{{ path('employee_orders') }}">Gestion des commandes</a>
                 <a href="{{ path('employee_menus') }}">Gestion des menus et plats</a>
                 <a href="{{ path('employee_hours') }}">Gestion des horaires</a>
                 <a href="{{ path('employee_reviews') }}">Gestion des avis clients</a>
+                <a href="{{ path('employee_messages') }}">Messagerie</a>
+                {# Liens supplementaires visibles uniquement pour l'administrateur. #}
                 {% if isAdminHeader %}
                     <a href="{{ path('admin_employees') }}">Gestion des employ&eacute;s</a>
                     <a href="{{ path('admin_orders_by_menu') }}">Commandes par menu</a>
@@ -66,7 +80,9 @@
         </div>
     </div>
 {% else %}
+    {# Header public affiche aux visiteurs et aux clients. #}
     <header class="header-desktop">
+        {# Logo et nom de marque qui renvoient vers la page d'accueil. #}
         <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
             <img
                 src="{{ asset('assets/logo.png') }}"
@@ -77,10 +93,12 @@
             <span class="header-title">Vite et Gourmand</span>
         </a>
 
+        {# Navigation principale du site public. #}
         <nav class="header-nav" aria-label="Navigation principale">
             <a href="{{ path('home_show') }}">Accueil</a>
             <a href="{{ path('menu_index') }}">Menu</a>
             <a href="{{ path('contact_index') }}">Contact</a>
+            {# Si un client est connecte, on affiche son compte et la deconnexion. Sinon, on affiche connexion. #}
             {% if app.session.get('utilisateur_id') %}
                 <a href="{{ path('customer_account') }}">Mon compte</a>
                 <a href="{{ path('logout') }}">D&eacute;connexion</a>
@@ -89,6 +107,7 @@
             {% endif %}
         </nav>
 
+        {# Acces direct au panier. #}
         <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
             Panier
         </a>

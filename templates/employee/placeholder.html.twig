@@ -1,15 +1,19 @@
 {% extends 'base.html.twig' %}
 
+{# Titre generique : cette page sert de modele temporaire pour une page employe. #}
 {% block title %}{{ pageTitle }} - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal reutilisable avec le titre fourni par le controleur. #}
     {% include 'components/_big_title.html.twig' with {
         title: pageTitle,
         image: asset('assets/bigtittle.png'),
         image_alt: pageTitle
     } %}
 
+    {# Contenu minimal d'une page employe en attente de developpement complet. #}
     <main class="employee-page">
+        {# Introduction de la page : type d'espace, titre et description dynamique. #}
         <section class="employee-page__intro">
             <p class="employee-page__eyebrow">Espace employ&eacute;</p>
             <h1>{{ pageTitle }}</h1>

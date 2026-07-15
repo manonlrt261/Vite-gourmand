@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{# Titre affiche dans l'onglet du navigateur pour la messagerie. #}
+{% block title %}Messagerie - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Messagerie',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Messagerie Vite et Gourmand'
+    } %}
+
+    {# Contenu principal de la messagerie employe/administrateur. #}
+    <main class="employee-messages-page">
+        {# Lien de retour adapte au role connecte. #}
+        {% include 'components/_workspace_back_link.html.twig' %}
+
+        {# Introduction de la page. #}
+        <section class="employee-messages-intro">
+            <h1>Messages clients</h1>
+            <p>Consultez les demandes envoyées depuis la page contact, répondez aux clients et classez les messages.</p>
+        </section>
+
+        {# Messages de succes ou d'erreur apres une action sur la messagerie. #}
+        {% for message in app.flashes('message_success') %}
+            <p class="contact-alert contact-alert--success">{{ message }}</p>
+        {% endfor %}
+
+        {% for message in app.flashes('message_error') %}
+            <p class="contact-alert contact-alert--error">{{ message }}</p>
+        {% endfor %}
+
+        {# Formulaire d'envoi d'un email de demande de retour de materiel. #}
+        <section class="employee-material-email-card">
+            <h2>Demande de retour de mat&eacute;riel</h2>
+            <p>S&eacute;lectionnez une commande et compl&eacute;tez les informations utiles. Le mail est pr&eacute;par&eacute; automatiquement pour le client.</p>
+
+            <form method="post" action="{{ path('employee_material_return_email') }}" class="employee-material-email-form">
+                {# Selection de la commande concernee par le retour materiel. #}
+                <label>
+                    <span>Commande concern&eacute;e</span>
+                    <select name="commande_id" required>
+                        <option value="">Choisir une commande</option>
+                        {# Liste des commandes pouvant necessiter un retour de materiel. #}
+                        {% for order in materialOrders %}
+                            <option value="{{ order.commande_id }}">
+                                Commande n&deg;{{ order.commande_id }} - {{ order.nom_menu|default('Menu') }} - {{ order.prenom }} {{ order.nom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                {# Date limite demandee au client pour retourner le materiel. #}
+                <label>
+                    <span>Date limite de retour</span>
+                    <input type="date" name="date_retour" required>
+                </label>
+
+                {# Materiel attendu en retour. #}
+                <label class="employee-material-email-form__full">
+                    <span>Mat&eacute;riel &agrave; retourner</span>
+                    <textarea name="materiel" rows="3" placeholder="Exemple : plats de service, supports, nappage..." required></textarea>
+                </label>
+
+                {# Consignes complementaires facultatives. #}
+                <label class="employee-material-email-form__full">
+                    <span>Informations compl&eacute;mentaires</span>
+                    <textarea name="instructions" rows="3" placeholder="Adresse de retour, horaires, consignes particuli&egrave;res..."></textarea>
+                </label>
+
+                <button type="submit" class="buttonprimary">Envoyer la demande</button>
+            </form>
+        </section>
+
+        {# Onglets de filtrage de la messagerie. #}
+        <nav class="employee-message-tabs" aria-label="Filtres messagerie">
+            <a href="{{ path('employee_messages') }}" class="{{ currentTab == 'active' ? 'is-active' }}">
+                Messages reçus <span>{{ counts.active }}</span>
+            </a>
+            <a href="{{ path('employee_messages', { tab: 'archived' }) }}" class="{{ currentTab == 'archived' ? 'is-active' }}">
+                Voir tous les messages archivés <span>{{ counts.archived }}</span>
+            </a>
+            <a href="{{ path('employee_messages', { tab: 'deleted' }) }}" class="{{ currentTab == 'deleted' ? 'is-active' }}">
+                Voir les messages supprimés récemment <span>{{ counts.deleted }}</span>
+            </a>
+            <a href="{{ path('employee_messages', { tab: 'replied' }) }}" class="{{ currentTab == 'replied' ? 'is-active' }}">
+                Messages répondus <span>{{ counts.replied }}</span>
+            </a>
+        </nav>
+
+        {# Liste des messages correspondant a l'onglet selectionne. #}
+        <section class="employee-message-list">
+            {# Boucle sur les messages de contact. #}
+            {% for contactMessage in messages %}
+                {# Carte d'un message client. #}
+                <article class="employee-message-card">
+                    {# En-tete : numero, sujet et date du message. #}
+                    <header class="employee-message-card__header">
+                        <div>
+                            <p>Message n°{{ contactMessage.contact_id }}</p>
+                            <h2>{{ contactMessage.titre }}</h2>
+                        </div>
+                        <span>{{ contactMessage.created_at|date('d/m/Y H:i') }}</span>
+                    </header>
+
+                    {# Informations rapides : email client et statut du message. #}
+                    <div class="employee-message-card__meta">
+                        <span>{{ contactMessage.email }}</span>
+                        <span>{{ contactMessage.statut|default('nouveau') }}</span>
+                    </div>
+
+                    {# Contenu du message envoye depuis la page contact. #}
+                    <p class="employee-message-card__content">{{ contactMessage.description }}</p>
+
+                    {# Bloc affiche si une reponse a deja ete envoyee. #}
+                    {% if contactMessage.reponse %}
+                        <div class="employee-message-reply">
+                            <h3>Réponse envoyée</h3>
+                            <p>{{ contactMessage.reponse }}</p>
+                            {% if contactMessage.responded_at %}
+                                <small>
+                                    Répondu le {{ contactMessage.responded_at|date('d/m/Y H:i') }}
+                                    {% if contactMessage.respondent_prenom or contactMessage.respondent_nom %}
+                                        par {{ contactMessage.respondent_prenom }} {{ contactMessage.respondent_nom }}
+                                    {% endif %}
+                                </small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {# Formulaire de reponse, masque dans les onglets repondus et supprimes. #}
+                    {% if currentTab not in ['replied', 'deleted'] %}
+                        <form method="post" action="{{ path('employee_message_reply', { id: contactMessage.contact_id }) }}" class="employee-message-reply-form">
+                            <input type="hidden" name="tab" value="{{ currentTab }}">
+                            <label>
+                                <span>Répondre au message</span>
+                                <textarea name="reponse" rows="4" placeholder="Écrivez votre réponse ici."></textarea>
+                            </label>
+                            <button type="submit" class="buttonprimary">Répondre</button>
+                        </form>
+                    {% endif %}
+
+                    {# Actions disponibles selon l'onglet courant. #}
+                    <div class="employee-message-actions">
+                        {# Depuis les messages recus, on peut archiver. #}
+                        {% if currentTab == 'active' %}
+                            <form method="post" action="{{ path('employee_message_archive', { id: contactMessage.contact_id }) }}">
+                                <input type="hidden" name="tab" value="{{ currentTab }}">
+                                <button type="submit" class="buttonoffwhite">Archiver</button>
+                            </form>
+                        {% endif %}
+
+                        {# Depuis les archives, on peut remettre dans les messages recus. #}
+                        {% if currentTab == 'archived' %}
+                            <form method="post" action="{{ path('employee_message_unarchive', { id: contactMessage.contact_id }) }}">
+                                <button type="submit" class="buttonprimary">Déplacer dans messages reçus</button>
+                            </form>
+                        {% endif %}
+
+                        {# Depuis les messages supprimes, on peut restaurer selon l'etat de reponse. #}
+                        {% if currentTab == 'deleted' %}
+                            <form method="post" action="{{ path('employee_message_restore', { id: contactMessage.contact_id }) }}">
+                                <button type="submit" class="buttonprimary">
+                                    {{ contactMessage.reponse ? 'Déplacer dans messages répondus' : 'Déplacer dans messages reçus' }}
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {# Suppression possible depuis les messages actifs, archives ou repondus. #}
+                        {% if currentTab in ['active', 'archived', 'replied'] %}
+                            <form method="post" action="{{ path('employee_message_delete', { id: contactMessage.contact_id }) }}">
+                                <input type="hidden" name="tab" value="{{ currentTab }}">
+                                <button type="submit" class="buttonoffwhite">Supprimer</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </article>
+            {% else %}
+                {# Message affiche si l'onglet ne contient aucun message. #}
+                <p class="employee-empty">Aucun message dans cet onglet.</p>
+            {% endfor %}
+        </section>
+    </main>
+{% endblock %}

@@ -1,27 +1,37 @@
 {% extends 'base.html.twig' %}
 
+{# Indique si le formulaire concerne un menu complet. #}
 {% set isMenu = type == 'menu' %}
+{# Determine le nom du champ a lire pour une entree, un plat ou un dessert. #}
 {% set nameField = type == 'entree' ? 'nom_entree' : (type == 'plat' ? 'nom_plat' : 'nom_dessert') %}
 
+{# Titre dynamique de la page selon l'action : ajout ou modification. #}
 {% block title %}{{ pageTitle }} - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal reutilisable avec le titre fourni par le controleur. #}
     {% include 'components/_big_title.html.twig' with {
         title: pageTitle,
         image: asset('assets/bigtittle.png'),
         image_alt: 'Plat Vite et Gourmand'
     } %}
 
+    {# Contenu principal du formulaire de gestion. #}
     <main class="employee-management-page employee-form-page">
+        {# Lien de retour vers la liste complete des menus et plats. #}
         <a href="{{ path('employee_items_all') }}" class="cart-back-link">&larr; Retour aux menus et plats</a>
 
+        {# Formulaire d'ajout ou modification d'un menu, entree, plat ou dessert. #}
         <form method="post" class="employee-edit-form">
+            {# Champs specifiques aux menus complets. #}
             {% if isMenu %}
+                {# Nom public du menu. #}
                 <label>
                     <span>Nom du menu</span>
                     <input type="text" name="nom_menu" value="{{ item.nom_menu|default('') }}" required>
                 </label>
 
+                {# Theme du menu, limite aux valeurs autorisees. #}
                 <label>
                     <span>Th&egrave;me</span>
                     <select name="theme" required>
@@ -33,31 +43,37 @@
                     </select>
                 </label>
 
+                {# Description affichee sur la page menus et detail menu. #}
                 <label class="employee-form-field--full">
                     <span>Description</span>
                     <textarea name="description" required>{{ item.description|default('') }}</textarea>
                 </label>
 
+                {# Conditions particulieres du menu. #}
                 <label class="employee-form-field--full">
                     <span>Conditions</span>
                     <textarea name="conditions" required>{{ item.conditions|default('') }}</textarea>
                 </label>
 
+                {# Dates optionnelles de disponibilite du menu. #}
                 <label>
                     <span>Date de d&eacute;but de disponibilit&eacute;</span>
                     <input type="date" name="date_debut_disponibilite" value="{{ item.date_debut_disponibilite|default('') }}">
                 </label>
 
+                {# Nombre minimum de personnes pour commander ce menu. #}
                 <label>
                     <span>Date de fin de disponibilit&eacute;</span>
                     <input type="date" name="date_fin_disponibilite" value="{{ item.date_fin_disponibilite|default('') }}">
                 </label>
 
+                {# Prix par personne utilise dans le panier et les commandes. #}
                 <label>
                     <span>Nombre de personnes minimum</span>
                     <input type="number" name="personnes_minimum" min="1" value="{{ item.personnes_minimum|default(1) }}" required>
                 </label>
 
+                {# Stock disponible du menu. #}
                 <label>
                     <span>Prix par personne</span>
                     <input type="number" name="prix_par_personne" min="0" step="0.01" value="{{ item.prix_par_personne|default(0) }}" required>
@@ -68,15 +84,18 @@
                     <input type="number" name="stock_disponible" min="0" value="{{ item.stock_disponible|default(0) }}" required>
                 </label>
             {% else %}
+                {# Champs specifiques aux entrees, plats et desserts. #}
                 <label>
                     <span>Nom</span>
                     <input type="text" name="nom" value="{{ attribute(item, nameField)|default('') }}" required>
                 </label>
 
+                {# Menu auquel rattacher l'element, ou independant si aucun menu n'est choisi. #}
                 <label>
                     <span>Menu associ&eacute;</span>
                     <select name="menu_id">
                         <option value="">Ind&eacute;pendant</option>
+                        {# Liste des menus disponibles pour l'association. #}
                         {% for menu in menus %}
                             <option value="{{ menu.menu_id }}" {{ item.menu_id|default(null) == menu.menu_id ? 'selected' : '' }}>
                                 {{ menu.nom_menu }}
@@ -85,6 +104,7 @@
                     </select>
                 </label>
 
+                {# Theme de l'element. #}
                 <label>
                     <span>Th&egrave;me</span>
                     <select name="theme" required>
@@ -96,32 +116,38 @@
                     </select>
                 </label>
 
+                {# Allergènes affiches au client. #}
                 <label>
                     <span>Allerg&egrave;nes</span>
                     <input type="text" name="allergenes" value="{{ item.allergenes|default('') }}" required>
                 </label>
 
+                {# Description de l'entree, du plat ou du dessert. #}
                 <label class="employee-form-field--full">
                     <span>Description</span>
                     <textarea name="description" required>{{ item.description|default('') }}</textarea>
                 </label>
             {% endif %}
 
+            {# Chemin de l'image affichee sur le site. #}
             <label>
                 <span>Chemin de l'image</span>
                 <input type="text" name="image_url" value="{{ item.image_url|default('assets/bigtittle.png') }}" required>
             </label>
 
+            {# Texte alternatif de l'image pour l'accessibilite. #}
             <label>
                 <span>Texte alternatif de l'image</span>
                 <input type="text" name="image_alt" value="{{ item.image_alt|default('Image Vite et Gourmand') }}" required>
             </label>
 
+            {# Case qui determine si l'element est visible sur le site public. #}
             <label class="employee-form-checkbox">
                 <input type="checkbox" name="actif" value="1" {{ item.actif|default(1) == 1 ? 'checked' : '' }}>
                 <span>Visible sur le site</span>
             </label>
 
+            {# Actions finales : enregistrer ou annuler. #}
             <div class="employee-form-actions">
                 <button type="submit" class="buttonprimary">{{ isCreate ? 'Ajouter' : 'Enregistrer' }}</button>
                 <a href="{{ path('employee_items_all') }}" class="buttonoffwhite">Annuler</a>

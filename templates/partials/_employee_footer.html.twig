@@ -1,32 +1,43 @@
+{# Utilisateur connecte recupere pour adapter le lien "Mon espace". #}
 {% set footerUser = app.session.get('utilisateur') %}
+{# Role de l'utilisateur utilise dans le footer interne. #}
 {% set footerRole = footerUser.role_libelle|default('') %}
 {% set footerRoleId = footerUser.role_id|default(0) %}
+{# Route du tableau de bord selon que l'utilisateur est administrateur ou employe. #}
 {% set footerDashboardRoute = footerRole == 'administrateur' or footerRoleId == 3 ? 'admin_dashboard' : 'employee_dashboard' %}
 
+{# Footer specifique aux espaces employe et administrateur. #}
 <footer class="footer-desktop footer-employee">
+    {# Colonne de liens vers les pages de gestion internes. #}
     <div class="footer-hours footer-employee-management">
         <h2 class="footer-title">Gestion :</h2>
 
+        {# Navigation vers les principaux outils de gestion. #}
         <nav class="footer-text footer-employee-links" aria-label="Navigation gestion">
             <a href="{{ path('employee_orders') }}">Des commandes</a>
             <a href="{{ path('employee_menus') }}">Des menus et des plats</a>
             <a href="{{ path('employee_reviews') }}">Des avis</a>
             <a href="{{ path('employee_hours') }}">Des horaires</a>
+            <a href="{{ path('employee_messages') }}">Des messages</a>
         </nav>
     </div>
 
+    {# Bloc central avec le nom du site et les liens legaux. #}
     <div class="footer-brand">
         <p class="footer-name">Vite & Gourmand</p>
 
+        {# Liens legaux affiches aussi dans l'espace interne. #}
         <nav class="footer-legal" aria-label="Liens légaux">
             <a href="#">Mentions légales</a>
             <a href="#">CGV</a>
         </nav>
     </div>
 
+    {# Navigation generale du footer interne. #}
     <nav class="footer-nav" aria-label="Navigation">
         <a href="{{ path('home_show') }}">Accueil</a>
         <a href="{{ path('menu_index') }}">Menus</a>
+        {# Retour vers le bon espace selon le role connecte. #}
         <a href="{{ path(footerDashboardRoute) }}">Mon espace</a>
         <a href="{{ path('logout') }}">Déconnexion</a>
     </nav>

@@ -1,29 +1,38 @@
 {% extends 'base.html.twig' %}
 
+{# Titre dynamique de l'onglet avec le nom du menu consulte. #}
 {% block title %}{{ menu.nom_menu }} - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Grand bandeau avec le nom du menu et son image si elle existe. #}
 {% include 'components/_big_title.html.twig' with {
     title: menu.nom_menu,
     image: menu.image_url ? asset(menu.image_url) : asset('assets/bigtittle.png'),
     image_alt: menu.image_alt ?: menu.nom_menu
 } %}
 
+{# Contenu principal de la page detail d'un menu. #}
 <main class="menu-detail-page">
+    {# Description generale du menu. #}
     <section class="menu-detail-intro">
         <p>{{ menu.description }}</p>
     </section>
 
+    {# Mise en page en deux colonnes : composition du menu et informations de commande. #}
     <section class="menu-detail-layout">
+        {# Liste des elements du menu : entree, plat et dessert. #}
         <div class="menu-detail-meal-list">
             {% for category, item in mealItems %}
                 {% if item %}
+                    {# Ligne de presentation d'un element du menu. #}
                     <article class="menu-detail-row">
+                        {# Texte de l'element : categorie, nom, description et allergenes. #}
                         <div class="menu-detail-row__content">
                             <h2>{{ category }}</h2>
                             <h3>{{ item.nom }}</h3>
                             <p>{{ item.description }}</p>
 
+                            {# Bloc allergenes affiche uniquement si l'information existe. #}
                             {% if item.allergenes %}
                                 <div class="menu-detail-allergens">
                                     <span>Allergènes</span>
@@ -32,6 +41,7 @@
                             {% endif %}
                         </div>
 
+                        {# Image de l'element affichee uniquement si un chemin est renseigne. #}
                         {% if item.image_url %}
                             <img
                                 src="{{ asset(item.image_url) }}"
@@ -44,7 +54,9 @@
             {% endfor %}
         </div>
 
+        {# Colonne laterale avec le recapitulatif et le bouton commander. #}
         <aside class="menu-detail-sidebar">
+            {# Informations rapides : minimum, prix et disponibilite. #}
             <section class="menu-detail-summary" aria-label="Informations du menu">
                 <div>
                     <strong>{{ menu.personnes_minimum }} pers. min.</strong>
@@ -62,6 +74,7 @@
                 </div>
             </section>
 
+            {# Conditions propres au menu ou conditions par defaut si rien n'est renseigne en base. #}
             <section class="menu-detail-conditions">
                 <h2>Conditions de ce menu</h2>
 
@@ -78,6 +91,7 @@
                 {% endif %}
             </section>
 
+            {# Bouton qui ajoute le menu au panier et lance le parcours de commande. #}
             <section class="menu-detail-order">
                 <a href="{{ path('cart_show', { id: menu.menu_id }) }}" class="buttonprimary menu-detail-order__button">Commander</a>
                 <p>Connectez-vous pour pouvoir commander ce menu</p>

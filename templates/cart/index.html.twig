@@ -1,19 +1,25 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page panier vide. #}
 {% block title %}Panier - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Panier',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
+{# Contenu principal affiche lorsque le panier ne contient aucun menu. #}
 <main class="cart-page">
+    {# Carte d'information indiquant au client que son panier est vide. #}
     <section class="cart-card cart-empty-card">
         <h2>Votre panier est vide</h2>
+        {# Ligne decorative utilisee pour separer le titre du texte. #}
         <div class="cart-card__line"></div>
         <p>Choisissez un menu gourmand pour commencer votre commande.</p>
+        {# Bouton de redirection vers la page des menus pour commencer une commande. #}
         <a href="{{ path('menu_index') }}" class="buttonprimary">Voir les menus</a>
     </section>
 </main>

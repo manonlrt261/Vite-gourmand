@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+
+{# Titre affiché dans l'onglet du navigateur pour la page d'ajout d'un employé. #}
+{% block title %}Ajouter un employ&eacute; - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
+    {% include 'components/_big_title.html.twig' with {
+        title: 'Ajouter un employ&eacute;',
+        image: asset('assets/bigtittle.png'),
+        image_alt: 'Ajouter un employ&eacute; Vite et Gourmand'
+    } %}
+
+    {# Contenu principal du formulaire de création d'un employé. #}
+    <main class="admin-employee-form-page">
+        {# Lien de retour vers la liste des employés. #}
+        <a href="{{ path('admin_employees') }}" class="cart-back-link">&larr; Retour &agrave; la gestion des employ&eacute;s</a>
+
+        {# Introduction de la page : elle explique à quoi sert le formulaire. #}
+        <section class="admin-employees-heading">
+            <div>
+                <h1>Ajouter un employ&eacute;</h1>
+                <p>Cr&eacute;ez un compte employ&eacute; avec les informations utiles &agrave; l'administration interne.</p>
+            </div>
+        </section>
+
+        {# Bloc d'erreurs affiché si une information obligatoire est manquante ou invalide. #}
+        {% if errors is not empty %}
+            <div class="contact-alert">
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Formulaire envoyé au serveur pour créer le compte employé dans la base de données. #}
+        <form method="post" class="admin-employee-create-form">
+            {# Identité de l'employé. #}
+            <label>
+                <span>Nom *</span>
+                <input type="text" name="nom" value="{{ employee.nom }}" required>
+            </label>
+
+            <label>
+                <span>Pr&eacute;nom *</span>
+                <input type="text" name="prenom" value="{{ employee.prenom }}" required>
+            </label>
+
+            {# Informations de naissance demandées pour compléter la fiche administrative. #}
+            <label>
+                <span>Date de naissance *</span>
+                <input type="date" name="date_naissance" value="{{ employee.date_naissance }}" required>
+            </label>
+
+            <label>
+                <span>Lieu de naissance *</span>
+                <input type="text" name="lieu_naissance" value="{{ employee.lieu_naissance }}" required>
+            </label>
+
+            {# Adresse postale complète de l'employé. #}
+            <label class="admin-employee-create-form__full">
+                <span>Adresse postale *</span>
+                <input type="text" name="adresse_postale" value="{{ employee.adresse_postale }}" required>
+            </label>
+
+            <label>
+                <span>Code postal *</span>
+                <input type="text" name="code_postal" value="{{ employee.code_postal }}" required>
+            </label>
+
+            <label>
+                <span>Ville *</span>
+                <input type="text" name="ville" value="{{ employee.ville }}" required>
+            </label>
+
+            {# Coordonnées professionnelles utilisées pour la connexion et les échanges internes. #}
+            <label>
+                <span>Email professionnelle *</span>
+                <input type="email" name="email" value="{{ employee.email }}" placeholder="prenom.nom@vite-gourmand.fr" required>
+            </label>
+
+            <label>
+                <span>Num&eacute;ro de t&eacute;l&eacute;phone *</span>
+                <input type="text" name="telephone" value="{{ employee.telephone }}" required>
+            </label>
+
+            {# Poste de l'employé : la liste vient du contrôleur pour garder les postes cohérents partout. #}
+            <label class="admin-employee-create-form__full">
+                <span>Poste *</span>
+                <select name="poste" required>
+                    <option value="">Choisir un poste</option>
+                    {# Si le formulaire est réaffiché après une erreur, le poste déjà choisi reste sélectionné. #}
+                    {% for job in jobs %}
+                        <option value="{{ job }}" {{ employee.poste == job ? 'selected' : '' }}>{{ job }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            {# Actions finales : créer l'employé ou revenir à la liste sans enregistrer. #}
+            <div class="admin-employee-create-form__actions">
+                <button type="submit" class="buttonprimary">Cr&eacute;er l'employ&eacute;</button>
+                <a href="{{ path('admin_employees') }}" class="buttonoffwhite">Annuler</a>
+            </div>
+        </form>
+    </main>
+{% endblock %}

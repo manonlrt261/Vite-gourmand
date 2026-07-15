@@ -1,11 +1,18 @@
+{# Statut courant de l'avis, avec en_attente comme valeur par defaut. #}
 {% set status = review.statut|default('en_attente') %}
+{# Libelle lisible du statut affiche dans la carte. #}
 {% set statusLabel = status == 'valide' ? 'Accept&eacute;' : (status == 'refuse' ? 'Refus&eacute;' : 'En attente') %}
+{# Date normalisee pour les filtres JavaScript. #}
 {% set date = review.created_at|date('Y-m-d') %}
+{# Identifiant du menu utilise pour filtrer les avis par menu. #}
 {% set menuId = review.menu_id|default('') %}
+{# Nom complet du client, avec Client comme secours. #}
 {% set fullName = (review.prenom|default('Client') ~ ' ' ~ review.nom|default(''))|trim %}
 
+{# Carte reutilisable representant un avis client dans les pages employe. #}
 <article
     class="employee-review-card"
+    {# Attributs data utilises par les filtres et actions sans rechargement. #}
     data-review-card
     data-search="{{ (fullName ~ ' commande ' ~ review.commande_id ~ ' ' ~ review.nom_menu|default(''))|lower }}"
     data-note="{{ review.note }}"
@@ -13,6 +20,7 @@
     data-menu-id="{{ menuId }}"
     data-status="{{ status }}"
 >
+    {# Colonne client : identite, commande, date, note et statut de moderation. #}
     <div class="employee-review-card__client">
         <h3>{{ fullName }}</h3>
         <p>Commande n&deg;{{ review.commande_id }}</p>
@@ -21,6 +29,7 @@
         <span class="employee-review-status" data-review-status-label>{{ statusLabel|raw }}</span>
     </div>
 
+    {# Contenu de l'avis : commentaire, date et menu concerne. #}
     <div class="employee-review-card__content">
         <p>{{ review.commentaire|default('Aucun commentaire laiss&eacute;.') }}</p>
         <small>
@@ -31,7 +40,9 @@
         </small>
     </div>
 
+    {# Actions de moderation disponibles selon le statut actuel de l'avis. #}
     <div class="employee-review-card__actions">
+        {# Permet d'accepter l'avis s'il n'est pas deja accepte. #}
         {% if status != 'valide' %}
             <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-review-action>
                 <input type="hidden" name="action" value="accept">
@@ -39,6 +50,7 @@
             </form>
         {% endif %}
 
+        {# Permet de refuser l'avis s'il n'est pas deja refuse. #}
         {% if status != 'refuse' %}
             <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-review-action>
                 <input type="hidden" name="action" value="refuse">
@@ -46,6 +58,7 @@
             </form>
         {% endif %}
 
+        {# Permet de remettre un avis accepte ou refuse dans la file d'attente. #}
         {% if status != 'en_attente' %}
             <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-review-action>
                 <input type="hidden" name="action" value="pending">

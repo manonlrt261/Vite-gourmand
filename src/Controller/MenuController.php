@@ -6,8 +6,10 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
+// Controleur des menus visibles par les visiteurs et les clients.
 class MenuController extends AbstractController
 {
+    // Recupere les menus actifs, les regroupe par theme et affiche la page liste des menus.
     public function index(Connection $connection): Response
     {
         $menus = $connection->fetchAllAssociative(
@@ -49,6 +51,7 @@ class MenuController extends AbstractController
         ]);
     }
 
+    // Affiche le detail d un menu avec son entree, son plat et son dessert.
     public function show(int $id, Connection $connection): Response
     {
         $menu = $connection->fetchAssociative(
@@ -68,7 +71,7 @@ class MenuController extends AbstractController
         $entree = $connection->fetchAssociative(
             'SELECT nom_entree AS nom, description, allergenes, image_url, image_alt
              FROM entree
-             WHERE menu_id = ? AND actif = 1
+             WHERE menu_id = ?
              LIMIT 1',
             [$id]
         );
@@ -76,7 +79,7 @@ class MenuController extends AbstractController
         $plat = $connection->fetchAssociative(
             'SELECT nom_plat AS nom, description, allergenes, image_url, image_alt
              FROM plat
-             WHERE menu_id = ? AND actif = 1
+             WHERE menu_id = ?
              LIMIT 1',
             [$id]
         );
@@ -84,7 +87,7 @@ class MenuController extends AbstractController
         $dessert = $connection->fetchAssociative(
             'SELECT nom_dessert AS nom, description, allergenes, image_url, image_alt
              FROM dessert
-             WHERE menu_id = ? AND actif = 1
+             WHERE menu_id = ?
              LIMIT 1',
             [$id]
         );
@@ -99,6 +102,7 @@ class MenuController extends AbstractController
         ]);
     }
 
+    // Normalise le theme d un menu pour le ranger dans la bonne categorie d affichage.
     private function normalizeTheme(string $theme): string
     {
         return match ($theme) {

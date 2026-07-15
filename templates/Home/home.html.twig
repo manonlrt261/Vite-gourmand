@@ -1,17 +1,23 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur. #}
 {% block title %}Accueil - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Contenu principal de la page d'accueil. #}
 <main class="home-page">
+    {# Hero d'accueil avec image de fond, filtre sombre et appel a l'action vers les menus. #}
     <section class="home-festive-hero">
+        {# Image principale visible en haut de la page. #}
         <img
             src="{{ asset('assets/bigtittle.png') }}"
             alt="Plat raffin&eacute; pr&eacute;par&eacute; par Vite et Gourmand"
             class="home-festive-hero__image"
         >
+        {# Calque visuel qui assombrit legerement l'image pour rendre le texte lisible. #}
         <div class="home-festive-hero__overlay" aria-hidden="true"></div>
 
+        {# Texte central du hero et bouton de redirection vers la page menus. #}
         <div class="home-festive-hero__content">
             <p>Chaque occasion m&eacute;rite son</p>
             <h1>festin</h1>
@@ -19,13 +25,16 @@
         </div>
     </section>
 
+    {# Section de presentation du professionnalisme et des valeurs de l'entreprise. #}
     <section class="home-section home-professionalism">
+        {# Petit titre de section encadre par deux traits decoratifs. #}
         <div class="home-kicker">
             <span></span>
             <p>Notre professionnalisme</p>
             <span></span>
         </div>
 
+        {# Grand titre et texte d'introduction de la section. #}
         <header class="home-section-heading">
             <h2>L'exigence au service de vos plus beaux moments</h2>
             <p>
@@ -34,7 +43,9 @@
             </p>
         </header>
 
+        {# Grille qui alterne image et arguments de confiance. #}
         <div class="home-values-grid">
+            {# Photo de Julie et Jose pour humaniser la presentation. #}
             <div class="home-values-grid__image">
                 <img
                     src="{{ asset('assets/julieetjose.png') }}"
@@ -42,6 +53,7 @@
                 >
             </div>
 
+            {# Premier argument : cuisine authentique. #}
             <article class="home-value-card">
                 <h3>Une cuisine authentique</h3>
                 <p>
@@ -50,6 +62,7 @@
                 </p>
             </article>
 
+            {# Deuxieme argument : choix des ingredients. #}
             <article class="home-value-card">
                 <h3>Une s&eacute;lection d'ingr&eacute;dients de qualit&eacute;</h3>
                 <p>
@@ -58,6 +71,7 @@
                 </p>
             </article>
 
+            {# Troisieme argument : importance de l'equipe. #}
             <article class="home-value-card">
                 <h3>Notre &eacute;quipe, notre force</h3>
                 <p>
@@ -66,6 +80,7 @@
                 </p>
             </article>
 
+            {# Quatrieme argument : organisation et ponctualite. #}
             <article class="home-value-card">
                 <h3>Organisation et ponctualit&eacute;</h3>
                 <p>
@@ -74,6 +89,7 @@
                 </p>
             </article>
 
+            {# Cinquieme argument : relation de confiance avec les clients. #}
             <article class="home-value-card">
                 <h3>Qualit&eacute; et confiance</h3>
                 <p>
@@ -83,18 +99,22 @@
             </article>
         </div>
 
+        {# Bouton centre qui renvoie vers la page des menus. #}
         <div class="home-centered-button">
             <a href="{{ path('menu_index') }}" class="buttonprimary">Nos menus</a>
         </div>
     </section>
 
+    {# Bloc editorial qui met en avant la satisfaction client avec une image de table d'evenement. #}
     <section class="home-success-card">
+        {# Texte de mise en avant de la promesse de l'entreprise. #}
         <div class="home-success-card__content">
             <h2>Notre plus belle r&eacute;ussite ?</h2>
             <p>Voir nos clients repartir avec le sourire.</p>
             <span>Julie & Jos&eacute;</span>
         </div>
 
+        {# Image associee a un evenement soigne et convivial. #}
         <img
             src="{{ asset('assets/imageaccueil.png') }}"
             alt="Table &eacute;l&eacute;gante pr&eacute;par&eacute;e pour un &eacute;v&eacute;nement"
@@ -102,24 +122,31 @@
         >
     </section>
 
+    {# Bouton de contact place entre les sections de contenu. #}
     <div class="home-contact-cta">
         <a href="{{ path('contact_index') }}" class="buttonwhite">Contactez-nous !</a>
     </div>
 
+    {# Section des avis clients affiches sur la page d'accueil. #}
     <section class="home-section home-reviews">
+        {# Petit titre de section encadre par deux traits decoratifs. #}
         <div class="home-kicker">
             <span></span>
             <p>Avis clients v&eacute;rifi&eacute;s</p>
             <span></span>
         </div>
 
+        {# Titre et texte d'introduction des avis. #}
         <header class="home-section-heading">
             <h2>Ils nous ont fait confiance</h2>
             <p>D&eacute;couvrez les avis de nos clients apr&egrave;s leur &eacute;v&eacute;nement.</p>
         </header>
 
+        {# Grille contenant les avis mis en avant. #}
         <div class="home-review-grid">
+            {# Premier avis client statique affiche sur l'accueil. #}
             <article class="home-review-card">
+                {# Guillemets decoratifs et note en etoiles. #}
                 <div class="home-review-card__top">
                     <span class="home-quote">&ldquo;</span>
                     <span class="home-stars">★★★★★</span>
@@ -135,7 +162,9 @@
                 </footer>
             </article>
 
+            {# Deuxieme avis client statique affiche sur l'accueil. #}
             <article class="home-review-card">
+                {# Guillemets decoratifs et note en etoiles. #}
                 <div class="home-review-card__top">
                     <span class="home-quote">&ldquo;</span>
                     <span class="home-stars">★★★★★</span>
@@ -152,6 +181,7 @@
             </article>
         </div>
 
+        {# Note Google globale affichee sous les avis. #}
         <div class="home-google-rating">
             <span></span>
             <p>★★★★★ 4,9 Avis Google</p>

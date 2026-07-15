@@ -9,8 +9,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Controleur de l'espace administrateur et des statistiques.
 class AdminController extends AbstractController
 {
+    // Affiche le tableau de bord administrateur avec les indicateurs principaux.
     public function dashboard(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -25,6 +27,7 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // Affiche la page de gestion des employes.
     public function employees(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -32,6 +35,7 @@ class AdminController extends AbstractController
         }
 
         $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
 
         return $this->render('admin/employees.html.twig', [
             'employees' => $this->getEmployees($connection),
@@ -39,18 +43,59 @@ class AdminController extends AbstractController
         ]);
     }
 
-    public function createEmployee(Request $request): Response
+    // Cree un compte employe depuis l espace administrateur.
+    public function createEmployee(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
             return $this->redirectToAdminLogin($request);
         }
 
-        return $this->render('employee/placeholder.html.twig', [
-            'pageTitle' => "Ajout d'un employé",
-            'pageDescription' => "Cette page servira à créer un nouveau compte employé.",
+        $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
+
+        $formData = $this->getEmployeeFormData($request);
+        $errors = [];
+
+        if ($request->isMethod('POST')) {
+            $errors = $this->validateEmployeeData($connection, $formData);
+
+            if ($errors === []) {
+                $temporaryPassword = $this->generateTemporaryEmployeePassword();
+                $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+
+                $connection->insert('utilisateurs', [
+                    'nom' => $formData['nom'],
+                    'prenom' => $formData['prenom'],
+                    'date_naissance' => $formData['date_naissance'],
+                    'lieu_naissance' => $formData['lieu_naissance'],
+                    'adresse_postale' => $formData['adresse_postale'],
+                    'code_postal' => $formData['code_postal'],
+                    'ville' => $formData['ville'],
+                    'email' => $formData['email'],
+                    'telephone' => $formData['telephone'],
+                    'poste' => $formData['poste'],
+                    'mot_de_passe' => password_hash($temporaryPassword, PASSWORD_DEFAULT),
+                    'role_id' => $this->getEmployeeRoleId($connection),
+                    'actif' => 1,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                $this->addFlash('employee_success', 'Compte employe cree. Mot de passe provisoire a transmettre a l employe : ' . $temporaryPassword);
+
+                return $this->redirectToRoute('admin_employees');
+            }
+        }
+
+        return $this->render('admin/employee_form.html.twig', [
+            'jobs' => $this->getEmployeeJobs(),
+            'employee' => $formData,
+            'errors' => $errors,
         ]);
+
     }
 
+    // Affiche les statistiques du nombre de commandes par menu.
     public function ordersByMenu(Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -70,6 +115,7 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // Affiche les statistiques du chiffre d affaires par menu.
     public function revenueByMenu(Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -89,6 +135,7 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // Active ou desactive un employe sans rechargement de page.
     public function toggleEmployeeStatus(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -96,6 +143,7 @@ class AdminController extends AbstractController
         }
 
         $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
 
         if (!$employee) {
@@ -117,6 +165,7 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // Met a jour les informations d un employe.
     public function updateEmployee(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -124,6 +173,7 @@ class AdminController extends AbstractController
         }
 
         $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
 
         if (!$employee) {
@@ -133,6 +183,8 @@ class AdminController extends AbstractController
         $payload = [
             'prenom' => trim((string) $request->request->get('prenom')),
             'nom' => trim((string) $request->request->get('nom')),
+            'date_naissance' => trim((string) $request->request->get('date_naissance')),
+            'lieu_naissance' => trim((string) $request->request->get('lieu_naissance')),
             'email' => trim((string) $request->request->get('email')),
             'telephone' => trim((string) $request->request->get('telephone')),
             'adresse_postale' => trim((string) $request->request->get('adresse_postale')),
@@ -142,10 +194,35 @@ class AdminController extends AbstractController
             'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
 
+        if (
+            $payload['prenom'] === ''
+            || $payload['nom'] === ''
+            || $payload['date_naissance'] === ''
+            || $payload['lieu_naissance'] === ''
+            || $payload['email'] === ''
+            || $payload['telephone'] === ''
+            || $payload['adresse_postale'] === ''
+            || $payload['ville'] === ''
+            || $payload['code_postal'] === ''
+            || $payload['poste'] === ''
+        ) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Tous les champs de l employe sont obligatoires.',
+            ], 422);
+        }
+
+        if (!$this->isValidDate($payload['date_naissance'])) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Veuillez renseigner une date de naissance valide.',
+            ], 422);
+        }
+
         if ($payload['prenom'] === '' || $payload['nom'] === '' || $payload['email'] === '' || $payload['poste'] === '') {
             return $this->json([
                 'success' => false,
-                'message' => 'Les champs prénom, nom, email et poste sont obligatoires.',
+                'message' => 'Les champs prÃ©nom, nom, email et poste sont obligatoires.',
             ], 422);
         }
 
@@ -160,7 +237,7 @@ class AdminController extends AbstractController
         if ($existingUserId) {
             return $this->json([
                 'success' => false,
-                'message' => 'Un compte existe déjà avec cette adresse email.',
+                'message' => 'Un compte existe dÃ©jÃ  avec cette adresse email.',
             ], 422);
         }
 
@@ -173,6 +250,7 @@ class AdminController extends AbstractController
         ]);
     }
 
+    // Supprime un compte employe apres confirmation administrateur.
     public function deleteEmployee(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -180,6 +258,7 @@ class AdminController extends AbstractController
         }
 
         $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
 
         if (!$employee) {
@@ -191,6 +270,7 @@ class AdminController extends AbstractController
         return $this->json(['success' => true]);
     }
 
+    // Verifie que l utilisateur connecte est administrateur.
     private function canAccessAdminSpace(Request $request): bool
     {
         $user = $request->getSession()->get('utilisateur');
@@ -200,6 +280,7 @@ class AdminController extends AbstractController
         return $role === 'administrateur' || $roleId === 3;
     }
 
+    // Redirige vers la connexion si l administrateur n est pas connecte.
     private function redirectToAdminLogin(Request $request): Response
     {
         if (!$request->getSession()->get('utilisateur_id')) {
@@ -212,6 +293,8 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Construit les documents de statistiques depuis les commandes MySQL.
+    // Recupere le nombre de commandes par menu depuis MySQL.
     private function getOrdersByMenuDocuments(Connection $connection): array
     {
         $documents = $connection->fetchAllAssociative(
@@ -254,6 +337,7 @@ class AdminController extends AbstractController
     /**
      * @param list<array<string, mixed>> $documents
      */
+    // Ecrit les statistiques dans la base NoSQL.
     private function writeNoSqlOrdersByMenu(array $documents): void
     {
         $directory = dirname(__DIR__, 2) . '/var/nosql';
@@ -275,6 +359,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Lit les statistiques stockees dans la base NoSQL.
     private function readNoSqlOrdersByMenu(): array
     {
         $path = dirname(__DIR__, 2) . '/var/nosql/commandes_par_menu.json';
@@ -291,6 +376,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere les menus utiles aux pages de statistiques.
     private function getMenusForOrderStats(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -303,6 +389,7 @@ class AdminController extends AbstractController
     /**
      * @return list<string>
      */
+    // Recupere la liste des themes de menus disponibles.
     private function getMenuThemes(Connection $connection): array
     {
         $themes = array_map(static fn (array $row): string => self::normalizeMenuTheme((string) $row['theme']), $connection->fetchAllAssociative(
@@ -318,6 +405,7 @@ class AdminController extends AbstractController
      *
      * @return array<string, mixed>
      */
+    // Prepare les donnees du graphique commandes par menu.
     private function buildOrdersByMenuStats(array $documents, array $menus): array
     {
         $year = (int) (new \DateTimeImmutable())->format('Y');
@@ -342,6 +430,7 @@ class AdminController extends AbstractController
      *
      * @return array<string, mixed>
      */
+    // Prepare les donnees du graphique chiffre d affaires par menu.
     private function buildRevenueByMenuStats(array $documents, array $menus): array
     {
         $year = (int) (new \DateTimeImmutable())->format('Y');
@@ -364,6 +453,7 @@ class AdminController extends AbstractController
     /**
      * @return array{orders_count: int, revenue: float, customers_count: int, average_rating: float}
      */
+    // Calcule les indicateurs annuels du tableau de bord administrateur.
     private function getYearStats(Connection $connection): array
     {
         $year = (int) (new \DateTimeImmutable())->format('Y');
@@ -391,10 +481,11 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere le nombre de commandes par menu depuis MySQL.
     private function getOrdersByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT COALESCE(m.nom_menu, "Menu supprimé") AS nom_menu,
+            'SELECT COALESCE(m.nom_menu, "Menu supprimÃ©") AS nom_menu,
                     COUNT(c.commande_id) AS total_commandes
              FROM commandes c
              LEFT JOIN menus m ON m.menu_id = c.menu_id
@@ -407,10 +498,11 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere le chiffre d affaires par menu depuis MySQL.
     private function getRevenueByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT COALESCE(m.nom_menu, "Menu supprimé") AS nom_menu,
+            'SELECT COALESCE(m.nom_menu, "Menu supprimÃ©") AS nom_menu,
                     COALESCE(SUM(c.prix_total), 0) AS chiffre_affaires
              FROM commandes c
              LEFT JOIN menus m ON m.menu_id = c.menu_id
@@ -423,32 +515,138 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere les derniers employes ajoutes.
     private function getLatestEmployees(Connection $connection): array
     {
         $this->ensureEmployeeColumns($connection);
+        $this->ensureEmployeeIdentityColumns($connection);
 
         return $connection->fetchAllAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.created_at, u.actif, u.poste
+            'SELECT u.id, u.nom, u.prenom, u.email, u.telephone, u.date_naissance, u.lieu_naissance,
+                    u.adresse_postale, u.ville, u.code_postal, u.created_at, u.actif, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
              WHERE r.libelle IN (?, ?)
              ORDER BY u.created_at DESC, u.id DESC
              LIMIT 4',
-            ['employe', 'employé']
+            ['employe', 'employÃ©']
         );
     }
 
+    // Ajoute les colonnes employe manquantes si besoin.
     private function ensureEmployeeColumns(Connection $connection): void
     {
         try {
-            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN poste VARCHAR(100) NOT NULL DEFAULT "Employé polyvalent"');
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN poste VARCHAR(100) NOT NULL DEFAULT "EmployÃ© polyvalent"');
         } catch (\Throwable) {
+        }
+    }
+
+    // Ajoute les colonnes d identite employe si elles n existent pas.
+    private function ensureEmployeeIdentityColumns(Connection $connection): void
+    {
+        try {
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN date_naissance DATE DEFAULT NULL');
+        } catch (\Throwable) {
+        }
+
+        try {
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN lieu_naissance VARCHAR(150) DEFAULT NULL');
+        } catch (\Throwable) {
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    // Recupere les donnees envoyees par les formulaires employe.
+    private function getEmployeeFormData(Request $request): array
+    {
+        return [
+            'nom' => trim((string) $request->request->get('nom')),
+            'prenom' => trim((string) $request->request->get('prenom')),
+            'date_naissance' => trim((string) $request->request->get('date_naissance')),
+            'lieu_naissance' => trim((string) $request->request->get('lieu_naissance')),
+            'adresse_postale' => trim((string) $request->request->get('adresse_postale')),
+            'code_postal' => trim((string) $request->request->get('code_postal')),
+            'ville' => trim((string) $request->request->get('ville')),
+            'email' => trim((string) $request->request->get('email')),
+            'telephone' => trim((string) $request->request->get('telephone')),
+            'poste' => trim((string) $request->request->get('poste')),
+        ];
+    }
+
+    /**
+     * @param array<string, string> $data
+     * @return list<string>
+     */
+    // Valide les informations employe avant creation ou modification.
+    private function validateEmployeeData(Connection $connection, array $data, ?int $ignoredUserId = null): array
+    {
+        $errors = [];
+
+        foreach (['nom', 'prenom', 'date_naissance', 'lieu_naissance', 'adresse_postale', 'code_postal', 'ville', 'email', 'telephone', 'poste'] as $field) {
+            if (($data[$field] ?? '') === '') {
+                $errors[] = 'Tous les champs sont obligatoires.';
+                break;
+            }
+        }
+
+        if (($data['email'] ?? '') !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Veuillez renseigner une adresse email professionnelle valide.';
+        }
+
+        if (($data['date_naissance'] ?? '') !== '' && !$this->isValidDate($data['date_naissance'])) {
+            $errors[] = 'Veuillez renseigner une date de naissance valide.';
+        }
+
+        if (($data['email'] ?? '') !== '') {
+            $parameters = [$data['email']];
+            $sql = 'SELECT id FROM utilisateurs WHERE email = ?';
+
+            if ($ignoredUserId !== null) {
+                $sql .= ' AND id <> ?';
+                $parameters[] = $ignoredUserId;
+            }
+
+            if ($connection->fetchOne($sql, $parameters)) {
+                $errors[] = 'Un compte existe deja avec cette adresse email.';
+            }
+        }
+
+        return array_values(array_unique($errors));
+    }
+
+    // Controle qu une date saisie est valide.
+    private function isValidDate(string $date): bool
+    {
+        $parsedDate = \DateTimeImmutable::createFromFormat('Y-m-d', $date);
+
+        return $parsedDate instanceof \DateTimeImmutable && $parsedDate->format('Y-m-d') === $date;
+    }
+
+    // Recupere l identifiant du role employe.
+    private function getEmployeeRoleId(Connection $connection): int
+    {
+        $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employÃƒÂ©']);
+
+        return $roleId ? (int) $roleId : 2;
+    }
+
+    // Genere un mot de passe temporaire pour un nouvel employe.
+    private function generateTemporaryEmployeePassword(): string
+    {
+        try {
+            return 'Vg!2026' . bin2hex(random_bytes(4));
+        } catch (\Throwable) {
+            return 'Vg!2026Temp';
         }
     }
 
     /**
      * @return list<string>
      */
+    // Fournit la liste des postes disponibles pour les employes.
     private function getEmployeeJobs(): array
     {
         return [
@@ -456,9 +654,9 @@ class AdminController extends AbstractController
             'Commis de cuisine',
             'Responsable livraison',
             'Livreur',
-            'Chargé de clientèle',
+            'ChargÃ© de clientÃ¨le',
             'Gestionnaire administratif',
-            'Employé polyvalent',
+            'EmployÃ© polyvalent',
         ];
     }
 
@@ -466,43 +664,50 @@ class AdminController extends AbstractController
     {
         return match (mb_strtolower(trim($theme))) {
             'classiques', 'classique' => 'Classique',
-            'événementiels', 'evénementiels', 'évènementiels', 'evènementiels', 'evenementiels', 'événements', 'evenements', 'événementiel', 'evénementiel', 'évènementiel', 'evènementiel', 'evenementiel' => 'Événementiel',
+            'Ã©vÃ©nementiels', 'evÃ©nementiels', 'Ã©vÃ¨nementiels', 'evÃ¨nementiels', 'evenementiels', 'Ã©vÃ©nements', 'evenements', 'Ã©vÃ©nementiel', 'evÃ©nementiel', 'Ã©vÃ¨nementiel', 'evÃ¨nementiel', 'evenementiel' => 'Ã‰vÃ©nementiel',
             'saisonniers', 'saisonnier' => 'Saisonnier',
-            'régimes particuliers', 'regimes particuliers', 'régime particulier', 'regime particulier', 'régimes', 'regimes' => 'Régime particulier',
-            default => trim($theme) !== '' ? trim($theme) : 'Non renseigné',
+            'rÃ©gimes particuliers', 'regimes particuliers', 'rÃ©gime particulier', 'regime particulier', 'rÃ©gimes', 'regimes' => 'RÃ©gime particulier',
+            default => trim($theme) !== '' ? trim($theme) : 'Non renseignÃ©',
         };
     }
 
     /**
      * @return list<array<string, mixed>>
      */
+    // Recupere tous les employes pour la page de gestion.
     private function getEmployees(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
             'SELECT u.id, u.nom, u.prenom, u.email, u.telephone,
+                    u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
              WHERE r.libelle IN (?, ?)
              ORDER BY u.created_at DESC, u.id DESC',
-            ['employe', 'employé']
+            ['employe', 'employÃ©']
         );
     }
 
     /**
      * @return array<string, mixed>|false
      */
+    // Recupere un employe precis par son identifiant.
     private function getEmployeeById(Connection $connection, int $id): array|false
     {
         return $connection->fetchAssociative(
             'SELECT u.id, u.nom, u.prenom, u.email, u.telephone,
+                    u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
              WHERE u.id = ? AND r.libelle IN (?, ?)',
-            [$id, 'employe', 'employé']
+            [$id, 'employe', 'employÃ©']
         );
     }
 }
+
+
+

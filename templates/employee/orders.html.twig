@@ -1,29 +1,48 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur. #}
 {% block title %}Gestion des commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Grand bandeau visuel de la page employe. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Gestion des commandes',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Commandes Vite et Gourmand'
     } %}
 
+    {# Contenu principal de la page de gestion des commandes. #}
     <main class="employee-orders-management-page" data-employee-orders-page>
+        {# Lien de retour adapte selon le role connecte. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
+        {# Introduction de la page et objectif de l'outil. #}
         <section class="employee-orders-intro">
             <h1>Commandes clients</h1>
             <p>Consultez les commandes, filtrez les demandes et faites avancer leur statut.</p>
         </section>
 
+        {# Messages de confirmation apres une action sur une commande. #}
+        {% for message in app.flashes('order_success') %}
+            <p class="contact-alert contact-alert--success">{{ message }}</p>
+        {% endfor %}
+
+        {# Messages d'erreur si une action sur une commande echoue. #}
+        {% for message in app.flashes('order_error') %}
+            <p class="contact-alert contact-alert--error">{{ message }}</p>
+        {% endfor %}
+
+        {# Bloc de filtres utilise par JavaScript pour trier les commandes sans recharger la page. #}
         <section class="employee-orders-filters-panel" data-order-filters>
+            {# Recherche par numero de commande ou nom du client. #}
             <label class="employee-orders-filter employee-orders-filter--search">
                 <span>Rechercher une commande</span>
                 <input type="search" name="search" placeholder="N&deg; de commande ou nom du client" data-order-search>
             </label>
 
+            {# Grille des filtres disponibles pour affiner la liste. #}
             <div class="employee-orders-filter-grid">
+                {# Filtre par statut de commande. #}
                 <label class="employee-orders-filter">
                     <span>Statut</span>
                     <select name="status" data-order-status>
@@ -34,6 +53,7 @@
                     </select>
                 </label>
 
+                {# Filtre par periode de commande. #}
                 <label class="employee-orders-filter">
                     <span>P&eacute;riode</span>
                     <select name="period" data-order-period>
@@ -47,6 +67,7 @@
                     </select>
                 </label>
 
+                {# Filtre par nombre de personnes prevu pour la prestation. #}
                 <label class="employee-orders-filter">
                     <span>Nombre de personnes</span>
                     <select name="people" data-order-people>
@@ -58,32 +79,39 @@
                     </select>
                 </label>
 
+                {# Filtre par date de livraison/prestation. #}
                 <label class="employee-orders-filter">
                     <span>Date de livraison</span>
                     <input type="date" name="delivery_date" data-order-delivery-date>
                 </label>
 
+                {# Filtre par code postal de livraison. #}
                 <label class="employee-orders-filter">
                     <span>Lieu de livraison</span>
                     <input type="text" name="postal_code" placeholder="Code postal" data-order-postal>
                 </label>
             </div>
 
+            {# Boutons pour appliquer ou reinitialiser les filtres. #}
             <div class="employee-orders-filter-actions">
                 <button type="button" class="buttonprimary" data-order-apply>Appliquer les filtres</button>
                 <button type="button" class="buttonoffwhite" data-order-reset>R&eacute;initialiser les filtres</button>
             </div>
         </section>
 
+        {# Liste des commandes affichees apres filtrage. #}
         <section class="employee-orders-results">
+            {# Compteur mis a jour par JavaScript selon les filtres appliques. #}
             <p class="employee-orders-count"><span data-order-count>{{ orders|length }}</span> commande(s) affich&eacute;e(s)</p>
 
             <div class="employee-orders-management-list" data-order-list>
                 {% for order in orders %}
+                    {# Variables utiles pour calculer l'affichage du statut et du client. #}
                     {% set statusCode = order.statut_code|default('en_attente') %}
                     {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode == 'en_attente' ? 'badgeattente' : 'badgevalidee') %}
                     {% set customerName = (order.prenom|default('Client') ~ ' ' ~ order.nom|default(''))|trim %}
 
+                    {# Carte commande avec les donnees necessaires aux filtres JavaScript. #}
                     <article
                         class="ordergestion"
                         data-order-card
@@ -95,7 +123,9 @@
                         data-order-people="{{ order.nombre_personnes|default(0) }}"
                         data-order-postal="{{ order.code_postal_livraison|default('') }}"
                     >
+                        {# Partie principale de la carte : client, menu, livraison et total. #}
                         <div class="ordergestion-main">
+                            {# Colonne gauche : informations client et livraison. #}
                             <div class="ordergestion-left">
                                 <h2 class="ordergestion-number">Commande n&deg;{{ order.commande_id }}</h2>
                                 <p class="ordergestion-client">{{ customerName }}</p>
@@ -117,6 +147,7 @@
                                 </p>
                             </div>
 
+                            {# Colonne droite : nombre de personnes, prix total et date de commande. #}
                             <div class="ordergestion-right">
                                 <div class="ordergestion-total-line">
                                     <span class="ordergestion-dot" aria-hidden="true"></span>
@@ -132,21 +163,138 @@
                             </div>
                         </div>
 
+                        {# Formulaire qui fait avancer le statut de la commande. #}
                         <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-order-status-form>
-                            <button
+                                <button
                                 type="submit"
                                 class="{{ statusClass }} ordergestion-status"
                                 data-order-status-button
-                                {% if statusCode in ['terminee', 'livree', 'annulee', 'en_livraison'] %}disabled aria-label="Statut non modifiable"{% endif %}
+                                {% if statusCode in ['livree', 'annulee'] %}disabled aria-label="Statut non modifiable"{% endif %}
                             >
                                 {{ order.statut_libelle|default('En attente') }}
                             </button>
                         </form>
+
+                        {# Tant que la commande est en attente, l'employe peut la modifier ou l'annuler apres contact client. #}
+                        {% if statusCode == 'en_attente' %}
+                            <section class="employee-order-contact-actions" data-order-contact-actions>
+                                {# Formulaire de modification de commande. #}
+                                <details>
+                                    <summary>Modifier la commande</summary>
+                                    <form method="post" action="{{ path('employee_order_update', { id: order.commande_id }) }}" class="employee-order-contact-form">
+                                        {# Nouvelles informations de prestation et de livraison. #}
+                                        <div class="employee-order-contact-grid">
+                                            <label>
+                                                <span>Date de prestation</span>
+                                                <input type="date" name="date_prestation" value="{{ order.date_prestation ? order.date_prestation|date('Y-m-d') : '' }}" required>
+                                            </label>
+                                            <label>
+                                                <span>Heure de livraison</span>
+                                                <input type="time" name="heure_de_livraison" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
+                                            </label>
+                                            <label>
+                                                <span>Nombre de personnes</span>
+                                                <input type="number" name="nombre_personnes" min="1" value="{{ order.nombre_personnes|default(1) }}" required>
+                                            </label>
+                                            <label>
+                                                <span>Adresse de livraison</span>
+                                                <input type="text" name="adresse_livraison" value="{{ order.adresse_livraison|default('') }}" required>
+                                            </label>
+                                            <label>
+                                                <span>Code postal</span>
+                                                <input type="text" name="code_postal_livraison" value="{{ order.code_postal_livraison|default('') }}" required>
+                                            </label>
+                                            <label>
+                                                <span>Ville</span>
+                                                <input type="text" name="ville_livraison" value="{{ order.ville_livraison|default('') }}" required>
+                                            </label>
+                                        </div>
+
+                                        {# Informations obligatoires prouvant que le client a ete contacte. #}
+                                        <div class="employee-order-contact-grid employee-order-contact-grid--contact">
+                                            <label>
+                                                <span>M&eacute;thode de contact client</span>
+                                                <select name="contact_methode_client" required>
+                                                    <option value="">Choisir</option>
+                                                    <option value="telephone">T&eacute;l&eacute;phone</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="sms">SMS</option>
+                                                </select>
+                                            </label>
+                                            <label>
+                                                <span>Date du contact</span>
+                                                <input type="date" name="contact_date_client" required>
+                                            </label>
+                                            <label>
+                                                <span>Heure du contact</span>
+                                                <input type="time" name="contact_heure_client" required>
+                                            </label>
+                                        </div>
+
+                                        {# Message expliquant ce qui a ete convenu avec le client. #}
+                                        <label class="employee-order-contact-message">
+                                            <span>Message / accord du client</span>
+                                            <textarea name="contact_message_client" rows="3" placeholder="Expliquez ce qui a &eacute;t&eacute; convenu avec le client." required></textarea>
+                                        </label>
+
+                                        <button type="submit" class="buttonprimary">Valider la modification</button>
+                                    </form>
+                                </details>
+
+                                {# Formulaire d'annulation de commande apres contact client. #}
+                                <details>
+                                    <summary>Annuler la commande</summary>
+                                    <form method="post" action="{{ path('employee_order_cancel', { id: order.commande_id }) }}" class="employee-order-contact-form">
+                                        {# Methode, date et heure du contact client. #}
+                                        <div class="employee-order-contact-grid employee-order-contact-grid--contact">
+                                            <label>
+                                                <span>M&eacute;thode de contact client</span>
+                                                <select name="contact_methode_client" required>
+                                                    <option value="">Choisir</option>
+                                                    <option value="telephone">T&eacute;l&eacute;phone</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="sms">SMS</option>
+                                                </select>
+                                            </label>
+                                            <label>
+                                                <span>Date du contact</span>
+                                                <input type="date" name="contact_date_client" required>
+                                            </label>
+                                            <label>
+                                                <span>Heure du contact</span>
+                                                <input type="time" name="contact_heure_client" required>
+                                            </label>
+                                        </div>
+
+                                        {# Motif obligatoire de l'annulation. #}
+                                        <label class="employee-order-contact-message">
+                                            <span>Motif de l'annulation</span>
+                                            <textarea name="contact_message_client" rows="3" placeholder="Indiquez le motif apr&egrave;s avoir contact&eacute; le client." required></textarea>
+                                        </label>
+
+                                        <button type="submit" class="buttonoffwhite">Confirmer l'annulation</button>
+                                    </form>
+                                </details>
+                            </section>
+                        {% elseif order.contact_methode_client or order.contact_message_client %}
+                            {# Resume du dernier contact client quand la commande n'est plus modifiable. #}
+                            <section class="employee-order-contact-log">
+                                <p>Contact client : {{ order.contact_methode_client|default('non renseign&eacute;') }}</p>
+                                {% if order.contact_client_at %}
+                                    <p>Le {{ order.contact_client_at|date('d/m/Y H:i') }}</p>
+                                {% endif %}
+                                {% if order.contact_message_client %}
+                                    <p>{{ order.contact_message_client }}</p>
+                                {% endif %}
+                            </section>
+                        {% endif %}
                     </article>
                 {% else %}
+                    {# Message affiche si aucune commande n'existe. #}
                     <p class="employee-empty">Aucune commande pour le moment.</p>
                 {% endfor %}
 
+                {# Message affiche par JavaScript quand les filtres ne donnent aucun resultat. #}
                 <p class="employee-empty" data-order-empty hidden>Aucune commande ne correspond aux filtres.</p>
             </div>
         </section>
@@ -155,5 +303,6 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script qui gere les filtres et les changements de statut sans rechargement complet. #}
     <script src="{{ asset('assets/scripts/employee-orders.js') }}" defer></script>
 {% endblock %}

@@ -1,11 +1,15 @@
+{# Composant reutilisable du grand bandeau de page. #}
 <section class="bigtittle">
+    {# Image de fond du bandeau. Si aucune image n'est fournie, l'image par defaut est utilisee. #}
     <img
         src="{{ image|default(asset('assets/bigtittle.png')) }}"
         alt="{{ image_alt|default('') }}"
         class="bigtittle-image"
     >
 
+    {# Voile visuel place par-dessus l'image pour rendre le titre plus lisible. #}
     <div class="bigtittle-overlay" aria-hidden="true"></div>
 
+    {# Titre affiche au centre du bandeau. La valeur vient de la page qui inclut ce composant. #}
     <h1 class="bigtittle-title">{{ title }}</h1>
 </section>

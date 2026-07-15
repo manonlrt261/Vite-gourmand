@@ -1,17 +1,26 @@
+{# Normalisation du nom du menu pour detecter automatiquement un regime alimentaire. #}
 {% set menuName = menu.nom_menu|lower %}
+{# Valeur vide par defaut : elle sera completee seulement si le menu correspond a un regime. #}
 {% set regime = '' %}
+{# Detection du regime vegetarien a partir du nom du menu. #}
 {% if 'végétarien' in menuName or 'vegetarien' in menuName %}
     {% set regime = 'vegetarien' %}
+{# Detection du regime vegan a partir du nom du menu. #}
 {% elseif 'végan' in menuName or 'vegan' in menuName %}
     {% set regime = 'vegan' %}
+{# Detection du regime sans gluten a partir du nom du menu. #}
 {% elseif 'sans gluten' in menuName %}
     {% set regime = 'sans-gluten' %}
 {% endif %}
 
+{# Carte reutilisable pour afficher un menu dans la page des menus. #}
 <article
     class="menucard"
+    {# Attribut utilise par le JavaScript pour retrouver toutes les cartes filtrables. #}
     data-menu-card
+    {# Identifiant du menu, utile pour les actions panier et les filtres. #}
     data-menu-id="{{ menu.menu_id }}"
+    {# Prix, stock, theme, regime, minimum et popularite servent aux filtres sans rechargement. #}
     data-price="{{ menu.prix_par_personne }}"
     data-stock="{{ menu.stock_disponible }}"
     data-category="{{ menu.theme }}"
@@ -19,6 +28,7 @@
     data-minimum-person="{{ menu.personnes_minimum }}"
     data-popularity="{{ menu.popularite|default(0) }}"
 >
+    {# Image du menu affichee seulement si un chemin d'image existe en base. #}
     {% if menu.image_url %}
         <img
             src="{{ asset(menu.image_url) }}"
@@ -27,20 +37,27 @@
         >
     {% endif %}
 
+    {# Contenu textuel et actions de la carte. #}
     <div class="menucard-content">
+        {# Nom du menu. #}
         <h2 class="menucard-title">{{ menu.nom_menu }}</h2>
 
+        {# Description courte du menu. #}
         <p class="menucard-description">{{ menu.description }}</p>
 
+        {# Informations importantes affichees en bas de carte : minimum et prix par personne. #}
         <p class="menucard-infos">
             {{ menu.personnes_minimum }} personnes min /
             {{ menu.prix_par_personne|number_format(2, ',', ' ') }} € par personne
         </p>
 
+        {# Actions disponibles pour le client : voir le detail ou ajouter au panier. #}
         <div class="menucard-actions">
+            {# Lien vers la page detail du menu. #}
             <a href="{{ path('menu_show', { id: menu.menu_id }) }}" class="buttonwhite menucard-button">
                 Découvrir
             </a>
+            {# Bouton ajoute le menu au panier sans quitter la page des menus. #}
             <button
                 type="button"
                 class="buttonprimary menucard-cart-button"

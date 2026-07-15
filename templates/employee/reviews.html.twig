@@ -1,26 +1,34 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la gestion des avis. #}
 {% block title %}Gestion des avis - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal reutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Gestion des avis',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Plat Vite et Gourmand'
     } %}
 
+    {# Contenu principal de la page de moderation des avis en attente. #}
     <main class="employee-reviews-page">
+        {# Lien de retour vers l'espace employe ou administrateur. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
+        {# Introduction de la page. #}
         <section class="employee-reviews-intro">
             <h1>Avis en attente de validation</h1>
             <p>Consultez les avis laiss&eacute;s par vos clients et validez ceux que vous souhaitez publier sur le site.</p>
         </section>
 
+        {# Filtres JavaScript pour rechercher et trier les avis sans rechargement. #}
         <section class="employee-review-filters" data-review-filters>
+            {# Recherche par client ou numero de commande. #}
             <input type="search" name="search" placeholder="Rechercher par client ou num&eacute;ro de commande" data-review-search>
 
             <div class="employee-review-filter-row">
+                {# Filtre par note. #}
                 <select name="note" data-review-note>
                     <option value="">Note</option>
                     {% for note in 1..5 %}
@@ -28,6 +36,7 @@
                     {% endfor %}
                 </select>
 
+                {# Filtre par periode. #}
                 <select name="period" data-review-period>
                     <option value="">P&eacute;riode</option>
                     <option value="10days">10 derniers jours</option>
@@ -38,6 +47,7 @@
                     <option value="other">Autres</option>
                 </select>
 
+                {# Filtre par menu concerne. #}
                 <select name="menu" data-review-menu>
                     <option value="">Menu</option>
                     {% for menu in menus %}
@@ -46,29 +56,39 @@
                 </select>
             </div>
 
+            {# Boutons pour appliquer ou reinitialiser les filtres. #}
             <div class="employee-review-filter-actions">
                 <button type="button" class="buttonprimary" data-review-apply>Appliquer les filtres</button>
                 <button type="button" class="buttonoffwhite" data-review-reset>R&eacute;initialiser les filtres</button>
             </div>
 
+            {# Compteur d'avis affiches ou en attente. #}
             <p><span data-review-count>{{ pendingCount }}</span> avis en attente</p>
         </section>
 
+        {# Lien vers la page qui regroupe tous les avis, quel que soit leur statut. #}
         <div class="employee-review-link-row">
             <a href="{{ path('employee_reviews_all') }}">Voir tous les avis</a>
         </div>
 
+        {# Mise en page : liste d'avis a gauche, informations a droite. #}
         <div class="employee-reviews-layout">
+            {# Liste des avis en attente de moderation. #}
             <section class="employee-review-list-large" data-review-list>
+                {# Boucle sur les avis a moderer. #}
                 {% for review in reviews %}
+                    {# Carte reutilisable d'un avis. #}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
+                    {# Message si aucun avis n'est en attente. #}
                     <p class="employee-empty">Aucun avis en attente.</p>
                 {% endfor %}
 
+                {# Message affiche quand les filtres ne retournent aucun avis. #}
                 <p class="employee-empty" data-review-empty hidden>Aucun avis ne correspond aux filtres.</p>
             </section>
 
+            {# Encadre explicatif sur la moderation des avis. #}
             <aside class="employee-reviews-info">
                 <h2>&Agrave; propos des avis</h2>
                 <ul>
@@ -83,5 +103,6 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script qui gere les filtres et actions de moderation sans rechargement. #}
     <script src="{{ asset('assets/scripts/employee-reviews.js') }}" defer></script>
 {% endblock %}

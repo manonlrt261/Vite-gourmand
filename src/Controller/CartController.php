@@ -5,11 +5,15 @@ namespace App\Controller;
 use App\Service\MongoStatsService;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
+// Controleur du panier, de la validation de commande et de la confirmation.
 class CartController extends AbstractController
 {
     private const REQUIRED_CHECKOUT_FIELDS = [
@@ -24,11 +28,13 @@ class CartController extends AbstractController
         'heure_livraison',
     ];
 
+    // Affiche le panier sans ajouter de nouveau menu.
     public function index(Request $request, Connection $connection): Response
     {
         return $this->renderCart($request, $connection);
     }
 
+    // Affiche le panier apres l ajout ou la consultation d un menu.
     public function show(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->addMenuToCart($id, $request, $connection)) {
@@ -38,6 +44,7 @@ class CartController extends AbstractController
         return $this->redirectToRoute('cart_index');
     }
 
+    // Ajoute un menu au panier depuis une action rapide.
     public function add(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->addMenuToCart($id, $request, $connection)) {
@@ -54,6 +61,7 @@ class CartController extends AbstractController
         ]);
     }
 
+    // Met a jour le panier et renvoie le nouveau recapitulatif.
     public function update(Request $request, Connection $connection): Response
     {
         $cartItems = $this->getCartItems($request);
@@ -96,6 +104,7 @@ class CartController extends AbstractController
         return $this->redirectToRoute('cart_index');
     }
 
+    // Supprime un menu du panier.
     public function remove(int $id, Request $request, Connection $connection): Response
     {
         $cartItems = $this->getCartItems($request);
@@ -116,7 +125,8 @@ class CartController extends AbstractController
         return $this->redirectToRoute('cart_index');
     }
 
-    public function checkout(Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
+    // Verifie le panier, cree les commandes en base et synchronise les statistiques.
+    public function checkout(Request $request, Connection $connection, MongoStatsService $mongoStatsService, MailerInterface $mailer): Response
     {
         $session = $request->getSession();
         $isConnected = $this->getUser() !== null || $session->has('utilisateur_id');
@@ -221,18 +231,222 @@ class CartController extends AbstractController
 
         $this->saveCartItems($request, []);
         $session->set('last_order_ids', $orderIds);
+        $orders = $this->getOrdersForConfirmation($connection, $orderIds, $userId);
+        $this->sendOrderConfirmationEmail($mailer, $orders, $checkoutData);
         $mongoStatsService->getOrdersByMenuDocuments($connection);
 
         return $this->redirectToRoute('order_confirmation');
     }
 
-    public function confirmation(Request $request): Response
+    // Affiche la page de confirmation apres validation de commande.
+    public function confirmation(Request $request, Connection $connection): Response
     {
+        $session = $request->getSession();
+        $orderIds = $session->get('last_order_ids', []);
+        $userId = (int) $session->get('utilisateur_id');
+        $orders = $userId > 0 ? $this->getOrdersForConfirmation($connection, $orderIds, $userId) : [];
+
         return $this->render('cart/confirmation.html.twig', [
-            'orderIds' => $request->getSession()->get('last_order_ids', []),
+            'orderIds' => $orderIds,
+            'orders' => $orders,
         ]);
     }
 
+    /**
+     * @param list<int> $orderIds
+     * @return list<array<string, mixed>>
+     */
+    // Recupere les commandes a afficher sur la page de confirmation.
+    private function getOrdersForConfirmation(Connection $connection, array $orderIds, int $userId): array
+    {
+        $orderIds = array_values(array_filter(array_map('intval', $orderIds)));
+
+        if ($orderIds === []) {
+            return [];
+        }
+
+        $orders = $connection->fetchAllAssociative(
+            'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
+                    c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
+                    c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.statut_id,
+                    m.menu_id, m.nom_menu, m.description AS menu_description, m.prix_par_personne,
+                    m.image_url AS menu_image_url, m.image_alt AS menu_image_alt,
+                    COALESCE(sc.libelle, "En attente") AS statut_libelle,
+                    COALESCE(sc.code, "en_attente") AS statut_code
+             FROM commandes c
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+            WHERE c.commande_id IN (?) AND c.utilisateur_id = ?
+             ORDER BY c.commande_id ASC',
+            [$orderIds, $userId],
+            [ArrayParameterType::INTEGER, ParameterType::INTEGER]
+        );
+
+        foreach ($orders as $index => $order) {
+            $orders[$index]['mealItems'] = $this->getOrderMealItems($connection, (int) $order['menu_id']);
+            $orders[$index]['statusHistory'] = $this->getOrderStatusHistory($connection, (int) $order['commande_id'], $order);
+        }
+
+        return $orders;
+    }
+
+    // Prepare et envoie l email recapitulatif de commande.
+    private function sendOrderConfirmationEmail(MailerInterface $mailer, array $orders, array $checkoutData): void
+    {
+        if ($orders === []) {
+            return;
+        }
+
+        $to = (string) ($checkoutData['email'] ?? '');
+
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $lines = [
+            '<h1>Confirmation de commande - Vite & Gourmand</h1>',
+            '<p>Bonjour ' . htmlspecialchars((string) ($checkoutData['prenom'] ?? ''), ENT_QUOTES, 'UTF-8') . ',</p>',
+            '<p>Votre commande a bien ete enregistree. Elle est maintenant en attente de validation.</p>',
+        ];
+
+        foreach ($orders as $order) {
+            $subtotal = (float) $order['prix_par_personne'] * (int) $order['nombre_personnes'];
+            $discount = $subtotal - (float) $order['prix_menu'];
+
+            $lines[] = '<hr>';
+            $lines[] = '<h2>Commande n&deg;' . (int) $order['commande_id'] . '</h2>';
+            $lines[] = '<p><strong>Menu :</strong> ' . htmlspecialchars((string) $order['nom_menu'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<p><strong>Date de prestation :</strong> ' . htmlspecialchars((string) $order['date_prestation'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<p><strong>Heure de livraison :</strong> ' . htmlspecialchars((string) $order['heure_de_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<p><strong>Adresse :</strong> ' . htmlspecialchars((string) $order['adresse_livraison'], ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars((string) $order['code_postal_livraison'], ENT_QUOTES, 'UTF-8') . ' ' . htmlspecialchars((string) $order['ville_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<p><strong>Nombre de personnes :</strong> ' . (int) $order['nombre_personnes'] . '</p>';
+            $lines[] = '<p><strong>Prix par personne :</strong> ' . number_format((float) $order['prix_par_personne'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Sous-total :</strong> ' . number_format($subtotal, 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Reduction :</strong> - ' . number_format(max(0, $discount), 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Livraison :</strong> ' . number_format((float) $order['prix_livraison'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Total TTC :</strong> ' . number_format((float) $order['prix_total'], 2, ',', ' ') . ' &euro;</p>';
+            $lines[] = '<p><strong>Statut :</strong> ' . htmlspecialchars((string) $order['statut_libelle'], ENT_QUOTES, 'UTF-8') . '</p>';
+
+            foreach (($order['mealItems'] ?? []) as $category => $item) {
+                if (!$item) {
+                    continue;
+                }
+
+                $lines[] = '<p><strong>' . htmlspecialchars((string) $category, ENT_QUOTES, 'UTF-8') . ' :</strong> ' . htmlspecialchars((string) $item['nom'], ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+        }
+
+        $lines[] = '<p>A tres bientot,<br>Vite & Gourmand</p>';
+
+        try {
+            $mailer->send((new Email())
+                ->from('noreply@vite-et-gourmand.local')
+                ->to($to)
+                ->subject('Confirmation de votre commande - Vite & Gourmand')
+                ->html(implode("\n", $lines)));
+        } catch (\Throwable) {
+            // The order must stay valid even if the local SMTP configuration is not ready.
+        }
+    }
+
+    /**
+     * @return array<string, array<string, mixed>|false>
+     */
+    // Recupere l entree, le plat et le dessert associes a un menu commande.
+    private function getOrderMealItems(Connection $connection, int $menuId): array
+    {
+        return [
+            'Entree' => $connection->fetchAssociative(
+                'SELECT nom_entree AS nom, description, image_url, image_alt
+                 FROM entree
+                 WHERE menu_id = ?
+                 LIMIT 1',
+                [$menuId]
+            ),
+            'Plat' => $connection->fetchAssociative(
+                'SELECT nom_plat AS nom, description, image_url, image_alt
+                 FROM plat
+                 WHERE menu_id = ?
+                 LIMIT 1',
+                [$menuId]
+            ),
+            'Dessert' => $connection->fetchAssociative(
+                'SELECT nom_dessert AS nom, description, image_url, image_alt
+                 FROM dessert
+                 WHERE menu_id = ?
+                 LIMIT 1',
+                [$menuId]
+            ),
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    // Construit l historique de statut d une commande.
+    private function getOrderStatusHistory(Connection $connection, int $orderId, array $order): array
+    {
+        $history = $connection->fetchAllAssociative(
+            'SELECT h.date_changement, h.commentaire, h.statut_id,
+                    COALESCE(sc.libelle, "En attente") AS statut_libelle,
+                    COALESCE(sc.code, "en_attente") AS statut_code
+             FROM historique_statuts_commande h
+             LEFT JOIN statuts_commande sc ON sc.statut_id = h.statut_id
+             WHERE h.commande_id = ?
+             ORDER BY h.date_changement ASC, h.historique_id ASC',
+            [$orderId]
+        );
+
+        if ((string) ($order['statut_code'] ?? '') === 'annulee') {
+            return $history !== [] ? $history : [[
+                'date_changement' => $order['date_commande'] ?? null,
+                'commentaire' => $order['motif_annulation'] ?? null,
+                'statut_libelle' => $order['statut_libelle'] ?? 'Annulee',
+                'statut_code' => 'annulee',
+            ]];
+        }
+
+        $currentStatusId = (int) ($order['statut_id'] ?? 0);
+        $statusSteps = [];
+
+        if ($currentStatusId > 0) {
+            $statusSteps = $connection->fetchAllAssociative(
+                'SELECT statut_id, code AS statut_code, libelle AS statut_libelle, ordre
+                 FROM statuts_commande
+                 WHERE ordre <= (
+                     SELECT ordre FROM statuts_commande WHERE statut_id = ?
+                 )
+                 ORDER BY ordre ASC, statut_id ASC',
+                [$currentStatusId]
+            );
+        }
+
+        if ($statusSteps === []) {
+            return $history;
+        }
+
+        $historyByStatusId = [];
+        foreach ($history as $step) {
+            $historyByStatusId[(int) $step['statut_id']] = $step;
+        }
+
+        $timeline = [];
+        foreach ($statusSteps as $index => $statusStep) {
+            $statusId = (int) $statusStep['statut_id'];
+            $historyStep = $historyByStatusId[$statusId] ?? null;
+
+            $timeline[] = [
+                'date_changement' => $historyStep['date_changement'] ?? ($index === 0 ? $order['date_commande'] : null),
+                'commentaire' => $historyStep['commentaire'] ?? null,
+                'statut_libelle' => $statusStep['statut_libelle'],
+                'statut_code' => $statusStep['statut_code'],
+            ];
+        }
+
+        return $timeline;
+    }
+
+    // Prepare les donnees necessaires a l affichage du panier.
     private function renderCart(Request $request, Connection $connection): Response
     {
         $cartItems = $this->getCartItems($request);
@@ -325,6 +539,7 @@ class CartController extends AbstractController
         ]);
     }
 
+    // Renvoie le resume du panier en JSON pour les actions sans rechargement.
     private function jsonCartSummary(Request $request, Connection $connection): JsonResponse
     {
         $cartItems = $this->getCartItems($request);
@@ -394,6 +609,7 @@ class CartController extends AbstractController
         ]);
     }
 
+    // Met a jour les nombres de personnes depuis les champs du panier.
     private function updateCartQuantitiesFromRequest(Request $request, Connection $connection): void
     {
         $cartItems = $this->getCartItems($request);
@@ -426,6 +642,7 @@ class CartController extends AbstractController
         $this->saveCartItems($request, $cartItems);
     }
 
+    // Calcule les totaux du panier, la reduction et la livraison.
     private function getCartSummary(Request $request, Connection $connection): ?array
     {
         $cartItems = $this->getCartItems($request);
@@ -487,6 +704,7 @@ class CartController extends AbstractController
     /**
      * @return list<string>
      */
+    // Recupere les colonnes d une table pour adapter les insertions SQL.
     private function getTableColumns(Connection $connection, string $tableName): array
     {
         try {
@@ -507,6 +725,7 @@ class CartController extends AbstractController
     /**
      * @return array<int, array{nombre_personnes: int}>
      */
+    // Recupere les menus stockes dans la session panier.
     private function getCartItems(Request $request): array
     {
         $session = $request->getSession();
@@ -535,12 +754,14 @@ class CartController extends AbstractController
     /**
      * @param array<int, array{nombre_personnes: int}> $cartItems
      */
+    // Sauvegarde le panier dans la session.
     private function saveCartItems(Request $request, array $cartItems): void
     {
         $request->getSession()->set('cart_items', $cartItems);
         $request->getSession()->remove('cart_menu_id');
     }
 
+    // Ajoute un menu au panier en respectant son minimum de personnes.
     private function addMenuToCart(int $id, Request $request, Connection $connection): bool
     {
         $menuExists = (bool) $connection->fetchOne(

@@ -1,38 +1,65 @@
 <!DOCTYPE html>
+{# Document HTML principal du site, configure en francais. #}
 <html lang="fr">
     <head>
+        {# Encodage des caracteres pour afficher correctement les textes. #}
         <meta charset="UTF-8">
+        {# Rend le site responsive sur mobile, tablette et ordinateur. #}
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {# Titre de page personnalisable par chaque template enfant. #}
         <title>{% block title %}Vite & Gourmand{% endblock %}</title>
+        {# Icône affichee dans l'onglet du navigateur. #}
         <link rel="icon" href="{{ asset('assets/logo.png') }}">
+        {# Variables CSS globales : couleurs, tailles et valeurs reutilisables. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/variables.css') }}">
+        {# Styles de typographie pour les titres et textes du site. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/typography.css') }}">
+        {# Styles communs des boutons. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/buttons.css') }}">
+        {# Styles des badges de statut. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/badge.css') }}">
+        {# Styles du grand titre reutilisable en haut des pages. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/bigtittle.css') }}">
+        {# Styles des cartes reutilisees sur plusieurs pages. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/card.css') }}">
+        {# Styles des zones de filtres. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/filters.css') }}">
+        {# Styles des formulaires. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/forms.css') }}">
+        {# Styles du header public et du header employe/admin. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/header.css') }}">
+        {# Styles des footers. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/footer.css') }}">
+        {# Styles des petits composants interactifs ou widgets. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/widget.css') }}">
+        {# Feuille de style principale avec les styles specifiques des pages. #}
         <link rel="stylesheet" href="{{ asset('assets/styles/app.css') }}">
+        {# Script du menu burger employe/administrateur. #}
         <script src="{{ asset('assets/scripts/employee-header.js') }}" defer></script>
+        {# Script permettant d'afficher ou masquer les mots de passe dans les formulaires. #}
+        <script src="{{ asset('assets/scripts/password-toggle.js') }}" defer></script>
 
+        {# Bloc optionnel pour ajouter des styles propres a une page enfant. #}
         {% block stylesheets %}
         {% endblock %}
 
+        {# Bloc optionnel pour ajouter des scripts propres a une page enfant. #}
         {% block javascripts %}
         {% endblock %}
     </head>
     <body>
+        {# Header commun : il change automatiquement selon le role de l'utilisateur connecte. #}
         {% include 'partials/_header.html.twig' %}
 
+        {# Zone principale remplacee par le contenu de chaque page. #}
         {% block body %}{% endblock %}
 
+        {# Recuperation de l'utilisateur connecte pour choisir le bon footer. #}
         {% set baseUser = app.session.get('utilisateur') %}
+        {# Role de l'utilisateur utilise pour differencier client, employe et administrateur. #}
         {% set baseRole = baseUser.role_libelle|default('') %}
         {% set baseRoleId = baseUser.role_id|default(0) %}
+        {# Footer interne pour employes/admins, footer public pour visiteurs/clients. #}
         {% if baseRole in ['employe', 'employé', 'administrateur'] or baseRoleId in [2, 3] %}
             {% include 'partials/_employee_footer.html.twig' %}
         {% else %}

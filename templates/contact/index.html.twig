@@ -1,16 +1,22 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page contact. #}
 {% block title %}Contact - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Contactez-nous !',
     image_alt: 'Contact Vite et Gourmand'
 } %}
 
+{# Contenu principal de la page contact. #}
 <main class="contact-page">
+    {# Mise en page en deux colonnes : formulaire a gauche et informations a droite. #}
     <section class="contact-layout" aria-label="Formulaire de contact">
+        {# Formulaire envoye vers la route contact pour enregistrer le message en base. #}
         <form class="contact-form-card" method="post" action="{{ path('contact_index') }}">
+            {# En-tete du formulaire : titre et texte d'introduction pour guider le visiteur. #}
             <header class="contact-form-card__header">
                 <h1>Nous sommes à votre écoute</h1>
                 <p>
@@ -20,40 +26,49 @@
                 </p>
             </header>
 
+            {# Message de succes affiche apres l'envoi correct du formulaire. #}
             {% for message in app.flashes('contact_success') %}
                 <p class="contact-alert contact-alert--success">{{ message }}</p>
             {% endfor %}
 
+            {# Message d'erreur affiche si le formulaire ne peut pas etre enregistre. #}
             {% for message in app.flashes('contact_error') %}
                 <p class="contact-alert contact-alert--error">{{ message }}</p>
             {% endfor %}
 
+            {# Ensemble des champs obligatoires du formulaire de contact. #}
             <div class="contact-fields">
+                {# Email du visiteur : il servira a repondre au message depuis la messagerie. #}
                 <label class="contact-field">
                     <span>Email *</span>
                     <input type="email" name="email" placeholder="votre.mail@exemple.fr" required>
                 </label>
 
+                {# Sujet de la demande, enregistre dans la colonne titre. #}
                 <label class="contact-field">
                     <span>Sujet *</span>
                     <input type="text" name="titre" placeholder="Votre demande concerne ..." required>
                 </label>
 
+                {# Corps du message envoye par le visiteur. #}
                 <label class="contact-field">
                     <span>Message *</span>
                     <textarea name="description" placeholder="Ecrivez votre message ici." required></textarea>
                 </label>
             </div>
 
+            {# Bas du formulaire : bouton d'envoi et mention de confidentialite. #}
             <div class="contact-form-card__footer">
                 <button type="submit" class="buttonprimary contact-submit-button">Envoyer votre message</button>
                 <p class="contact-security">Vos données ne seront jamais partagées.</p>
             </div>
         </form>
 
+        {# Carte informative a cote du formulaire pour rassurer et orienter le visiteur. #}
         <aside class="contact-info-card" aria-label="Informations complémentaires">
             <h2>Un projet en tête ?</h2>
 
+            {# Premier argument : accompagnement dans la creation du projet. #}
             <div class="contact-info-card__item">
                 <h3>Parlons-en ensemble</h3>
                 <p>
@@ -62,11 +77,13 @@
                 </p>
             </div>
 
+            {# Deuxieme argument : delai de reponse annonce au visiteur. #}
             <div class="contact-info-card__item">
                 <h3>Réponse rapide</h3>
                 <p>Nous nous engageons à vous répondre dans les plus brefs délais.</p>
             </div>
 
+            {# Troisieme argument : personnalisation de la reponse selon la demande. #}
             <div class="contact-info-card__item">
                 <h3>Sur-mesure</h3>
                 <p>Chaque demande est unique, chaque réponse est personnalisée.</p>

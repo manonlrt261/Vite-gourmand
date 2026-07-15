@@ -66,6 +66,27 @@ customer_order_detail:
     requirements:
         id: '\d+'
 
+customer_order_cancel:
+    path: /mon-compte/commandes/{id}/annuler
+    controller: App\Controller\CustomerController::cancelOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+customer_order_update:
+    path: /mon-compte/commandes/{id}/modifier
+    controller: App\Controller\CustomerController::updateOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+customer_order_add_menu:
+    path: /mon-compte/commandes/{id}/ajouter-menu
+    controller: App\Controller\CustomerController::addMenuToOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
 customer_profile:
     path: /mon-compte/mes-informations
     controller: App\Controller\CustomerController::profile
@@ -158,6 +179,20 @@ employee_order_advance_status:
     requirements:
         id: '\d+'
 
+employee_order_update:
+    path: /espace-employe/commandes/{id}/modifier
+    controller: App\Controller\EmployeeController::updateOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_order_cancel:
+    path: /espace-employe/commandes/{id}/annuler
+    controller: App\Controller\EmployeeController::cancelOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
 employee_menus:
     path: /espace-employe/menus-et-plats
     controller: App\Controller\EmployeeController::menus
@@ -217,6 +252,50 @@ employee_closure_delete:
 employee_reviews:
     path: /espace-employe/avis-clients
     controller: App\Controller\EmployeeController::reviews
+
+employee_messages:
+    path: /espace-employe/messagerie
+    controller: App\Controller\EmployeeController::messages
+
+employee_material_return_email:
+    path: /espace-employe/messagerie/retour-materiel
+    controller: App\Controller\EmployeeController::sendMaterialReturnEmail
+    methods: [POST]
+
+employee_message_reply:
+    path: /espace-employe/messagerie/{id}/repondre
+    controller: App\Controller\EmployeeController::replyContactMessage
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_message_archive:
+    path: /espace-employe/messagerie/{id}/archiver
+    controller: App\Controller\EmployeeController::archiveContactMessage
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_message_unarchive:
+    path: /espace-employe/messagerie/{id}/desarchiver
+    controller: App\Controller\EmployeeController::unarchiveContactMessage
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_message_restore:
+    path: /espace-employe/messagerie/{id}/restaurer
+    controller: App\Controller\EmployeeController::restoreContactMessage
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_message_delete:
+    path: /espace-employe/messagerie/{id}/supprimer
+    controller: App\Controller\EmployeeController::deleteContactMessage
+    methods: [POST]
+    requirements:
+        id: '\d+'
 
 employee_reviews_all:
     path: /espace-employe/avis-clients/tous

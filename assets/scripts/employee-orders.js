@@ -139,6 +139,28 @@ document.addEventListener('DOMContentLoaded', () => {
     applyFilters();
   };
 
+  const setOrderContactActionsState = (card, status) => {
+    const actions = card.querySelector('[data-order-contact-actions]');
+
+    if (!actions) {
+      return;
+    }
+
+    const isPending = status === 'en_attente';
+    actions.classList.toggle('is-disabled', !isPending);
+    actions.setAttribute('aria-disabled', String(!isPending));
+
+    actions.querySelectorAll('details').forEach((details) => {
+      if (!isPending) {
+        details.open = false;
+      }
+    });
+
+    actions.querySelectorAll('input, select, textarea, button').forEach((field) => {
+      field.disabled = !isPending;
+    });
+  };
+
   page.querySelectorAll('[data-order-status-form]').forEach((form) => {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -168,17 +190,22 @@ document.addEventListener('DOMContentLoaded', () => {
           button.textContent = data.label;
           button.classList.remove('badgeattente', 'badgevalidee', 'badgeterminee');
           button.classList.add(data.className);
-          button.disabled = ['en_livraison', 'terminee', 'livree', 'annulee'].includes(data.status);
+          button.disabled = ['livree', 'annulee'].includes(data.status);
+          setOrderContactActionsState(card, data.status);
           applyFilters();
         }
       } catch (error) {
         console.error(error);
       } finally {
-        if (!['en_livraison', 'terminee', 'livree', 'annulee'].includes(card.dataset.orderStatus || '')) {
+        if (!['livree', 'annulee'].includes(card.dataset.orderStatus || '')) {
           button.disabled = false;
         }
       }
     });
+  });
+
+  cards.forEach((card) => {
+    setOrderContactActionsState(card, card.dataset.orderStatus || 'en_attente');
   });
 
   applyButton.addEventListener('click', applyFilters);

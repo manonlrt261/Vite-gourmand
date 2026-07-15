@@ -1,34 +1,46 @@
 ﻿{% extends 'base.html.twig' %}
 
+{# Titre affiche dans l'onglet du navigateur pour la page Mes informations. #}
 {% block title %}Mes informations - Vite & Gourmand{% endblock %}
 
 {% block body %}
+{# Bandeau principal reutilisable avec le titre de la page. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Mes informations',
     image_alt: 'Informations personnelles Vite et Gourmand'
 } %}
 
+{# Contenu principal de la page de profil client. #}
 <main class="customer-page customer-profile-page">
+    {# Lien de retour vers l'espace client. #}
     <a href="{{ path('customer_account') }}" class="cart-back-link">← Retour à mon espace client</a>
 
+    {# Introduction qui explique l'objectif de la page. #}
     <section class="customer-profile-intro">
         <h1>Mes informations personnelles</h1>
         <p>Modifiez vos informations personnelles ci-dessous.<br>Ces informations seront utilisÃ©es pour vos commandes.</p>
     </section>
 
+    {# Message de succes apres modification des informations ou du mot de passe. #}
     {% for message in app.flashes('profile_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
 
+    {# Message d'erreur si une modification est impossible. #}
     {% for message in app.flashes('profile_error') %}
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
+    {# Formulaire principal pour modifier les informations personnelles et l'adresse. #}
     <form class="customer-profile-form" method="post" action="{{ path('customer_profile') }}">
+        {# Champ cache indiquant au controleur que l'action concerne les informations du profil. #}
+        <input type="hidden" name="profile_action" value="information">
         <div class="customer-profile-columns">
+            {# Bloc des informations personnelles du client. #}
             <section class="customer-profile-card-panel">
                 <h2>Informations personnelles</h2>
 
+                {# Champs prenom et nom affiches cote a cote. #}
                 <div class="customer-profile-grid customer-profile-grid--two">
                     <label>
                         <span>PrÃ©nom</span>
@@ -41,25 +53,32 @@
                     </label>
                 </div>
 
+                {# Email du client, utilise aussi pour la connexion. #}
                 <label>
                     <span>Email</span>
                     <input type="email" name="email" value="{{ customer.email }}" placeholder="{{ customer.email }}" autocomplete="email" required>
                 </label>
 
+                {# Numero de telephone utile pour le suivi de commande. #}
                 <label>
                     <span>NumÃ©ro de tÃ©lÃ©phone</span>
                     <input type="tel" name="telephone" value="{{ customer.telephone }}" placeholder="{{ customer.telephone }}" autocomplete="tel" required>
                 </label>
             </section>
 
+            {# Bloc des informations personnelles du client. #}
+            {# Bloc de l'adresse de livraison par defaut. #}
             <section class="customer-profile-card-panel">
                 <h2>Adresse de livraison par dÃ©faut</h2>
 
+                {# Adresse postale utilisee par defaut au panier. #}
                 <label>
                     <span>Adresse</span>
                     <input type="text" name="adresse_postale" value="{{ customer.adresse_postale }}" placeholder="{{ customer.adresse_postale }}" autocomplete="street-address" required>
                 </label>
 
+                {# Champs prenom et nom affiches cote a cote. #}
+                {# Code postal et ville de livraison. #}
                 <div class="customer-profile-grid customer-profile-grid--two">
                     <label>
                         <span>Code postal</span>
@@ -76,26 +95,50 @@
             </section>
         </div>
 
+        {# Actions du formulaire d'informations : enregistrer ou annuler. #}
+        <div class="customer-profile-actions customer-profile-actions--information">
+            <button type="submit" class="buttonprimary">Enregistrer les modifications</button>
+            <a href="{{ path('customer_account') }}" class="buttonwhite">Annuler</a>
+        </div>
+    </form>
+
+    {# Deuxieme formulaire dedie au changement de mot de passe. #}
+    <form class="customer-profile-form customer-password-form" method="post" action="{{ path('customer_profile') }}">
+        {# Champ cache indiquant au controleur que l'action concerne le mot de passe. #}
+        <input type="hidden" name="profile_action" value="password">
+
+        {# Bloc contenant les champs de changement de mot de passe. #}
         <section class="customer-profile-card-panel customer-password-panel">
             <h2>Changer mon mot de passe</h2>
 
+            {# Trois champs : mot de passe actuel, nouveau mot de passe et confirmation. #}
             <div class="customer-profile-grid customer-profile-grid--three">
                 <label>
                     <span>Mot de passe actuel</span>
-                    <input type="password" name="current_password" placeholder="Votre mot de passe actuel" autocomplete="current-password">
+                    <span class="auth-password-control">
+                        <input type="password" name="current_password" placeholder="Votre mot de passe actuel" autocomplete="current-password" data-password-input>
+                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    </span>
                 </label>
 
                 <label>
                     <span>Nouveau mot de passe</span>
-                    <input type="password" name="new_password" placeholder="Tapez votre nouveau mot de passe" autocomplete="new-password">
+                    <span class="auth-password-control">
+                        <input type="password" name="new_password" placeholder="Tapez votre nouveau mot de passe" autocomplete="new-password" data-password-input>
+                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    </span>
                 </label>
 
                 <label>
                     <span>Confirmer le nouveau mot de passe</span>
-                    <input type="password" name="new_password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password">
+                    <span class="auth-password-control">
+                        <input type="password" name="new_password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password" data-password-input>
+                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    </span>
                 </label>
             </div>
 
+            {# Rappel des regles de securite du nouveau mot de passe. #}
             <div class="customer-password-rules">
                 <p>Le mot de passe doit contenir au minimum :</p>
                 <ul>
@@ -109,9 +152,9 @@
             </div>
         </section>
 
-        <div class="customer-profile-actions">
-            <button type="submit" class="buttonprimary">Enregistrer les modifications</button>
-            <a href="{{ path('customer_account') }}" class="buttonwhite">Annuler</a>
+        {# Action finale du formulaire de mot de passe. #}
+        <div class="customer-profile-actions customer-profile-actions--password">
+            <button type="submit" class="buttonprimary">Enregistrer mon nouveau mot de passe</button>
         </div>
     </form>
 </main>

@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const editModal = page.querySelector('[data-employee-edit-modal]');
   const editForm = page.querySelector('[data-employee-edit-form]');
   const editError = page.querySelector('[data-edit-error]');
+  const viewModal = page.querySelector('[data-employee-view-modal]');
   const deleteModal = page.querySelector('[data-employee-delete-modal]');
   const deleteConfirm = page.querySelector('[data-delete-confirm]');
 
@@ -125,6 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
     editForm.querySelector('[data-edit-id]').value = button.dataset.id || '';
     editForm.querySelector('[data-edit-prenom]').value = button.dataset.prenom || '';
     editForm.querySelector('[data-edit-nom]').value = button.dataset.nom || '';
+    editForm.querySelector('[data-edit-date-naissance]').value = button.dataset.dateNaissance || '';
+    editForm.querySelector('[data-edit-lieu-naissance]').value = button.dataset.lieuNaissance || '';
     editForm.querySelector('[data-edit-email]').value = button.dataset.email || '';
     editForm.querySelector('[data-edit-telephone]').value = button.dataset.telephone || '';
     editForm.querySelector('[data-edit-adresse]').value = button.dataset.adresse || '';
@@ -152,6 +155,30 @@ document.addEventListener('DOMContentLoaded', () => {
     editedCard = null;
   };
 
+  const fillViewModal = (button) => {
+    viewModal.querySelector('[data-view-nom]').textContent = button.dataset.nom || 'Non renseigne';
+    viewModal.querySelector('[data-view-prenom]').textContent = button.dataset.prenom || 'Non renseigne';
+    viewModal.querySelector('[data-view-date-naissance]').textContent = button.dataset.dateNaissance || 'Non renseignee';
+    viewModal.querySelector('[data-view-lieu-naissance]').textContent = button.dataset.lieuNaissance || 'Non renseigne';
+    viewModal.querySelector('[data-view-adresse]').textContent = button.dataset.adresse || 'Non renseignee';
+    viewModal.querySelector('[data-view-code-postal]').textContent = button.dataset.codePostal || 'Non renseigne';
+    viewModal.querySelector('[data-view-ville]').textContent = button.dataset.ville || 'Non renseignee';
+    viewModal.querySelector('[data-view-email]').textContent = button.dataset.email || 'Non renseigne';
+    viewModal.querySelector('[data-view-telephone]').textContent = button.dataset.telephone || 'Non renseigne';
+    viewModal.querySelector('[data-view-poste]').textContent = button.dataset.poste || 'Non renseigne';
+  };
+
+  const openViewModal = (button) => {
+    fillViewModal(button);
+    viewModal.hidden = false;
+    document.body.classList.add('employee-modal-is-open');
+  };
+
+  const closeViewModal = () => {
+    viewModal.hidden = true;
+    document.body.classList.remove('employee-modal-is-open');
+  };
+
   const updateEmployeeCard = (employee) => {
     if (!editedCard) {
       return;
@@ -159,8 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fullName = `${employee.prenom || ''} ${employee.nom || ''}`.trim();
     const editButton = editedCard.querySelector('[data-employee-edit]');
+    const viewButton = editedCard.querySelector('[data-employee-view]');
 
-    editedCard.dataset.search = normalize(`${employee.id} ${employee.nom || ''} ${employee.prenom || ''} ${employee.email || ''}`);
+    editedCard.dataset.search = normalize(`${employee.id} ${employee.nom || ''} ${employee.prenom || ''} ${employee.email || ''} ${employee.telephone || ''} ${employee.poste || ''}`);
     editedCard.dataset.job = employee.poste || '';
 
     editedCard.querySelector('[data-employee-name]').textContent = fullName;
@@ -170,6 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editButton) {
       editButton.dataset.prenom = employee.prenom || '';
       editButton.dataset.nom = employee.nom || '';
+      editButton.dataset.dateNaissance = employee.date_naissance || '';
+      editButton.dataset.lieuNaissance = employee.lieu_naissance || '';
       editButton.dataset.email = employee.email || '';
       editButton.dataset.telephone = employee.telephone || '';
       editButton.dataset.adresse = employee.adresse_postale || '';
@@ -177,7 +207,24 @@ document.addEventListener('DOMContentLoaded', () => {
       editButton.dataset.codePostal = employee.code_postal || '';
       editButton.dataset.poste = employee.poste || '';
     }
+
+    if (viewButton) {
+      viewButton.dataset.prenom = employee.prenom || '';
+      viewButton.dataset.nom = employee.nom || '';
+      viewButton.dataset.dateNaissance = employee.date_naissance || '';
+      viewButton.dataset.lieuNaissance = employee.lieu_naissance || '';
+      viewButton.dataset.email = employee.email || '';
+      viewButton.dataset.telephone = employee.telephone || '';
+      viewButton.dataset.adresse = employee.adresse_postale || '';
+      viewButton.dataset.ville = employee.ville || '';
+      viewButton.dataset.codePostal = employee.code_postal || '';
+      viewButton.dataset.poste = employee.poste || '';
+    }
   };
+
+  page.querySelectorAll('[data-employee-view]').forEach((button) => {
+    button.addEventListener('click', () => openViewModal(button));
+  });
 
   page.querySelectorAll('[data-employee-edit]').forEach((button) => {
     button.addEventListener('click', () => openEditModal(button));
@@ -254,6 +301,10 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', closeDeleteModal);
   });
 
+  page.querySelectorAll('[data-view-modal-close]').forEach((button) => {
+    button.addEventListener('click', closeViewModal);
+  });
+
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       if (editModal && !editModal.hidden) {
@@ -262,6 +313,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (deleteModal && !deleteModal.hidden) {
         closeDeleteModal();
+      }
+
+      if (viewModal && !viewModal.hidden) {
+        closeViewModal();
       }
     }
   });

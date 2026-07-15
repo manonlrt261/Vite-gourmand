@@ -1,17 +1,27 @@
 {% extends 'base.html.twig' %}
 
+{# Titre affiché dans l'onglet du navigateur pour la gestion des employés. #}
 {% block title %}Gestion des employ&eacute;s - Vite & Gourmand{% endblock %}
 
 {% block body %}
+    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Gestion des employ&eacute;s',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Gestion des employ&eacute;s Vite et Gourmand'
     } %}
 
+    {# Conteneur principal de la page. L'attribut data sert au JavaScript des filtres et modales. #}
     <main class="admin-employees-page" data-admin-employees-page>
+        {# Lien de retour vers le tableau de bord administrateur. #}
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
+        {# Messages de confirmation affichés après la création, modification ou suppression d'un employé. #}
+        {% for message in app.flashes('employee_success') %}
+            <p class="contact-alert contact-alert--success">{{ message }}</p>
+        {% endfor %}
+
+        {# En-tête de la page avec l'explication et le bouton d'ajout d'un employé. #}
         <section class="admin-employees-heading">
             <div>
                 <h1>Gestion des employ&eacute;s</h1>
@@ -21,11 +31,14 @@
             <a href="{{ path('admin_employee_create') }}" class="buttonprimary admin-employee-add">Ajouter un employ&eacute;</a>
         </section>
 
+        {# Zone de filtres : recherche, statut, poste, application et réinitialisation. #}
         <section class="admin-employees-filters" data-admin-employee-filters>
+            {# Champ de recherche instantanée sur le nom, prénom, id, email, téléphone ou poste. #}
             <label class="admin-employee-filter admin-employee-filter--search">
                 <input type="search" placeholder="Rechercher un employ&eacute;" data-employee-search>
             </label>
 
+            {# Filtre permettant d'afficher les employés actifs ou inactifs. #}
             <label class="admin-employee-filter">
                 <select data-employee-status>
                     <option value="">Statut</option>
@@ -34,6 +47,7 @@
                 </select>
             </label>
 
+            {# Filtre permettant d'afficher les employés selon leur poste. #}
             <label class="admin-employee-filter">
                 <select data-employee-job>
                     <option value="">Tous les postes</option>
@@ -43,43 +57,74 @@
                 </select>
             </label>
 
+            {# Boutons qui appliquent ou réinitialisent les filtres sans recharger la page. #}
             <div class="admin-employee-filter-actions">
                 <button type="button" class="buttonprimary admin-employee-apply" data-employee-apply>Appliquer les filtres</button>
                 <button type="button" class="buttonoffwhite admin-employee-reset" data-employee-reset>R&eacute;initialiser tous les filtres</button>
             </div>
         </section>
 
+        {# Liste des employés affichée sous forme de lignes administrables. #}
         <section class="admin-employees-list-frame">
             <div class="admin-employees-list" data-employee-list>
+                {# Boucle sur tous les employés récupérés depuis la base de données. #}
                 {% for employee in employees %}
+                    {# Variables de confort pour éviter de répéter les mêmes calculs dans le HTML. #}
                     {% set fullName = (employee.prenom ~ ' ' ~ employee.nom)|trim %}
                     {% set isActive = employee.actif == 1 %}
+                    {% set birthDate = employee.date_naissance ? employee.date_naissance|date('Y-m-d') : '' %}
 
+                    {# Ligne d'un employé. Les data-* stockent les informations utilisées par les filtres et les fenêtres. #}
                     <article
                         class="admin-employee-row"
                         data-employee-card
                         data-employee-id="{{ employee.id }}"
-                        data-search="{{ (employee.id ~ ' ' ~ employee.nom ~ ' ' ~ employee.prenom ~ ' ' ~ employee.email)|lower }}"
+                        data-search="{{ (employee.id ~ ' ' ~ employee.nom ~ ' ' ~ employee.prenom ~ ' ' ~ employee.email ~ ' ' ~ employee.telephone ~ ' ' ~ employee.poste)|lower }}"
                         data-status="{{ employee.actif }}"
                         data-job="{{ employee.poste }}"
                     >
+                        {# Badge actif/inactif cliquable : il permet de désactiver ou réactiver un employé. #}
                         <form method="post" action="{{ path('admin_employee_toggle', { id: employee.id }) }}" data-employee-toggle-form>
                             <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-employee-status-button>
                                 {{ isActive ? 'Actif' : 'Inactif' }}
                             </button>
                         </form>
 
+                        {# Identité principale affichée dans la ligne : nom complet, id et email. #}
                         <div class="admin-employee-row__main">
                             <h2 data-employee-name>{{ fullName }}</h2>
                             <p data-employee-identity>ID {{ employee.id }} &middot; {{ employee.email }}</p>
                         </div>
 
+                        {# Poste occupé par l'employé. #}
                         <p class="admin-employee-row__job" data-employee-job-label>{{ employee.poste }}</p>
 
+                        {# Date de création du compte employé. #}
                         <div class="admin-employee-row__meta">
                             <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
                         </div>
 
+                        {# Bouton qui ouvre une fenêtre de lecture avec toutes les informations de l'employé. #}
+                        <button
+                            type="button"
+                            class="buttonprimary admin-employee-view-button"
+                            data-employee-view
+                            data-id="{{ employee.id }}"
+                            data-prenom="{{ employee.prenom }}"
+                            data-nom="{{ employee.nom }}"
+                            data-date-naissance="{{ birthDate }}"
+                            data-lieu-naissance="{{ employee.lieu_naissance }}"
+                            data-email="{{ employee.email }}"
+                            data-telephone="{{ employee.telephone }}"
+                            data-adresse="{{ employee.adresse_postale }}"
+                            data-ville="{{ employee.ville }}"
+                            data-code-postal="{{ employee.code_postal }}"
+                            data-poste="{{ employee.poste }}"
+                        >
+                            Visualiser les informations
+                        </button>
+
+                        {# Bouton qui ouvre une fenêtre de modification préremplie avec les données de l'employé. #}
                         <button
                             type="button"
                             class="buttonedit"
@@ -88,6 +133,8 @@
                             data-id="{{ employee.id }}"
                             data-prenom="{{ employee.prenom }}"
                             data-nom="{{ employee.nom }}"
+                            data-date-naissance="{{ birthDate }}"
+                            data-lieu-naissance="{{ employee.lieu_naissance }}"
                             data-email="{{ employee.email }}"
                             data-telephone="{{ employee.telephone }}"
                             data-adresse="{{ employee.adresse_postale }}"
@@ -98,6 +145,7 @@
                             Modifier
                         </button>
 
+                        {# Bouton qui ouvre la fenêtre de confirmation avant suppression du compte. #}
                         <button
                             type="button"
                             class="buttondelete"
@@ -108,13 +156,16 @@
                         </button>
                     </article>
                 {% else %}
+                    {# Message affiché s'il n'y a aucun employé en base. #}
                     <p class="employee-empty">Aucun employ&eacute; pour le moment.</p>
                 {% endfor %}
 
+                {# Message affiché par JavaScript quand aucun employé ne correspond aux filtres. #}
                 <p class="employee-empty" data-employee-empty hidden>Aucun employ&eacute; ne correspond aux filtres.</p>
             </div>
         </section>
 
+        {# Bloc d'aide pour rappeler les règles de création et de sécurité des comptes employés. #}
         <section class="admin-employees-info">
             <div class="admin-employees-info__heading">
                 <span aria-hidden="true">?</span>
@@ -129,17 +180,55 @@
             </ul>
         </section>
 
+        {# Fenêtre de visualisation : elle affiche les informations complètes sans permettre la modification. #}
+        <div class="admin-employee-modal" data-employee-view-modal hidden>
+            {# Overlay permettant de fermer la fenêtre en cliquant à l'extérieur. #}
+            <div class="admin-employee-modal__overlay" data-view-modal-close></div>
+
+            <section class="admin-employee-modal__dialog" role="dialog" aria-modal="true">
+                {# En-tête de la fenêtre avec son titre et la croix de fermeture. #}
+                <div class="admin-employee-modal__header">
+                    <h2>Informations de l'employ&eacute;</h2>
+                    <button type="button" aria-label="Fermer" data-view-modal-close>&times;</button>
+                </div>
+
+                {# Liste descriptive remplie par JavaScript avec les données du bouton cliqué. #}
+                <dl class="admin-employee-details">
+                    <div><dt>Nom</dt><dd data-view-nom></dd></div>
+                    <div><dt>Pr&eacute;nom</dt><dd data-view-prenom></dd></div>
+                    <div><dt>Date de naissance</dt><dd data-view-date-naissance></dd></div>
+                    <div><dt>Lieu de naissance</dt><dd data-view-lieu-naissance></dd></div>
+                    <div><dt>Adresse postale</dt><dd data-view-adresse></dd></div>
+                    <div><dt>Code postal</dt><dd data-view-code-postal></dd></div>
+                    <div><dt>Ville</dt><dd data-view-ville></dd></div>
+                    <div><dt>Email professionnelle</dt><dd data-view-email></dd></div>
+                    <div><dt>Num&eacute;ro de t&eacute;l&eacute;phone</dt><dd data-view-telephone></dd></div>
+                    <div><dt>Poste</dt><dd data-view-poste></dd></div>
+                </dl>
+
+                {# Bouton de fermeture de la fenêtre de visualisation. #}
+                <div class="admin-employee-modal__actions">
+                    <button type="button" class="buttonprimary" data-view-modal-close>Fermer</button>
+                </div>
+            </section>
+        </div>
+
+        {# Fenêtre de modification : elle contient le formulaire envoyé vers la route de mise à jour. #}
         <div class="admin-employee-modal" data-employee-edit-modal hidden>
+            {# Overlay permettant de fermer la fenêtre de modification. #}
             <div class="admin-employee-modal__overlay" data-employee-modal-close></div>
 
             <form class="admin-employee-modal__dialog" method="post" data-employee-edit-form>
+                {# En-tête de la fenêtre de modification. #}
                 <div class="admin-employee-modal__header">
                     <h2>Modifier l'employ&eacute;</h2>
                     <button type="button" aria-label="Fermer" data-employee-modal-close>&times;</button>
                 </div>
 
+                {# Champ caché contenant l'identifiant de l'employé modifié. #}
                 <input type="hidden" name="id" data-edit-id>
 
+                {# Champs modifiables de l'employé, préremplis par JavaScript. #}
                 <div class="admin-employee-modal__grid">
                     <label>
                         <span>Pr&eacute;nom</span>
@@ -152,7 +241,17 @@
                     </label>
 
                     <label>
-                        <span>Email</span>
+                        <span>Date de naissance</span>
+                        <input type="date" name="date_naissance" required data-edit-date-naissance>
+                    </label>
+
+                    <label>
+                        <span>Lieu de naissance</span>
+                        <input type="text" name="lieu_naissance" required data-edit-lieu-naissance>
+                    </label>
+
+                    <label>
+                        <span>Email professionnelle</span>
                         <input type="email" name="email" required data-edit-email>
                     </label>
 
@@ -179,6 +278,7 @@
                     <label>
                         <span>Poste</span>
                         <select name="poste" required data-edit-poste>
+                            {# Liste des postes autorisés pour les employés. #}
                             {% for job in jobs %}
                                 <option value="{{ job }}">{{ job }}</option>
                             {% endfor %}
@@ -186,8 +286,10 @@
                     </label>
                 </div>
 
+                {# Zone d'erreur affichée si la modification ne peut pas être enregistrée. #}
                 <p class="admin-employee-modal__error" data-edit-error hidden></p>
 
+                {# Boutons de validation ou d'annulation de la modification. #}
                 <div class="admin-employee-modal__actions">
                     <button type="submit" class="buttonprimary">Valider</button>
                     <button type="button" class="buttonoffwhite" data-employee-modal-close>Annuler</button>
@@ -195,17 +297,22 @@
             </form>
         </div>
 
+        {# Fenêtre de confirmation avant suppression d'un employé. #}
         <div class="admin-employee-modal" data-employee-delete-modal hidden>
+            {# Overlay permettant de fermer la fenêtre de suppression. #}
             <div class="admin-employee-modal__overlay" data-delete-modal-close></div>
 
             <section class="admin-employee-modal__dialog admin-employee-modal__dialog--small" role="dialog" aria-modal="true">
+                {# En-tête de la fenêtre d'avertissement. #}
                 <div class="admin-employee-modal__header">
                     <h2>Attention</h2>
                     <button type="button" aria-label="Fermer" data-delete-modal-close>&times;</button>
                 </div>
 
+                {# Texte de confirmation pour éviter une suppression accidentelle. #}
                 <p>Voulez-vous vraiment supprimer cet employ&eacute; ? Cette action retirera son compte.</p>
 
+                {# Actions de la fenêtre : confirmer la suppression ou annuler. #}
                 <div class="admin-employee-modal__actions">
                     <button type="button" class="buttonoffwhite" data-delete-confirm>Supprimer</button>
                     <button type="button" class="buttonprimary" data-delete-modal-close>Annuler</button>
@@ -217,5 +324,6 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {# Script de la page : il gère les filtres, les badges actif/inactif et les fenêtres modales. #}
     <script src="{{ asset('assets/scripts/admin-employees.js') }}" defer></script>
 {% endblock %}
