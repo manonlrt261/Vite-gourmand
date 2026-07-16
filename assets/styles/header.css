@@ -285,3 +285,28 @@ body.employee-menu-is-open {
     font-size: 24px;
   }
 }
+
+@media (max-width: 768px) {
+  .employee-menu-overlay {
+    width: 100vw;
+    min-height: 100dvh;
+    background-color: var(--white);
+  }
+
+  .employee-menu-panel {
+    width: 100vw;
+    min-height: 100dvh;
+    box-shadow: none;
+  }
+
+  .employee-menu-panel__top {
+    width: 100%;
+  }
+
+  .employee-menu-panel__nav {
+    width: 100%;
+    min-height: calc(100dvh - 89px);
+    box-sizing: border-box;
+    align-items: flex-start;
+  }
+}

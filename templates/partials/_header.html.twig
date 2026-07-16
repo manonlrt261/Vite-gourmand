@@ -93,10 +93,17 @@
             <span class="header-title">Vite et Gourmand</span>
         </a>
 
+        {# Bouton burger affiche uniquement sur mobile pour ouvrir le menu public en superposition. #}
+        <button class="header-mobile-burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="public-mobile-menu-overlay" data-public-menu-open>
+            <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
+                <path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+        </button>
+
         {# Navigation principale du site public. #}
         <nav class="header-nav" aria-label="Navigation principale">
             <a href="{{ path('home_show') }}">Accueil</a>
-            <a href="{{ path('menu_index') }}">Menu</a>
+            <a href="{{ path('menu_index') }}">Menus</a>
             <a href="{{ path('contact_index') }}">Contact</a>
             {# Si un client est connecte, on affiche son compte et la deconnexion. Sinon, on affiche connexion. #}
             {% if app.session.get('utilisateur_id') %}
@@ -109,7 +116,48 @@
 
         {# Acces direct au panier. #}
         <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
-            Panier
+            <svg class="header-cart__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15a1 1 0 0 1 .99 1.141l-.825 5.775A2.5 2.5 0 0 1 12.69 15H3.31a2.5 2.5 0 0 1-2.475-2.084L.01 7.141A1 1 0 0 1 1 6h1.217L5.07 1.243a.5.5 0 0 1 .686-.172ZM1 7l.825 5.775A1.5 1.5 0 0 0 3.31 14h9.38a1.5 1.5 0 0 0 1.485-1.225L15 7H1Z"/>
+            </svg>
         </a>
     </header>
+
+    {# Menu mobile public : il s'ouvre au-dessus de la page et se ferme avec la croix ou un clic en dehors. #}
+    <div class="public-menu-overlay" id="public-mobile-menu-overlay" hidden data-public-menu-overlay>
+        <div class="public-menu-panel" role="dialog" aria-modal="true" aria-label="Menu principal mobile">
+            {# Haut du menu mobile : meme structure que le header, avec la croix a la place du burger. #}
+            <div class="public-menu-panel__top">
+                <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
+                    <img
+                        src="{{ asset('assets/logo.png') }}"
+                        alt="Logo Vite et Gourmand"
+                        class="header-logo"
+                    >
+
+                    <span class="header-title">Vite et Gourmand</span>
+                </a>
+
+                {# Bouton de fermeture du menu mobile. #}
+                <button class="public-menu-panel__close" type="button" aria-label="Fermer le menu" data-public-menu-close>
+                    <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
+                        <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            {# Navigation mobile reprenant les liens principaux du header public. #}
+            <nav class="public-menu-panel__nav" aria-label="Navigation mobile">
+                <a href="{{ path('home_show') }}">Accueil</a>
+                <a href="{{ path('menu_index') }}">Menus</a>
+                <a href="{{ path('contact_index') }}">Contact</a>
+                {% if app.session.get('utilisateur_id') %}
+                    <a href="{{ path('customer_account') }}">Mon compte</a>
+                    <a href="{{ path('logout') }}">D&eacute;connexion</a>
+                {% else %}
+                    <a href="{{ path('login') }}">Connexion</a>
+                {% endif %}
+                <a href="{{ path('cart_index') }}">Panier</a>
+            </nav>
+        </div>
+    </div>
 {% endif %}

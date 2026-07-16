@@ -93,7 +93,7 @@ class CustomerController extends AbstractController
         $order = $connection->fetchAssociative(
             'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
                     c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
-                    c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.statut_id,
+                    c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.pret_materiel, c.statut_id,
                     m.menu_id, m.nom_menu, m.description AS menu_description, m.prix_par_personne,
                     m.image_url AS menu_image_url, m.image_alt AS menu_image_alt,
                     COALESCE(sc.libelle, "En attente") AS statut_libelle,
@@ -112,8 +112,14 @@ class CustomerController extends AbstractController
             throw $this->createNotFoundException('Commande introuvable.');
         }
 
+        $orderMenus = $this->getOrderMenuLines($connection, $order);
+        foreach ($orderMenus as $index => $orderMenu) {
+            $orderMenus[$index]['mealItems'] = $this->getOrderMealItems($connection, (int) $orderMenu['menu_id']);
+        }
+
         return $this->render('customer/order_detail.html.twig', [
             'order' => $order,
+            'orderMenus' => $orderMenus,
             'mealItems' => $this->getOrderMealItems($connection, (int) $order['menu_id']),
             'statusHistory' => $this->getOrderStatusHistory($connection, (int) $order['commande_id'], $order),
             'availableMenus' => $this->getAvailableMenus($connection),
@@ -185,8 +191,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiee par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien ete modifiee.');
+        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiée par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien été modifiée.');
 
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
@@ -242,31 +248,33 @@ class CustomerController extends AbstractController
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $statusId = (int) $order['statut_id'];
 
-        $connection->insert('commandes', [
-            'utilisateur_id' => $userId,
+        $this->ensureOrderMenuTable($connection);
+
+        $connection->insert('commande_menus', [
+            'commande_id' => $id,
             'menu_id' => $menuId,
-            'date_commande' => $now,
-            'date_prestation' => $order['date_prestation'],
-            'heure_de_livraison' => $order['heure_de_livraison'],
-            'adresse_livraison' => $order['adresse_livraison'],
-            'ville_livraison' => $order['ville_livraison'],
-            'code_postal_livraison' => $order['code_postal_livraison'],
             'nombre_personnes' => $nombrePersonnes,
+            'prix_par_personne' => (float) $menu['prix_par_personne'],
             'prix_menu' => $priceMenu,
-            'prix_livraison' => 0,
-            'prix_total' => $priceMenu,
-            'pret_materiel' => 0,
-            'motif_annulation' => '',
+            'reduction' => $discount,
             'created_at' => $now,
-            'updated_at' => $now,
-            'statut_id' => $statusId,
         ]);
 
-        $newOrderId = (int) $connection->lastInsertId();
-        $this->addOrderStatusHistory($connection, $newOrderId, $statusId, 'Menu ajoute par le client depuis le detail de commande.');
-        $this->addFlash('order_success', 'Le menu a bien ete ajoute a vos commandes.');
+        $totals = $this->getOrderMenuTotals($connection, $id);
+        $connection->update('commandes', [
+            'nombre_personnes' => $totals['people'],
+            'prix_menu' => $totals['price'],
+            'prix_total' => $totals['price'] + (float) $order['prix_livraison'],
+            'updated_at' => $now,
+        ], [
+            'commande_id' => $id,
+            'utilisateur_id' => $userId,
+        ]);
 
-        return $this->redirectToRoute('customer_order_detail', ['id' => $newOrderId]);
+        $this->addOrderStatusHistory($connection, $id, $statusId, 'Menu ajouté par le client depuis le détail de commande.');
+        $this->addFlash('order_success', 'Le menu a bien été ajouté à votre commande.');
+
+        return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
 
     // Permet au client d annuler une commande tant qu elle est en attente.
@@ -326,8 +334,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien ete annulee.');
+        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulée par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien été annulée.');
 
         return $this->redirectToRoute('customer_orders');
     }
@@ -354,9 +362,9 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Les informations personnelles et le mot de passe sont proteges par un token CSRF.
+            // Les informations personnelles et le mot de passe sont protégés par un token CSRF.
             if (!$this->isValidCustomerCsrf($request)) {
-                $this->addFlash('profile_error', 'Le formulaire a expire, veuillez reessayer.');
+                $this->addFlash('profile_error', 'Le formulaire a expiré, veuillez réessayer.');
 
                 return $this->redirectToRoute('customer_profile');
             }
@@ -371,7 +379,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Verifie le token CSRF commun aux formulaires de l espace client.
+    // Vérifie le token CSRF commun aux formulaires de l'espace client.
     private function isValidCustomerCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('customer_action', (string) $request->request->get('_csrf_token'));
@@ -391,7 +399,7 @@ class CustomerController extends AbstractController
             ];
 
             if ($passwordData['current'] === '' || $passwordData['new'] === '' || $passwordData['confirm'] === '') {
-                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent etre renseignes.');
+                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent être renseignés.');
 
                 return;
             }
@@ -409,17 +417,39 @@ class CustomerController extends AbstractController
             }
 
             if (!$this->isStrongPassword($passwordData['new'])) {
-                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquees.');
+                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquées.');
 
                 return;
             }
 
-            $connection->update('utilisateurs', [
-                'mot_de_passe' => password_hash($passwordData['new'], PASSWORD_DEFAULT),
+            // Le nouveau mot de passe est haché avant d'être enregistré en base.
+            $hashedPassword = password_hash($passwordData['new'], PASSWORD_DEFAULT);
+            $updatedRows = $connection->update('utilisateurs', [
+                'mot_de_passe' => $hashedPassword,
                 'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ], ['id' => $userId]);
 
-            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien ete enregistre.');
+            try {
+                // Si le compte employe avait un mot de passe initial visible par l'administrateur,
+                // il est efface des que l'utilisateur definit son propre mot de passe.
+                $connection->update('utilisateurs', ['mot_de_passe_initial' => null], ['id' => $userId]);
+            } catch (\Throwable) {
+            }
+
+            // On relit la base pour confirmer que le nouveau mot de passe a bien remplacé l'ancien.
+            $savedPassword = (string) $connection->fetchOne(
+                'SELECT mot_de_passe FROM utilisateurs WHERE id = ?',
+                [$userId]
+            );
+
+            if ($updatedRows < 1 || !password_verify($passwordData['new'], $savedPassword)) {
+                $this->addFlash('profile_error', "Le nouveau mot de passe n'a pas pu être enregistré. Veuillez réessayer.");
+
+                return;
+            }
+
+            $this->refreshCustomerSession($request, $connection, $userId);
+            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien été enregistré.');
 
             return;
         }
@@ -467,37 +497,8 @@ class CustomerController extends AbstractController
             return;
         }
 
-        $passwordData = [
-            'current' => (string) $request->request->get('current_password'),
-            'new' => (string) $request->request->get('new_password'),
-            'confirm' => (string) $request->request->get('new_password_confirm'),
-        ];
-        $wantsPasswordChange = $passwordData['current'] !== '' || $passwordData['new'] !== '' || $passwordData['confirm'] !== '';
-
         $updateData = $data;
         $updateData['updated_at'] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
-
-        if ($wantsPasswordChange) {
-            if (!$this->isPasswordValid($passwordData['current'], (string) $customer['mot_de_passe'])) {
-                $this->addFlash('profile_error', 'Le mot de passe actuel est incorrect.');
-
-                return;
-            }
-
-            if ($passwordData['new'] !== $passwordData['confirm']) {
-                $this->addFlash('profile_error', 'Les deux nouveaux mots de passe ne sont pas identiques.');
-
-                return;
-            }
-
-            if (!$this->isStrongPassword($passwordData['new'])) {
-                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquées.');
-
-                return;
-            }
-
-            $updateData['mot_de_passe'] = password_hash($passwordData['new'], PASSWORD_DEFAULT);
-        }
 
         $connection->update('utilisateurs', $updateData, ['id' => $userId]);
 
@@ -653,6 +654,86 @@ class CustomerController extends AbstractController
              FROM menus
              WHERE actif = 1
              ORDER BY nom_menu ASC'
+        );
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    // Recupere les menus contenus dans une commande, avec une compatibilite pour les anciennes commandes a menu unique.
+    private function getOrderMenuLines(Connection $connection, array $order): array
+    {
+        try {
+            $lines = $connection->fetchAllAssociative(
+                'SELECT cm.commande_menu_id, cm.menu_id, cm.nombre_personnes,
+                        cm.prix_par_personne, cm.prix_menu, cm.reduction,
+                        m.nom_menu, m.description AS menu_description,
+                        m.image_url AS menu_image_url, m.image_alt AS menu_image_alt
+                 FROM commande_menus cm
+                 LEFT JOIN menus m ON m.menu_id = cm.menu_id
+                 WHERE cm.commande_id = ?
+                 ORDER BY cm.commande_menu_id ASC',
+                [(int) $order['commande_id']]
+            );
+
+            if ($lines !== []) {
+                return $lines;
+            }
+        } catch (\Throwable) {
+            // Si la table commande_menus n'existe pas encore, on affiche l'ancien format.
+        }
+
+        return [[
+            'commande_menu_id' => null,
+            'menu_id' => (int) $order['menu_id'],
+            'nombre_personnes' => (int) $order['nombre_personnes'],
+            'prix_par_personne' => (float) $order['prix_par_personne'],
+            'prix_menu' => (float) $order['prix_menu'],
+            'reduction' => max(0, ((float) $order['prix_par_personne'] * (int) $order['nombre_personnes']) - (float) $order['prix_menu']),
+            'nom_menu' => $order['nom_menu'],
+            'menu_description' => $order['menu_description'],
+            'menu_image_url' => $order['menu_image_url'],
+            'menu_image_alt' => $order['menu_image_alt'],
+        ]];
+    }
+
+    /**
+     * @return array{people:int, price:float}
+     */
+    // Calcule les totaux d une commande a partir de ses lignes de menus.
+    private function getOrderMenuTotals(Connection $connection, int $orderId): array
+    {
+        $totals = $connection->fetchAssociative(
+            'SELECT COALESCE(SUM(nombre_personnes), 0) AS people,
+                    COALESCE(SUM(prix_menu), 0) AS price
+             FROM commande_menus
+             WHERE commande_id = ?',
+            [$orderId]
+        );
+
+        return [
+            'people' => (int) ($totals['people'] ?? 0),
+            'price' => (float) ($totals['price'] ?? 0),
+        ];
+    }
+
+    // Cree la table des lignes de commande si elle n existe pas encore.
+    private function ensureOrderMenuTable(Connection $connection): void
+    {
+        $connection->executeStatement(
+            'CREATE TABLE IF NOT EXISTS commande_menus (
+                commande_menu_id INT AUTO_INCREMENT NOT NULL,
+                commande_id INT NOT NULL,
+                menu_id INT NOT NULL,
+                nombre_personnes INT NOT NULL,
+                prix_par_personne DECIMAL(10,2) NOT NULL,
+                prix_menu DECIMAL(10,2) NOT NULL,
+                reduction DECIMAL(10,2) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                PRIMARY KEY(commande_menu_id),
+                INDEX idx_commande_menus_commande (commande_id),
+                INDEX idx_commande_menus_menu (menu_id)
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB'
         );
     }
 
@@ -825,6 +906,10 @@ class CustomerController extends AbstractController
 
         if (!InputValidator::isValidTime($heureLivraison)) {
             return 'Veuillez renseigner une heure de livraison valide.';
+        }
+
+        if (!InputValidator::isTimeBetween($heureLivraison, '08:00', '22:00')) {
+            return 'Les livraisons sont possibles entre 8h00 et 22h00';
         }
 
         if (!InputValidator::isValidPostalCode($codePostal)) {

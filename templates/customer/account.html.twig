@@ -70,7 +70,7 @@
                                 <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
                                 {# Le bouton modifier n'apparait que si la commande est encore en attente. #}
                                 {% if statusCode == 'en_attente' %}
-                                    <a href="{{ path('customer_orders') }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n&deg;{{ order.commande_id }}">Modifier</a>
+                                    <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n&deg;{{ order.commande_id }}">Modifier</a>
                                 {% endif %}
                             </div>
                         </article>
@@ -111,7 +111,7 @@
 
             {# Si aucune commande eligible n'existe, le formulaire complet n'est pas affiche. #}
             {% if reviewOrders is empty %}
-                <p class="customer-empty">Vous devez avoir passé une commande avant de laisser un avis.</p>
+                <p class="customer-empty">Vous pourrez laisser un avis une fois votre commande réceptionnée.</p>
             {% else %}
                 {# Choix obligatoire de la commande concernee par l'avis. #}
                 <label class="customer-review-field">

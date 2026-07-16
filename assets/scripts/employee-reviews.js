@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   const filters = document.querySelector('[data-review-filters]');
-  const cards = Array.from(document.querySelectorAll('[data-review-card]'));
+  const getCards = () => Array.from(document.querySelectorAll('[data-review-card]'));
   const emptyMessage = document.querySelector('[data-review-empty]');
   const countLabel = document.querySelector('[data-review-count]');
+  const isPendingReviewPage = Boolean(document.querySelector('.employee-reviews-layout')) && !document.querySelector('.employee-review-all-list');
+  const allReviewsList = document.querySelector('.employee-review-all-list');
+  const isAllReviewsPage = Boolean(allReviewsList);
 
-  if (!filters || cards.length === 0) {
+  if (!filters || getCards().length === 0) {
     return;
   }
 
@@ -60,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menu = menuSelect?.value || '';
     let visibleCount = 0;
 
-    cards.forEach((card) => {
+    getCards().forEach((card) => {
       const matchesSearch = !search || card.dataset.search.includes(search);
       const matchesNote = !note || card.dataset.note === note;
       const matchesPeriod = getPeriodMatch(period, card.dataset.date);
@@ -98,7 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sendReviewAction = async (form) => {
-    const response = await fetch(form.action, {
+    // Le formulaire contient un champ cache "action" pour le statut choisi.
+    // getAttribute('action') evite de confondre ce champ avec l'URL du formulaire.
+    const response = await fetch(form.getAttribute('action'), {
       method: form.method || 'POST',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
@@ -114,12 +119,74 @@ document.addEventListener('DOMContentLoaded', () => {
     return response.json();
   };
 
-  document.querySelectorAll('[data-review-action]').forEach((form) => {
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
+  const updateGroupEmptyMessages = () => {
+    document.querySelectorAll('[data-review-group]').forEach((group) => {
+      const empty = group.querySelector('[data-review-group-empty]');
+      if (empty) {
+        empty.hidden = Boolean(group.querySelector('[data-review-card]'));
+      }
+    });
+  };
+
+  const createReviewActionForm = ({ action, label, className }, actionUrl, csrfToken) => {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = actionUrl;
+    form.dataset.reviewAction = '';
+
+    form.innerHTML = `
+      <input type="hidden" name="_csrf_token" value="${csrfToken}">
+      <input type="hidden" name="action" value="${action}">
+      <button type="submit" class="${className}">${label}</button>
+    `;
+
+    return form;
+  };
+
+  const refreshReviewActions = (card, status, actionUrl, csrfToken) => {
+    const actions = card.querySelector('.employee-review-card__actions');
+    if (!actions) {
+      return;
+    }
+
+    const nextActions = [
+      { status: 'valide', action: 'accept', label: "Valider l'avis", className: 'buttonaccept' },
+      { status: 'refuse', action: 'refuse', label: "Refuser l'avis", className: 'buttonrefuse' },
+      { status: 'en_attente', action: 'pending', label: 'Remettre en attente', className: 'buttonwhite' },
+    ];
+
+    actions.innerHTML = '';
+    nextActions
+      .filter((item) => item.status !== status)
+      .forEach((item) => {
+        actions.appendChild(createReviewActionForm(item, actionUrl, csrfToken));
+      });
+  };
+
+  const moveReviewCardToGroup = (card, status) => {
+    const targetGroup = document.querySelector(`[data-review-group="${status}"]`);
+    if (!targetGroup) {
+      return;
+    }
+
+    const empty = targetGroup.querySelector('[data-review-group-empty]');
+    targetGroup.insertBefore(card, empty || null);
+    updateGroupEmptyMessages();
+  };
+
+  document.addEventListener('submit', async (event) => {
+    const form = event.target.matches('[data-review-action]') ? event.target : null;
+    if (!form) {
+      return;
+    }
+
+    event.preventDefault();
 
       const button = form.querySelector('button');
       const card = form.closest('[data-review-card]');
+      const formData = new FormData(form);
+      const actionUrl = form.getAttribute('action');
+      const csrfToken = formData.get('_csrf_token') || '';
 
       if (button) {
         button.disabled = true;
@@ -131,6 +198,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.status && card) {
           card.dataset.status = data.status;
           card.querySelector('[data-review-status-label]').textContent = data.label;
+
+          // Sur la page "Gestion des avis", seuls les avis en attente doivent rester visibles.
+          // Un avis valide ou refuse disparait donc aussitot et se retrouve dans "Tous les avis".
+          if (isPendingReviewPage && data.status !== 'en_attente') {
+            card.remove();
+            applyFilters();
+          }
+
+          // Sur la page "Tous les avis", la carte rejoint automatiquement la bonne section.
+          if (isAllReviewsPage) {
+            moveReviewCardToGroup(card, data.status);
+            refreshReviewActions(card, data.status, actionUrl, csrfToken);
+            applyFilters();
+          }
         }
 
         if (typeof data.home === 'boolean') {
@@ -148,9 +229,17 @@ document.addEventListener('DOMContentLoaded', () => {
           button.disabled = false;
         }
       }
-    });
   });
 
+  filters.addEventListener('keydown', (event) => {
+    // La touche Entree applique les filtres comme le bouton principal.
+    if (event.key === 'Enter' && event.target.matches('input, select')) {
+      event.preventDefault();
+      applyFilters();
+    }
+  });
+
+  updateGroupEmptyMessages();
   applyButton?.addEventListener('click', applyFilters);
   resetButton?.addEventListener('click', resetFilters);
 });

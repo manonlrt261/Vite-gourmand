@@ -86,35 +86,35 @@
         {# Liste globale des avis, organisee en trois groupes. #}
         <div class="employee-review-all-list" data-review-list>
             {# Groupe des avis en attente. #}
-            <section class="employee-review-group">
+            <section class="employee-review-group" data-review-group="en_attente">
                 <h2>En attente</h2>
                 {% for review in pendingReviews %}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
                     {# Message si aucun avis n'est en attente. #}
-                    <p class="employee-empty">Aucun avis en attente.</p>
+                    <p class="employee-empty" data-review-group-empty>Aucun avis en attente.</p>
                 {% endfor %}
             </section>
 
             {# Groupe des avis acceptes. #}
-            <section class="employee-review-group">
+            <section class="employee-review-group" data-review-group="valide">
                 <h2>Accept&eacute;s</h2>
                 {% for review in acceptedReviews %}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
                     {# Message si aucun avis accepte n'existe. #}
-                    <p class="employee-empty">Aucun avis accept&eacute;.</p>
+                    <p class="employee-empty" data-review-group-empty>Aucun avis accept&eacute;.</p>
                 {% endfor %}
             </section>
 
             {# Groupe des avis refuses. #}
-            <section class="employee-review-group">
+            <section class="employee-review-group" data-review-group="refuse">
                 <h2>Refus&eacute;s</h2>
                 {% for review in refusedReviews %}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
                     {# Message si aucun avis refuse n'existe. #}
-                    <p class="employee-empty">Aucun avis refus&eacute;.</p>
+                    <p class="employee-empty" data-review-group-empty>Aucun avis refus&eacute;.</p>
                 {% endfor %}
             </section>
 

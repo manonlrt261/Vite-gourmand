@@ -186,6 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable(menuGroups, total);
     };
 
+    page.addEventListener('keydown', (event) => {
+        // La touche Entree applique les filtres comme le bouton principal.
+        if (event.key === 'Enter' && event.target.matches('input, select')) {
+            event.preventDefault();
+            render();
+        }
+    });
+
     applyButton.addEventListener('click', render);
 
     resetButton.addEventListener('click', () => {

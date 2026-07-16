@@ -18,7 +18,7 @@
     {# Introduction de la page. #}
     <section class="customer-profile-intro">
         <h1>Toutes mes commandes</h1>
-        <p>Retrouvez ici l'historique de vos commandes passÃ©es chez Vite & Gourmand.</p>
+        <p>Retrouvez ici l'historique de vos commandes passées chez Vite & Gourmand.</p>
     </section>
 
     {# Message de succes apres l'envoi d'un avis. #}
@@ -45,7 +45,7 @@
     {% if orders is empty %}
         <section class="cart-empty-card">
             <h2>Aucune commande pour le moment</h2>
-            <p>Vos commandes apparaÃ®tront ici dÃ¨s que vous aurez validÃ© un panier.</p>
+            <p>Vos commandes apparaîtront ici dès que vous aurez validé un panier.</p>
             <a href="{{ path('menu_index') }}" class="buttonprimary">Voir les menus</a>
         </section>
     {% else %}
@@ -62,9 +62,9 @@
                 <article class="customer-order-row">
                     {# Informations principales de la commande. #}
                     <div class="customer-order-row__main">
-                        <h2>Commande nÂ°{{ order.commande_id }}</h2>
+                        <h2>Commande n°{{ order.commande_id }}</h2>
                         <p>{{ order.nom_menu|default('Menu') }}</p>
-                        <p>CommandÃ©e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
+                        <p>Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
                         {% if order.date_prestation %}
                             <p>Prestation le {{ order.date_prestation|date('d/m/Y') }}</p>
                         {% endif %}
@@ -72,11 +72,11 @@
 
                     {# Badge de statut et montant total. #}
                     <span class="{{ statusClass }}">{{ order.statut_libelle|default('En attente') }}</span>
-                    <strong>{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} â‚¬</strong>
+                    <strong>{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} €</strong>
 
                     {# Actions disponibles sur la commande. #}
                     <div class="customer-order-row__actions">
-                        <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary">Voir le dÃ©tail</a>
+                        <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary">Voir le détail</a>
                         {# Annulation possible uniquement tant que la commande est en attente. #}
                         {% if statusCode == 'en_attente' %}
                             <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment annuler cette commande ?');">
@@ -92,7 +92,7 @@
                                 class="buttonwhite"
                                 data-review-open
                                 data-order-id="{{ order.commande_id }}"
-                                data-order-label="Commande nÂ°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}"
+                                data-order-label="Commande n°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}"
                                 aria-label="Laisser un avis pour la commande n&deg;{{ order.commande_id }}"
                             >
                                 Laisser un avis
@@ -100,7 +100,7 @@
                         {% else %}
                             {# Indication affichee si un avis a deja ete envoye pour cette commande. #}
                             {% if hasReview %}
-                                <span class="customer-review-done">Avis envoyÃ©</span>
+                                <span class="customer-review-done">Avis envoyé</span>
                             {% endif %}
                         {% endif %}
                     </div>
@@ -118,13 +118,13 @@
     {# Boite de dialogue contenant le formulaire d'avis. #}
     <section class="customer-review-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
         {# Bouton de fermeture de la fenetre. #}
-        <button type="button" class="customer-review-modal__close" aria-label="Fermer la fenÃªtre" data-review-close>Ã—</button>
+        <button type="button" class="customer-review-modal__close" aria-label="Fermer la fenêtre" data-review-close>×</button>
 
         {# Formulaire d'avis envoye vers la page Mes commandes. #}
         <form class="customer-review-card customer-review-card--modal" method="post" action="{{ path('customer_orders') }}">
             {# Token CSRF : protege l envoi d un avis client. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
-            <h3 id="review-modal-title">Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
+            <h3 id="review-modal-title">Comment évalueriez-vous votre expérience ?</h3>
 
             {# Identifiant de commande rempli par JavaScript au clic sur Laisser un avis. #}
             <input type="hidden" name="commande_id" data-review-order-id>
@@ -136,7 +136,7 @@
                 <div class="customer-rating-stars">
                     {% for note in 5..1 %}
                         <input id="orders-note-{{ note }}" type="radio" name="note" value="{{ note }}" required>
-                        <label for="orders-note-{{ note }}" aria-label="{{ note }} Ã©toile{{ note > 1 ? 's' : '' }}">â˜…</label>
+                        <label for="orders-note-{{ note }}" aria-label="{{ note }} étoile{{ note > 1 ? 's' : '' }}">★</label>
                     {% endfor %}
                 </div>
             </fieldset>
@@ -144,7 +144,7 @@
             {# Commentaire facultatif associe a l'avis. #}
             <label class="customer-review-field">
                 <span>Votre commentaire (facultatif)</span>
-                <textarea name="commentaire" placeholder="Ã‰crivez votre commentaire ici."></textarea>
+                <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
             </label>
 
             {# Bouton d'envoi de l'avis. #}

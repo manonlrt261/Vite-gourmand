@@ -68,7 +68,7 @@ class ContactController extends AbstractController
             // Envoi d'une copie du message a l'entreprise, comme demande dans le sujet.
             $this->sendContactEmailToCompany($mailer, $email, $titre, $description);
 
-            $this->addFlash('contact_success', 'Votre message a bien ete envoye.');
+            $this->addFlash('contact_success', 'Votre message a bien été envoyé.');
 
             return $this->redirectToRoute('contact_index');
         }
@@ -77,7 +77,7 @@ class ContactController extends AbstractController
         return $this->render('contact/index.html.twig');
     }
 
-    // Email 4 : transmet la demande de contact a l'adresse email de l'entreprise.
+    // Email : transmet la demande de contact a l'adresse email de l'entreprise.
     private function sendContactEmailToCompany(MailerInterface $mailer, string $visitorEmail, string $title, string $message): void
     {
         $companyEmail = $_ENV['ADMIN_EMAIL'] ?? $_SERVER['ADMIN_EMAIL'] ?? 'contact@vite-gourmand.fr';
@@ -104,7 +104,7 @@ class ContactController extends AbstractController
                     '<p><strong>Sujet :</strong> ' . $safeTitle . '</p>' .
                     '<h2>Message</h2>' .
                     '<p>' . $safeMessage . '</p>' .
-                    '<p>Ce message a aussi ete enregistre dans la messagerie interne.</p>'
+                    '<p>Ce message a aussi été enregistré dans la messagerie interne.</p>'
                 ));
         } catch (\Throwable) {
             // Le message reste conserve dans la messagerie meme si le SMTP n'est pas encore configure.

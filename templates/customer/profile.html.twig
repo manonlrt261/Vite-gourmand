@@ -18,7 +18,7 @@
     {# Introduction qui explique l'objectif de la page. #}
     <section class="customer-profile-intro">
         <h1>Mes informations personnelles</h1>
-        <p>Modifiez vos informations personnelles ci-dessous.<br>Ces informations seront utilisÃ©es pour vos commandes.</p>
+        <p>Modifiez vos informations personnelles ci-dessous.<br>Ces informations seront utilisées pour vos commandes.</p>
     </section>
 
     {# Message de succes apres modification des informations ou du mot de passe. #}
@@ -45,7 +45,7 @@
                 {# Champs prenom et nom affiches cote a cote. #}
                 <div class="customer-profile-grid customer-profile-grid--two">
                     <label>
-                        <span>PrÃ©nom</span>
+                        <span>Prénom</span>
                         <input type="text" name="prenom" value="{{ customer.prenom }}" placeholder="{{ customer.prenom }}" autocomplete="given-name" required>
                     </label>
 
@@ -63,7 +63,7 @@
 
                 {# Numero de telephone utile pour le suivi de commande. #}
                 <label>
-                    <span>NumÃ©ro de tÃ©lÃ©phone</span>
+                    <span>Numéro de téléphone</span>
                     <input type="tel" name="telephone" value="{{ customer.telephone }}" placeholder="{{ customer.telephone }}" autocomplete="tel" required>
                 </label>
             </section>
@@ -71,7 +71,7 @@
             {# Bloc des informations personnelles du client. #}
             {# Bloc de l'adresse de livraison par defaut. #}
             <section class="customer-profile-card-panel">
-                <h2>Adresse de livraison par dÃ©faut</h2>
+                <h2>Adresse de livraison par défaut</h2>
 
                 {# Adresse postale utilisee par defaut au panier. #}
                 <label>
@@ -93,7 +93,7 @@
                     </label>
                 </div>
 
-                <p class="customer-profile-note">Cette adresse sera utilisÃ©e par dÃ©faut lors de vos prochaines commandes.</p>
+                <p class="customer-profile-note">Cette adresse sera utilisée par défaut lors de vos prochaines commandes.</p>
             </section>
         </div>
 
@@ -146,13 +146,13 @@
             <div class="customer-password-rules">
                 <p>Le mot de passe doit contenir au minimum :</p>
                 <ul>
-                    <li>10 caractÃ¨res minimum</li>
-                    <li>Au minimum 1 caractÃ¨re spÃ©cial</li>
+                    <li>10 caractères minimum</li>
+                    <li>Au minimum 1 caractère spécial</li>
                     <li>Une majuscule</li>
                     <li>Une minuscule</li>
                     <li>Au minimum 1 chiffre</li>
                 </ul>
-                <a href="{{ path('forgot_password') }}">Mot de passe oubliÃ© ?</a>
+                <a href="{{ path('forgot_password') }}">Mot de passe oublié ?</a>
             </div>
         </section>
 

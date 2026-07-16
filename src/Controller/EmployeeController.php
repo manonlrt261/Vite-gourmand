@@ -68,28 +68,42 @@ class EmployeeController extends AbstractController
             return $this->json(['success' => false], 404);
         }
 
-        $nextCode = match ((string) $order['statut_code']) {
-            'en_attente' => 'acceptee',
-            'acceptee' => 'en_preparation',
-            'en_preparation' => 'en_livraison',
-            'en_livraison' => 'terminee',
-            default => null,
-        };
+        // Le statut vient maintenant du menu deroulant : on refuse l'annulation ici,
+        // car elle doit passer par le formulaire dedie avec motif et contact client.
+        $requestedCode = (string) $request->request->get('status', '');
+        $allowedCodes = [
+            'en_attente',
+            'acceptee',
+            'en_preparation',
+            'en_livraison',
+            'livree',
+            'en_attente_retour_materiel',
+            'terminee',
+        ];
 
-        if ($nextCode === null) {
+        if (!in_array($requestedCode, $allowedCodes, true)) {
             return $this->json([
                 'success' => false,
-                'message' => 'Ce statut ne peut pas avancer manuellement.',
+                'message' => 'Ce statut ne peut pas etre selectionne depuis ce menu.',
             ], 409);
         }
 
         $nextStatus = $connection->fetchAssociative(
             'SELECT statut_id, code, libelle FROM statuts_commande WHERE code = ? LIMIT 1',
-            [$nextCode]
+            [$requestedCode]
         );
 
         if (!$nextStatus) {
             return $this->json(['success' => false], 404);
+        }
+
+        if ((string) $order['statut_code'] === (string) $nextStatus['code']) {
+            return $this->json([
+                'success' => true,
+                'status' => $nextStatus['code'],
+                'label' => $nextStatus['libelle'],
+                'className' => $this->getOrderStatusClass((string) $nextStatus['code']),
+            ]);
         }
 
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
@@ -102,7 +116,7 @@ class EmployeeController extends AbstractController
 
         $this->addOrderStatusHistory($connection, $id, (int) $nextStatus['statut_id'], 'Statut mis a jour par un employe.');
 
-        if ((string) $nextStatus['code'] === 'terminee') {
+        if ((string) $nextStatus['code'] === 'terminee' && (string) $order['statut_code'] !== 'terminee') {
             $this->sendReviewRequestEmail($connection, $mailer, $id);
             $this->sendMaterialReturnReminderEmail($connection, $mailer, $id);
         }
@@ -150,11 +164,12 @@ class EmployeeController extends AbstractController
             $contactError !== null
             || !InputValidator::isFutureOrTodayDate($datePrestation)
             || !InputValidator::isValidTime($heureLivraison)
+            || !InputValidator::isTimeBetween($heureLivraison, '08:00', '22:00')
             || !InputValidator::isValidPostalCode($codePostal)
             || !InputValidator::hasMaxLength($adresse, 255)
             || !InputValidator::hasMaxLength($ville, 100)
         ) {
-            $this->addFlash('employee_error', $contactError ?? 'Les informations de commande sont invalides.');
+            $this->addFlash('employee_error', $contactError ?? (!InputValidator::isTimeBetween($heureLivraison, '08:00', '22:00') ? 'Les livraisons sont possibles entre 8h00 et 22h00' : 'Les informations de commande sont invalides.'));
 
             return $this->redirectToRoute('employee_orders');
         }
@@ -302,7 +317,19 @@ class EmployeeController extends AbstractController
                 return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', $payload, true, $connection));
             }
 
+            $linkedItemsError = $this->validateLinkedMealItemsForMenu($request);
+            if ($linkedItemsError !== null) {
+                $this->addFlash('employee_error', $linkedItemsError);
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', $payload, true, $connection));
+            }
+
             $connection->insert('menus', $payload);
+            $menuId = (int) $connection->lastInsertId();
+
+            // Si une entree, un plat ou un dessert ont ete renseignes dans les modales,
+            // ils sont crees juste apres le menu avec le nouvel identifiant du menu.
+            $this->createLinkedMealItemsForMenu($request, $connection, $menuId);
 
             return $this->redirectToRoute('employee_items_all');
         }
@@ -516,9 +543,9 @@ class EmployeeController extends AbstractController
                 $this->saveWeeklyHours($request, $connection);
             }
 
-        if ($action === 'add_closure') {
-            $this->addExceptionalClosure($request, $connection);
-        }
+            if ($action === 'add_closure') {
+                $this->addExceptionalClosure($request, $connection);
+            }
 
             return $this->redirectToRoute('employee_hours');
         }
@@ -716,14 +743,14 @@ class EmployeeController extends AbstractController
                 ->to((string) $order['email'])
                 ->subject('Retour du materiel - Vite & Gourmand')
                 ->html(sprintf(
-                    '<h1>Demande de retour de materiel</h1>
-                    <p>Bonjour %s,</p>
-                    <p>Nous vous contactons au sujet de votre commande n&deg;%d, correspondant au menu <strong>%s</strong>.</p>
-                    <p><strong>Materiel a retourner :</strong><br>%s</p>
-                    <p><strong>Date limite de retour :</strong> %s</p>
-                    %s
-                    <p>Merci pour votre retour et votre confiance.</p>
-                    <p>L equipe Vite & Gourmand</p>',
+                    '<h1>Demande de retour de mat&eacute;riel</h1>
+<p>Bonjour %s,</p>
+<p>Nous vous contactons au sujet de votre commande n&deg;%d, correspondant au menu <strong>%s</strong>.</p>
+<p><strong>Mat&eacute;riel &agrave; retourner :</strong><br>%s</p>
+<p><strong>Date limite de retour :</strong> %s</p>
+%s
+<p>Merci pour votre retour et votre confiance.</p>
+<p>L&rsquo;&eacute;quipe Vite & Gourmand</p>',
                     $firstName,
                     (int) $order['commande_id'],
                     $menuName,
@@ -732,7 +759,7 @@ class EmployeeController extends AbstractController
                     $instructions !== '' ? '<p><strong>Informations complementaires :</strong><br>' . nl2br(htmlspecialchars($instructions, ENT_QUOTES, 'UTF-8')) . '</p>' : ''
                 )));
 
-            $this->addFlash('message_success', 'La demande de retour materiel a ete envoyee.');
+            $this->addFlash('message_success', 'La demande de retour matériel a été envoyée.');
         } catch (\Throwable) {
             $this->addFlash('message_error', 'Impossible d envoyer l email pour le moment.');
         }
@@ -800,19 +827,19 @@ class EmployeeController extends AbstractController
             // La reponse reste enregistree dans la messagerie meme si l email ne part pas.
         }
 
-        $this->addFlash('message_success', 'La reponse a ete enregistree et envoyee au client.');
+        $this->addFlash('message_success', 'La réponse a été enregistrée et envoyée au client.');
 
         return $this->redirectToRoute('employee_messages', ['tab' => 'replied']);
     }
 
     public function archiveContactMessage(int $id, Request $request, Connection $connection): Response
     {
-        return $this->changeContactMessageStatus($id, $request, $connection, 'archive', 'Message archive.');
+        return $this->changeContactMessageStatus($id, $request, $connection, 'archive', 'Le message a bien été archivé.');
     }
 
     public function unarchiveContactMessage(int $id, Request $request, Connection $connection): Response
     {
-        return $this->changeContactMessageStatus($id, $request, $connection, 'nouveau', 'Message deplace dans les messages recus.');
+        return $this->changeContactMessageStatus($id, $request, $connection, 'nouveau', 'Le message a bien été déplacé dans les messages reçus.');
     }
 
     public function restoreContactMessage(int $id, Request $request, Connection $connection): Response
@@ -823,7 +850,16 @@ class EmployeeController extends AbstractController
 
         // Token CSRF : protege la restauration d un message supprime.
         if (!$this->isValidEmployeeCsrf($request)) {
-            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+            $errorMessage = 'Le formulaire a expiré, veuillez réessayer.';
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            $this->addFlash('message_error', $errorMessage);
 
             return $this->redirectToRoute('employee_messages', ['tab' => 'deleted']);
         }
@@ -831,7 +867,16 @@ class EmployeeController extends AbstractController
         $this->ensureContactMessageColumns($connection);
         $message = $this->getContactMessage($connection, $id);
         if (!$message) {
-            $this->addFlash('message_error', 'Message introuvable.');
+            $errorMessage = 'Message introuvable.';
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $this->addFlash('message_error', $errorMessage);
 
             return $this->redirectToRoute('employee_messages', ['tab' => 'deleted']);
         }
@@ -845,14 +890,25 @@ class EmployeeController extends AbstractController
             'contact_id' => $id,
         ]);
 
-        $this->addFlash('message_success', 'Le message a ete restaure.');
+        $successMessage = 'Le message a bien été restauré.';
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json([
+                'success' => true,
+                'message' => $successMessage,
+                'targetTab' => $status === 'repondu' ? 'replied' : 'active',
+                'status' => $status,
+            ]);
+        }
+
+        $this->addFlash('message_success', $successMessage);
 
         return $this->redirectToRoute('employee_messages', ['tab' => $status === 'repondu' ? 'replied' : 'active']);
     }
 
     public function deleteContactMessage(int $id, Request $request, Connection $connection): Response
     {
-        return $this->changeContactMessageStatus($id, $request, $connection, 'supprime', 'Message supprime recemment.');
+        return $this->changeContactMessageStatus($id, $request, $connection, 'supprime', 'Le message a bien été supprimé.');
     }
 
     private function changeContactMessageStatus(int $id, Request $request, Connection $connection, string $status, string $successMessage): Response
@@ -863,7 +919,16 @@ class EmployeeController extends AbstractController
 
         // Token CSRF : protege les actions de classement ou suppression des messages.
         if (!$this->isValidEmployeeCsrf($request)) {
-            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+            $errorMessage = 'Le formulaire a expiré, veuillez réessayer.';
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            $this->addFlash('message_error', $errorMessage);
 
             return $this->redirectToMessageTab($request);
         }
@@ -871,7 +936,16 @@ class EmployeeController extends AbstractController
         $this->ensureContactMessageColumns($connection);
         $message = $this->getContactMessage($connection, $id);
         if (!$message) {
-            $this->addFlash('message_error', 'Message introuvable.');
+            $errorMessage = 'Message introuvable.';
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $this->addFlash('message_error', $errorMessage);
 
             return $this->redirectToMessageTab($request);
         }
@@ -893,6 +967,22 @@ class EmployeeController extends AbstractController
         }
 
         $connection->update('contact', $payload, ['contact_id' => $id]);
+
+        if ($request->isXmlHttpRequest()) {
+            $targetTab = match ($status) {
+                'archive' => 'archived',
+                'supprime' => 'deleted',
+                default => 'active',
+            };
+
+            return $this->json([
+                'success' => true,
+                'message' => $successMessage,
+                'targetTab' => $targetTab,
+                'status' => $status,
+            ]);
+        }
+
         $this->addFlash('message_success', $successMessage);
 
         return match ($status) {
@@ -949,6 +1039,12 @@ class EmployeeController extends AbstractController
 
         if (!InputValidator::isValidDate($date) || !InputValidator::isValidTime($time)) {
             return 'La date et l heure du contact client sont obligatoires.';
+        }
+
+        // Le contact client doit deja avoir eu lieu : une date future n'est pas acceptee.
+        $contactAt = new \DateTimeImmutable($date . ' ' . $time);
+        if ($contactAt > new \DateTimeImmutable()) {
+            return 'La date de contact client ne peut pas etre dans le futur.';
         }
 
         if ($message === '' || !InputValidator::hasMaxLength($message, 2000)) {
@@ -1119,7 +1215,7 @@ class EmployeeController extends AbstractController
         return $connection->fetchAllAssociative(
             'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
                     c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
-                    c.nombre_personnes, c.prix_total,
+                    c.nombre_personnes, c.prix_total, c.pret_materiel,
                     c.contact_methode_client, c.contact_client_at, c.contact_message_client,
                     u.nom, u.prenom,
                     m.nom_menu,
@@ -1516,11 +1612,22 @@ class EmployeeController extends AbstractController
             'CREATE TABLE IF NOT EXISTS fermetures_exceptionnelles (
                 fermeture_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 date_fermeture DATE NOT NULL,
+                date_fin_fermeture DATE NULL,
                 motif VARCHAR(255) NOT NULL,
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
+
+        // Ajoute la date de fin aux anciennes bases deja creees, sans supprimer les fermetures existantes.
+        $closureColumns = array_change_key_case($connection->createSchemaManager()->listTableColumns('fermetures_exceptionnelles'), CASE_LOWER);
+        if (!isset($closureColumns['date_fin_fermeture'])) {
+            $connection->executeStatement(
+                'ALTER TABLE fermetures_exceptionnelles
+                 ADD COLUMN date_fin_fermeture DATE NULL AFTER date_fermeture'
+            );
+        }
+
 
         $defaults = [
             ['lundi', 'Lundi', 1, '09:00:00', '18:00:00', 1],
@@ -1562,7 +1669,7 @@ class EmployeeController extends AbstractController
     private function getExceptionalClosures(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT fermeture_id, date_fermeture, motif
+            'SELECT fermeture_id, date_fermeture, date_fin_fermeture, motif
              FROM fermetures_exceptionnelles
              ORDER BY date_fermeture ASC, fermeture_id ASC
              LIMIT 3'
@@ -1597,8 +1704,18 @@ class EmployeeController extends AbstractController
     private function addExceptionalClosure(Request $request, Connection $connection): void
     {
         $date = $this->nullableValue($request->request->get('date_fermeture'));
-        // Une fermeture exceptionnelle doit avoir une vraie date, aujourd hui ou dans le futur.
+        $endDate = $this->nullableValue($request->request->get('date_fin_fermeture'));
+        // Une fermeture exceptionnelle doit avoir une vraie date de debut, aujourd hui ou dans le futur.
         if (!is_string($date) || !InputValidator::isFutureOrTodayDate($date)) {
+            return;
+        }
+
+        // La date de fin est facultative : vide = fermeture sur une seule journee.
+        if ($endDate !== null && (!is_string($endDate) || !InputValidator::isValidDate($endDate))) {
+            return;
+        }
+
+        if (is_string($endDate) && new \DateTimeImmutable($endDate) < new \DateTimeImmutable($date)) {
             return;
         }
 
@@ -1611,6 +1728,7 @@ class EmployeeController extends AbstractController
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $connection->insert('fermetures_exceptionnelles', [
             'date_fermeture' => $date,
+            'date_fin_fermeture' => $endDate,
             'motif' => $motif,
             'created_at' => $now,
             'updated_at' => $now,
@@ -1723,6 +1841,80 @@ class EmployeeController extends AbstractController
             'image_url' => trim((string) $request->request->get('image_url')),
             'image_alt' => trim((string) $request->request->get('image_alt')),
         ] + $this->getMealNamePayload($request);
+    }
+
+    // Verifie les elements saisis dans les modales avant de creer le menu.
+    private function validateLinkedMealItemsForMenu(Request $request): ?string
+    {
+        $linkedItems = $request->request->all('linked_items');
+
+        foreach (['entree', 'plat', 'dessert'] as $type) {
+            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
+            $name = trim((string) ($source['nom'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $payload = $this->getLinkedMealPayload($type, $source, 1);
+            $error = $this->validateItemPayload($type, $payload);
+
+            if ($error !== null) {
+                return $error;
+            }
+        }
+
+        return null;
+    }
+
+    // Cree les elements de repas renseignes depuis les modales de creation d un menu.
+    private function createLinkedMealItemsForMenu(Request $request, Connection $connection, int $menuId): void
+    {
+        $linkedItems = $request->request->all('linked_items');
+
+        foreach (['entree', 'plat', 'dessert'] as $type) {
+            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
+            $name = trim((string) ($source['nom'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $config = $this->getItemConfig($type);
+            if (!$config) {
+                continue;
+            }
+
+            $payload = $this->getLinkedMealPayload($type, $source, $menuId);
+            $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
+            $connection->insert($config['table'], $payload);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $source
+     * @return array<string, mixed>
+     */
+    // Transforme les champs d une modale en donnees compatibles avec les tables entree, plat ou dessert.
+    private function getLinkedMealPayload(string $type, array $source, int $menuId): array
+    {
+        $nameField = match ($type) {
+            'entree' => 'nom_entree',
+            'plat' => 'nom_plat',
+            'dessert' => 'nom_dessert',
+            default => 'nom',
+        };
+
+        return [
+            'menu_id' => $menuId,
+            'theme' => trim((string) ($source['theme'] ?? '')),
+            'description' => trim((string) ($source['description'] ?? '')),
+            'allergenes' => trim((string) ($source['allergenes'] ?? '')),
+            'actif' => !empty($source['actif']) ? 1 : 0,
+            'image_url' => trim((string) ($source['image_url'] ?? '')),
+            'image_alt' => trim((string) ($source['image_alt'] ?? '')),
+            $nameField => trim((string) ($source['nom'] ?? '')),
+        ];
     }
 
     /**
@@ -1946,3 +2138,4 @@ class EmployeeController extends AbstractController
         return (int) $menuStatus === 1 ? 1 : 0;
     }
 }
+

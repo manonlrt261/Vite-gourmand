@@ -26,6 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const normalize = (value) => value.toString().trim().toLowerCase();
 
+  // Affiche les dates de la fiche employe au format francais JJ/MM/AAAA.
+  const formatFrenchDate = (value) => {
+    if (!value) {
+      return '';
+    }
+
+    const parts = value.split('-');
+
+    if (parts.length !== 3) {
+      return value;
+    }
+
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
   const requestJson = async (url, options = {}) => {
     const response = await fetch(url, {
       ...options,
@@ -58,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isVisible = matchesSearch && matchesStatus && matchesJob;
 
       card.hidden = !isVisible;
+      card.classList.toggle('is-hidden-by-filter', !isVisible);
 
       if (isVisible) {
         visibleCount += 1;
@@ -129,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     editForm.querySelector('[data-edit-date-naissance]').value = button.dataset.dateNaissance || '';
     editForm.querySelector('[data-edit-lieu-naissance]').value = button.dataset.lieuNaissance || '';
     editForm.querySelector('[data-edit-email]').value = button.dataset.email || '';
+    editForm.querySelector('[data-edit-email-personnel]').value = button.dataset.emailPersonnel || '';
     editForm.querySelector('[data-edit-telephone]').value = button.dataset.telephone || '';
     editForm.querySelector('[data-edit-adresse]').value = button.dataset.adresse || '';
     editForm.querySelector('[data-edit-ville]').value = button.dataset.ville || '';
@@ -156,20 +173,44 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const fillViewModal = (button) => {
-    viewModal.querySelector('[data-view-nom]').textContent = button.dataset.nom || 'Non renseigne';
-    viewModal.querySelector('[data-view-prenom]').textContent = button.dataset.prenom || 'Non renseigne';
-    viewModal.querySelector('[data-view-date-naissance]').textContent = button.dataset.dateNaissance || 'Non renseignee';
-    viewModal.querySelector('[data-view-lieu-naissance]').textContent = button.dataset.lieuNaissance || 'Non renseigne';
-    viewModal.querySelector('[data-view-adresse]').textContent = button.dataset.adresse || 'Non renseignee';
-    viewModal.querySelector('[data-view-code-postal]').textContent = button.dataset.codePostal || 'Non renseigne';
-    viewModal.querySelector('[data-view-ville]').textContent = button.dataset.ville || 'Non renseignee';
-    viewModal.querySelector('[data-view-email]').textContent = button.dataset.email || 'Non renseigne';
-    viewModal.querySelector('[data-view-telephone]').textContent = button.dataset.telephone || 'Non renseigne';
-    viewModal.querySelector('[data-view-poste]').textContent = button.dataset.poste || 'Non renseigne';
+    viewModal.querySelector('[data-view-nom]').textContent = button.dataset.nom || 'Non renseigné';
+    viewModal.querySelector('[data-view-prenom]').textContent = button.dataset.prenom || 'Non renseigné';
+    viewModal.querySelector('[data-view-date-naissance]').textContent = formatFrenchDate(button.dataset.dateNaissance || '') || 'Non renseignée';
+    viewModal.querySelector('[data-view-lieu-naissance]').textContent = button.dataset.lieuNaissance || 'Non renseigné';
+    viewModal.querySelector('[data-view-adresse]').textContent = button.dataset.adresse || 'Non renseignée';
+    viewModal.querySelector('[data-view-code-postal]').textContent = button.dataset.codePostal || 'Non renseigné';
+    viewModal.querySelector('[data-view-ville]').textContent = button.dataset.ville || 'Non renseignée';
+    viewModal.querySelector('[data-view-email]').textContent = button.dataset.email || 'Non renseigné';
+    viewModal.querySelector('[data-view-email-personnel]').textContent = button.dataset.emailPersonnel || 'Non renseigné';
+    viewModal.querySelector('[data-view-telephone]').textContent = button.dataset.telephone || 'Non renseigné';
+    viewModal.querySelector('[data-view-poste]').textContent = button.dataset.poste || 'Non renseigné';
+  };
+
+  const preparePasswordPreview = (button) => {
+    // Le mot de passe initial n'est affichable que s'il correspond encore au mot de passe cree par l'administrateur.
+    const maskedPassword = '••••••••••';
+    const initialPassword = (button.dataset.initialPassword || '').trim();
+    const unavailableValues = ['non visible', '***', maskedPassword, 'null', 'undefined'];
+    const canRevealInitialPassword = initialPassword !== '' && !unavailableValues.includes(initialPassword.toLowerCase());
+    const passwordText = viewModal.querySelector('[data-view-password]');
+    const passwordToggle = viewModal.querySelector('[data-view-password-toggle]');
+    const passwordUnavailable = viewModal.querySelector('[data-view-password-unavailable]');
+
+    if (!passwordText || !passwordToggle || !passwordUnavailable) {
+      return;
+    }
+
+    passwordToggle.dataset.passwordValue = canRevealInitialPassword ? initialPassword : '';
+    passwordToggle.dataset.visible = 'false';
+    passwordToggle.textContent = 'Afficher';
+    passwordText.textContent = canRevealInitialPassword ? maskedPassword : 'Non visible';
+    passwordToggle.hidden = !canRevealInitialPassword;
+    passwordUnavailable.hidden = canRevealInitialPassword;
   };
 
   const openViewModal = (button) => {
     fillViewModal(button);
+    preparePasswordPreview(button);
     viewModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
   };
@@ -188,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editButton = editedCard.querySelector('[data-employee-edit]');
     const viewButton = editedCard.querySelector('[data-employee-view]');
 
-    editedCard.dataset.search = normalize(`${employee.id} ${employee.nom || ''} ${employee.prenom || ''} ${employee.email || ''} ${employee.telephone || ''} ${employee.poste || ''}`);
+    editedCard.dataset.search = normalize(`${employee.id} ${employee.nom || ''} ${employee.prenom || ''} ${employee.email || ''} ${employee.email_personnel || ''} ${employee.telephone || ''} ${employee.poste || ''}`);
     editedCard.dataset.job = employee.poste || '';
 
     editedCard.querySelector('[data-employee-name]').textContent = fullName;
@@ -201,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
       editButton.dataset.dateNaissance = employee.date_naissance || '';
       editButton.dataset.lieuNaissance = employee.lieu_naissance || '';
       editButton.dataset.email = employee.email || '';
+      editButton.dataset.emailPersonnel = employee.email_personnel || '';
       editButton.dataset.telephone = employee.telephone || '';
       editButton.dataset.adresse = employee.adresse_postale || '';
       editButton.dataset.ville = employee.ville || '';
@@ -214,6 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
       viewButton.dataset.dateNaissance = employee.date_naissance || '';
       viewButton.dataset.lieuNaissance = employee.lieu_naissance || '';
       viewButton.dataset.email = employee.email || '';
+      viewButton.dataset.emailPersonnel = employee.email_personnel || '';
+      viewButton.dataset.initialPassword = employee.mot_de_passe_initial || '';
       viewButton.dataset.telephone = employee.telephone || '';
       viewButton.dataset.adresse = employee.adresse_postale || '';
       viewButton.dataset.ville = employee.ville || '';
@@ -224,6 +268,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   page.querySelectorAll('[data-employee-view]').forEach((button) => {
     button.addEventListener('click', () => openViewModal(button));
+  });
+
+  viewModal?.querySelector('[data-view-password-toggle]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget;
+    const passwordText = viewModal.querySelector('[data-view-password]');
+    const isVisible = button.dataset.visible === 'true';
+
+    if (!passwordText) {
+      return;
+    }
+
+    if (isVisible) {
+      passwordText.textContent = '••••••••••';
+      button.textContent = 'Afficher';
+      button.dataset.visible = 'false';
+      return;
+    }
+
+    passwordText.textContent = button.dataset.passwordValue || '';
+    button.textContent = 'Masquer';
+    button.dataset.visible = 'true';
   });
 
   page.querySelectorAll('[data-employee-edit]').forEach((button) => {
@@ -319,6 +384,16 @@ document.addEventListener('DOMContentLoaded', () => {
         closeViewModal();
       }
     }
+  });
+
+  [searchInput, statusSelect, jobSelect].forEach((field) => {
+    field?.addEventListener('keydown', (event) => {
+      // La touche Entree applique les filtres comme le bouton principal.
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyFilters();
+      }
+    });
   });
 
   applyButton?.addEventListener('click', applyFilters);

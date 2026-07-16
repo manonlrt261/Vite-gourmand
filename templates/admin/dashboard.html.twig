@@ -100,34 +100,6 @@
                     </div>
                 </section>
 
-                {# Graphique simplifie du nombre de commandes par menu. #}
-                <section class="admin-section admin-chart-section">
-                    <div class="employee-section-heading">
-                        <h2>
-                            Commandes par menu
-                            <a href="{{ path('admin_orders_by_menu') }}" class="admin-heading-arrow" aria-label="Voir les commandes par menu">&rarr;</a>
-                        </h2>
-                    </div>
-
-                    <div class="admin-bar-chart">
-                        {# Chaque menu est affiche avec une barre proportionnelle au menu le plus commande. #}
-                        {% for item in ordersByMenu %}
-                            {% set percent = maxOrders > 0 ? (item.total_commandes / maxOrders * 100) : 0 %}
-                            <article class="admin-bar-row">
-                                <div class="admin-bar-row__label">
-                                    <span>{{ item.nom_menu }}</span>
-                                    <strong>{{ item.total_commandes }}</strong>
-                                </div>
-                                <div class="admin-bar-row__track">
-                                    <span style="width: {{ percent }}%"></span>
-                                </div>
-                            </article>
-                        {% else %}
-                            {# Message affiche quand aucune commande n'existe encore. #}
-                            <p class="employee-empty">Aucune commande pour le moment.</p>
-                        {% endfor %}
-                    </div>
-                </section>
             </div>
 
             {# Colonne laterale : apercu des derniers employes crees par l'administrateur. #}
@@ -157,6 +129,35 @@
                     </div>
                 </section>
             </aside>
+
+            {# Graphique simplifie du nombre de commandes par menu. Il occupe toute la largeur du tableau de bord pour rester aligne avec le chiffre d'affaires. #}
+            <section class="admin-section admin-chart-section">
+                <div class="employee-section-heading">
+                    <h2>
+                        Commandes par menu
+                        <a href="{{ path('admin_orders_by_menu') }}" class="admin-heading-arrow" aria-label="Voir les commandes par menu">&rarr;</a>
+                    </h2>
+                </div>
+
+                <div class="admin-bar-chart">
+                    {# Chaque menu est affiche avec une barre proportionnelle au menu le plus commande. #}
+                    {% for item in ordersByMenu %}
+                        {% set percent = maxOrders > 0 ? (item.total_commandes / maxOrders * 100) : 0 %}
+                        <article class="admin-bar-row">
+                            <div class="admin-bar-row__label">
+                                <span>{{ item.nom_menu }}</span>
+                                <strong>{{ item.total_commandes }}</strong>
+                            </div>
+                            <div class="admin-bar-row__track">
+                                <span style="width: {{ percent }}%"></span>
+                            </div>
+                        </article>
+                    {% else %}
+                        {# Message affiche quand aucune commande n'existe encore. #}
+                        <p class="employee-empty">Aucune commande pour le moment.</p>
+                    {% endfor %}
+                </div>
+            </section>
         </section>
 
         {# Section dediee au chiffre d'affaires genere par chaque menu. #}

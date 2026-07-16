@@ -36,7 +36,7 @@
                 {# Theme du menu, limite aux valeurs autorisees. #}
                 <label>
                     <span>Th&egrave;me</span>
-                    <select name="theme" required>
+                    <select name="theme" required data-menu-theme-source>
                         <option value="">Choisir un th&egrave;me</option>
                         <option value="Classique" {{ item.theme|default('') == 'Classique' ? 'selected' : '' }}>Classique</option>
                         <option value="&Eacute;v&eacute;nementiel" {{ item.theme|default('') in ['Événementiel', 'Evénementiel', 'Evenementiel'] ? 'selected' : '' }}>&Eacute;v&eacute;nementiel</option>
@@ -112,9 +112,9 @@
                     <select name="theme" required>
                         <option value="">Choisir un th&egrave;me</option>
                         <option value="Classique" {{ item.theme|default('') == 'Classique' ? 'selected' : '' }}>Classique</option>
-                        <option value="&Eacute;v&eacute;nementiel" {{ item.theme|default('') in ['Ã‰vÃ©nementiel', 'EvÃ©nementiel', 'Evenementiel'] ? 'selected' : '' }}>&Eacute;v&eacute;nementiel</option>
+                        <option value="&Eacute;v&eacute;nementiel" {{ item.theme|default('') in ['Événementiel', 'Evénementiel', 'Evenementiel'] ? 'selected' : '' }}>&Eacute;v&eacute;nementiel</option>
                         <option value="Saisonnier" {{ item.theme|default('') == 'Saisonnier' ? 'selected' : '' }}>Saisonnier</option>
-                        <option value="R&eacute;gime particulier" {{ item.theme|default('') in ['RÃ©gime particulier', 'Regime particulier'] ? 'selected' : '' }}>R&eacute;gime particulier</option>
+                        <option value="R&eacute;gime particulier" {{ item.theme|default('') in ['Régime particulier', 'Regime particulier'] ? 'selected' : '' }}>R&eacute;gime particulier</option>
                     </select>
                 </label>
 
@@ -131,16 +131,16 @@
                 </label>
             {% endif %}
 
-            {# Chemin de l'image affichee sur le site. #}
+            {# Chemin de l'image affichee sur le site. Ce champ reste facultatif en creation. #}
             <label>
                 <span>Chemin de l'image</span>
-                <input type="text" name="image_url" value="{{ item.image_url|default('assets/bigtittle.png') }}" required>
+                <input type="text" name="image_url" value="{{ item.image_url|default('') }}">
             </label>
 
-            {# Texte alternatif de l'image pour l'accessibilite. #}
+            {# Texte alternatif de l'image pour l'accessibilite. Ce champ reste facultatif en creation. #}
             <label>
                 <span>Texte alternatif de l'image</span>
-                <input type="text" name="image_alt" value="{{ item.image_alt|default('Image Vite et Gourmand') }}" required>
+                <input type="text" name="image_alt" value="{{ item.image_alt|default('') }}">
             </label>
 
             {# Case qui determine si l'element est visible sur le site public. #}
@@ -149,6 +149,85 @@
                 <span>Visible sur le site</span>
             </label>
 
+            {% if isMenu and isCreate %}
+                {# Zone optionnelle : elle permet de preparer directement l'entree, le plat et le dessert du menu en cours de creation. #}
+                <div class="employee-linked-meals employee-form-field--full" data-linked-meals>
+                    <p class="employee-linked-meals__title">Ajouter les elements du menu</p>
+                    <div class="employee-linked-meals__actions">
+                        <button type="button" class="buttonoffwhite" data-linked-meal-open="entree">+ Entr&eacute;e</button>
+                        <button type="button" class="buttonoffwhite" data-linked-meal-open="plat">+ Plat</button>
+                        <button type="button" class="buttonoffwhite" data-linked-meal-open="dessert">+ Dessert</button>
+                    </div>
+                </div>
+
+                {% set linkedMealLabels = {
+                    entree: 'Ajouter une entr&eacute;e',
+                    plat: 'Ajouter un plat',
+                    dessert: 'Ajouter un dessert'
+                } %}
+
+                {% for linkedType, linkedTitle in linkedMealLabels %}
+                    {# Fenetre modale ouverte depuis les boutons + Entree, + Plat et + Dessert. #}
+                    <div class="employee-linked-meal-modal" data-linked-meal-modal="{{ linkedType }}" hidden>
+                        <div class="employee-linked-meal-modal__overlay" data-linked-meal-close></div>
+                        <section class="employee-linked-meal-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="linked-meal-title-{{ linkedType }}">
+                            <header class="employee-linked-meal-modal__header">
+                                <h2 id="linked-meal-title-{{ linkedType }}">{{ linkedTitle|raw }}</h2>
+                                <button type="button" aria-label="Fermer la fen&ecirc;tre" data-linked-meal-close>&times;</button>
+                            </header>
+
+                            {# Ces champs seront enregistres avec le menu apres recuperation de son nouvel identifiant. #}
+                            <div class="employee-linked-meal-modal__grid">
+                                <label>
+                                    <span>Nom</span>
+                                    <input type="text" name="linked_items[{{ linkedType }}][nom]" placeholder="Nom">
+                                </label>
+
+                                <label>
+                                    <span>Th&egrave;me</span>
+                                    <select name="linked_items[{{ linkedType }}][theme]" data-linked-meal-theme>
+                                        <option value="">Choisir un th&egrave;me</option>
+                                        <option value="Classique">Classique</option>
+                                        <option value="&Eacute;v&eacute;nementiel">&Eacute;v&eacute;nementiel</option>
+                                        <option value="Saisonnier">Saisonnier</option>
+                                        <option value="R&eacute;gime particulier">R&eacute;gime particulier</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    <span>Allerg&egrave;nes</span>
+                                    <input type="text" name="linked_items[{{ linkedType }}][allergenes]" placeholder="Allerg&egrave;nes">
+                                </label>
+
+                                <label class="employee-linked-meal-modal__full">
+                                    <span>Description</span>
+                                    <textarea name="linked_items[{{ linkedType }}][description]" placeholder="Description"></textarea>
+                                </label>
+
+                                <label>
+                                    <span>Chemin de l'image</span>
+                                    <input type="text" name="linked_items[{{ linkedType }}][image_url]">
+                                </label>
+
+                                <label>
+                                    <span>Texte alternatif de l'image</span>
+                                    <input type="text" name="linked_items[{{ linkedType }}][image_alt]">
+                                </label>
+
+                                <label class="employee-form-checkbox employee-linked-meal-modal__full">
+                                    <input type="checkbox" name="linked_items[{{ linkedType }}][actif]" value="1" checked>
+                                    <span>Visible sur le site</span>
+                                </label>
+                            </div>
+
+                            <div class="employee-linked-meal-modal__actions">
+                                <button type="button" class="buttonprimary" data-linked-meal-close>Valider</button>
+                            </div>
+                        </section>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             {# Actions finales : enregistrer ou annuler. #}
             <div class="employee-form-actions">
                 <button type="submit" class="buttonprimary">{{ isCreate ? 'Ajouter' : 'Enregistrer' }}</button>
@@ -156,4 +235,12 @@
             </div>
         </form>
     </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if isMenu and isCreate %}
+        {# Script qui ouvre et ferme les fenetres + Entree, + Plat et + Dessert. #}
+        <script src="{{ asset('assets/scripts/employee-menu-form.js') }}" defer></script>
+    {% endif %}
 {% endblock %}

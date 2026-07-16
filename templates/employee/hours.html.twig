@@ -87,8 +87,13 @@
                         <input type="hidden" name="action" value="add_closure">
 
                         <label>
-                            <span>Date</span>
+                            <span>Date de d&eacute;but</span>
                             <input type="date" name="date_fermeture" required>
+                        </label>
+
+                        <label>
+                            <span>Date de fin</span>
+                            <input type="date" name="date_fin_fermeture">
                         </label>
 
                         <label>
@@ -106,7 +111,11 @@
                             {# Carte d'une fermeture avec sa date, son motif et son bouton de suppression. #}
                             <article class="employee-closure-card">
                                 <div>
-                                    <h3>{{ closure.date_fermeture|date('d/m/Y') }}</h3>
+                                    {% if closure.date_fin_fermeture is defined and closure.date_fin_fermeture and closure.date_fin_fermeture != closure.date_fermeture %}
+                                        <h3>Du {{ closure.date_fermeture|date('d/m/Y') }} au {{ closure.date_fin_fermeture|date('d/m/Y') }}</h3>
+                                    {% else %}
+                                        <h3>{{ closure.date_fermeture|date('d/m/Y') }}</h3>
+                                    {% endif %}
                                     <p>{{ closure.motif }}</p>
                                 </div>
 

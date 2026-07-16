@@ -13,6 +13,9 @@
 
 {# Contenu principal de la page detail d'un menu. #}
 <main class="menu-detail-page">
+    {# Lien de retour vers la page qui liste tous les menus disponibles. #}
+    <a href="{{ path('menu_index') }}" class="cart-back-link menu-detail-back-link">&larr; Retour aux menus</a>
+
     {# Description generale du menu. #}
     <section class="menu-detail-intro">
         <p>{{ menu.description }}</p>

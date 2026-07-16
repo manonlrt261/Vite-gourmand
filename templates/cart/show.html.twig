@@ -114,7 +114,7 @@
 
                     <label class="cart-field">
                         <span>Heure souhait&eacute;e</span>
-                        <input type="time" name="heure_livraison" required {{ not isConnected ? 'disabled' }}>
+                        <input type="time" name="heure_livraison" min="08:00" max="22:00" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
 
@@ -198,7 +198,12 @@
             </section>
 
             {# Recapitulatif du prix total du panier. #}
-            <section class="cart-card cart-recap-card">
+            <section
+                class="cart-card cart-recap-card"
+                data-cart-recap
+                data-cart-menu-total="{{ prixMenu }}"
+                data-cart-reduction="{{ reduction }}"
+            >
                 <h2>R&eacute;capitulatif</h2>
                 <div class="cart-card__line"></div>
 
@@ -245,6 +250,19 @@
                 </div>
             </section>
         </aside>
+
+        {# Option affichee seulement si au moins un menu du panier propose du materiel dans ses conditions. #}
+        {% if canRequestMaterial|default(false) %}
+            <section class="cart-card cart-material-card">
+                <h2>Mat&eacute;riel</h2>
+                <div class="cart-card__line"></div>
+                <label class="cart-material-choice">
+                    <input type="checkbox" name="pret_materiel" value="1" {{ not isConnected ? 'disabled' }}>
+                    <span>Demande de mat&eacute;riel</span>
+                </label>
+                <p>Cette demande sera enregistr&eacute;e dans votre commande et permettra &agrave; l'&eacute;quipe de pr&eacute;voir le mat&eacute;riel n&eacute;cessaire.</p>
+            </section>
+        {% endif %}
 
         {# Zone de validation finale du panier. #}
         <section class="cart-validation">

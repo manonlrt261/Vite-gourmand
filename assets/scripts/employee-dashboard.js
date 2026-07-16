@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const emptyMessage = document.querySelector('[data-employee-orders-empty]');
   const resetButton = form ? form.querySelector('button[type="reset"]') : null;
 
-  if (!dashboard || !form || orderCards.length === 0) {
+  if (!dashboard || !form) {
     return;
   }
 
@@ -104,9 +104,146 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form.addEventListener('submit', applyFilters);
 
+  form.addEventListener('keydown', (event) => {
+    // La touche Entree applique les filtres comme le bouton Valider.
+    if (event.key === 'Enter' && event.target.matches('input, select')) {
+      event.preventDefault();
+      applyFilters();
+    }
+  });
+
   if (resetButton) {
     resetButton.addEventListener('click', () => {
       window.setTimeout(() => applyFilters(), 0);
     });
   }
+
+  dashboard.querySelectorAll('[data-dashboard-order-status-form]').forEach((statusForm) => {
+    const select = statusForm.querySelector('[data-dashboard-order-status-select]');
+
+    if (!select) {
+      return;
+    }
+
+    let previousStatus = select.value;
+
+    statusForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const card = statusForm.closest('[data-order-card]');
+
+      if (!card) {
+        return;
+      }
+
+      // Le FormData doit etre cree avant de desactiver le select,
+      // sinon la valeur choisie ne serait pas envoyee.
+      const formData = new FormData(statusForm);
+      select.disabled = true;
+
+      try {
+        const response = await fetch(statusForm.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          card.dataset.orderStatus = data.status;
+          select.value = data.status;
+          previousStatus = data.status;
+          select.classList.remove('badgeattente', 'badgevalidee', 'badgeterminee');
+          select.classList.add(data.className);
+          applyFilters();
+        } else {
+          select.value = previousStatus;
+        }
+      } catch (error) {
+        console.error(error);
+        select.value = previousStatus;
+      } finally {
+        select.disabled = (card.dataset.orderStatus || '') === 'annulee';
+      }
+    });
+
+    // Le statut se met a jour des que l'employe choisit une valeur.
+    select.addEventListener('change', () => {
+      statusForm.requestSubmit();
+    });
+  });
+
+  dashboard.addEventListener('submit', async (event) => {
+    const reviewForm = event.target.closest('[data-dashboard-review-action]');
+
+    if (!reviewForm) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const reviewCard = reviewForm.closest('.latestreview');
+    const reviewList = reviewForm.closest('.employee-review-list');
+    const buttons = reviewCard ? Array.from(reviewCard.querySelectorAll('button')) : [];
+    const previousError = reviewCard ? reviewCard.querySelector('[data-dashboard-review-error]') : null;
+
+    if (previousError) {
+      previousError.remove();
+    }
+
+    buttons.forEach((button) => {
+      button.disabled = true;
+    });
+
+    try {
+      // Les boutons Valider et Refuser envoient le meme formulaire qu'avant,
+      // mais en AJAX pour rester sur le tableau de bord.
+      // Le champ cache s'appelle "action" pour indiquer accepter/refuser.
+      // On lit donc l'attribut HTML du formulaire, sinon reviewForm.action
+      // peut pointer vers le champ cache au lieu de l'URL.
+      const response = await fetch(reviewForm.getAttribute('action'), {
+        method: 'POST',
+        body: new FormData(reviewForm),
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          Accept: 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Action impossible pour le moment.');
+      }
+
+      if (reviewCard) {
+        reviewCard.remove();
+      }
+
+      if (reviewList && !reviewList.querySelector('.latestreview') && !reviewList.querySelector('.employee-empty')) {
+        const empty = document.createElement('p');
+        empty.className = 'employee-empty';
+        empty.textContent = 'Aucun avis en attente.';
+        reviewList.appendChild(empty);
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (reviewCard) {
+        const message = document.createElement('p');
+        message.className = 'employee-empty';
+        message.dataset.dashboardReviewError = 'true';
+        message.textContent = 'Impossible de modifier cet avis pour le moment.';
+        reviewCard.appendChild(message);
+      }
+
+      buttons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+  });
 });

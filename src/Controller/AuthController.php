@@ -145,14 +145,14 @@ class AuthController extends AbstractController
             }
 
             if (!$this->isStrongPassword($data['password'])) {
-                $this->addFlash('register_error', 'Le mot de passe doit contenir au minimum 10 caractÃ¨res, une majuscule, une minuscule, un chiffre et un caractÃ¨re spÃ©cial.');
+                $this->addFlash('register_error', 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
 
             $existingUser = $connection->fetchOne('SELECT id FROM utilisateurs WHERE email = ?', [$data['email']]);
             if ($existingUser) {
-                $this->addFlash('register_error', 'Un compte existe dÃ©jÃ  avec cette adresse email.');
+                $this->addFlash('register_error', 'Un compte existe déjà avec cette adresse email.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
@@ -193,7 +193,6 @@ class AuthController extends AbstractController
 
             $this->sendWelcomeEmail($mailer, $data);
 
-            $this->addFlash('success', 'Votre compte a bien Ã©tÃ© crÃ©Ã©.');
             $targetPath = (string) $request->query->get('target');
             if (!str_starts_with($targetPath, '/') || str_starts_with($targetPath, '//')) {
                 $targetPath = '';
@@ -213,7 +212,7 @@ class AuthController extends AbstractController
         if ($request->isMethod('POST')) {
             // Token CSRF : protege la demande de reinitialisation de mot de passe.
             if (!$this->isValidAuthCsrf($request)) {
-                $this->addFlash('forgot_error', 'Le formulaire a expire, veuillez reessayer.');
+                $this->addFlash('forgot_error', 'Le formulaire a expiré, veuillez reessayer.');
 
                 return $this->redirectToRoute('forgot_password');
             }
@@ -251,7 +250,7 @@ class AuthController extends AbstractController
                 $this->sendPasswordResetEmail($mailer, (string) $user['email'], $absoluteResetUrl);
             }
 
-            $this->addFlash('forgot_success', "Si un compte existe avec cette adresse email, un lien de reinitialisation vient d'etre envoye.");
+            $this->addFlash('forgot_success', "Si un compte existe avec cette adresse email, un lien de réinitialisation vient d'être envoyé.");
 
             return $this->redirectToRoute('forgot_password');
         }
@@ -275,7 +274,7 @@ class AuthController extends AbstractController
         );
 
         if (!$resetRequest || $resetRequest['used_at'] !== null || new \DateTimeImmutable((string) $resetRequest['expires_at']) < new \DateTimeImmutable()) {
-            $this->addFlash('forgot_error', 'Le lien de rÃ©initialisation est invalide ou expirÃ©.');
+            $this->addFlash('forgot_error', 'Le lien de réinitialisation est invalide ou expiré.');
 
             return $this->redirectToRoute('forgot_password');
         }
@@ -292,7 +291,7 @@ class AuthController extends AbstractController
             $passwordConfirm = (string) $request->request->get('password_confirm');
 
             if (!$this->isStrongPassword($password)) {
-                $this->addFlash('reset_error', 'Le mot de passe doit contenir au minimum 10 caractÃ¨res, une majuscule, une minuscule, un chiffre et un caractÃ¨re spÃ©cial.');
+                $this->addFlash('reset_error', 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.');
 
                 return $this->redirectToRoute('reset_password', ['token' => $token]);
             }
@@ -310,13 +309,22 @@ class AuthController extends AbstractController
                 'id' => (int) $resetRequest['utilisateur_id'],
             ]);
 
+            try {
+                // Le lien de reinitialisation definit un nouveau mot de passe personnel.
+                // Le mot de passe initial cree par l'administrateur ne doit donc plus etre visible.
+                $connection->update('utilisateurs', ['mot_de_passe_initial' => null], [
+                    'id' => (int) $resetRequest['utilisateur_id'],
+                ]);
+            } catch (\Throwable) {
+            }
+
             $connection->update('password_reset_tokens', [
                 'used_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ], [
                 'id' => (int) $resetRequest['id'],
             ]);
 
-            $this->addFlash('success', 'Votre mot de passe a bien Ã©tÃ© rÃ©initialisÃ©. Vous pouvez maintenant vous connecter.');
+            $this->addFlash('success', 'Votre mot de passe a bien été réinitialisé. Vous pouvez maintenant vous connecter.');
 
             return $this->redirectToRoute('login');
         }
@@ -342,7 +350,7 @@ class AuthController extends AbstractController
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
     }
 
-    // Email 1 : envoie un message de bienvenue au client apres la creation de son compte.
+    // Email : envoie un message de bienvenue au client apres la création de son compte.
     private function sendWelcomeEmail(MailerInterface $mailer, array $userData): void
     {
         $to = (string) ($userData['email'] ?? '');
@@ -357,9 +365,9 @@ class AuthController extends AbstractController
         $html = <<<HTML
             <h1>Bienvenue chez Vite & Gourmand</h1>
             <p>Bonjour {$firstName},</p>
-            <p>Votre compte client a bien ete cree.</p>
-            <p>Vous pouvez maintenant vous connecter, consulter nos menus, preparer votre panier et suivre vos commandes depuis votre espace client.</p>
-            <p>A tres bientot,<br>L'equipe Vite & Gourmand</p>
+            <p>Votre compte client a bien été crée.</p>
+            <p>Vous pouvez maintenant vous connecter, consulter nos menus, préparer votre panier et suivre vos commandes depuis votre espace client.</p>
+            <p>A très bientôt,<br>L'équipe Vite & Gourmand</p>
         HTML;
 
         try {
@@ -374,7 +382,7 @@ class AuthController extends AbstractController
         }
     }
 
-    // Email 2 : envoie au client le lien securise permettant de definir un nouveau mot de passe.
+    // Email 2 : envoie au client le lien sécurisé permettant de définir un nouveau mot de passe.
     private function sendPasswordResetEmail(MailerInterface $mailer, string $to, string $resetUrl): void
     {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {

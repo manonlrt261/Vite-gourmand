@@ -1,26 +1,26 @@
 {% extends 'base.html.twig' %}
 
 {# Titre affiché dans l'onglet du navigateur pour la page d'ajout d'un employé. #}
-{% block title %}Ajouter un employ&eacute; - Vite & Gourmand{% endblock %}
+{% block title %}Ajouter un employé - Vite & Gourmand{% endblock %}
 
 {% block body %}
     {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
-        title: 'Ajouter un employ&eacute;',
+        title: 'Ajouter un employé',
         image: asset('assets/bigtittle.png'),
-        image_alt: 'Ajouter un employ&eacute; Vite et Gourmand'
+        image_alt: 'Ajouter un employé Vite et Gourmand'
     } %}
 
     {# Contenu principal du formulaire de création d'un employé. #}
     <main class="admin-employee-form-page">
         {# Lien de retour vers la liste des employés. #}
-        <a href="{{ path('admin_employees') }}" class="cart-back-link">&larr; Retour &agrave; la gestion des employ&eacute;s</a>
+        <a href="{{ path('admin_employees') }}" class="cart-back-link">&larr; Retour à la gestion des employés</a>
 
         {# Introduction de la page : elle explique à quoi sert le formulaire. #}
         <section class="admin-employees-heading">
             <div>
-                <h1>Ajouter un employ&eacute;</h1>
-                <p>Cr&eacute;ez un compte employ&eacute; avec les informations utiles &agrave; l'administration interne.</p>
+                <h1>Ajouter un employé</h1>
+                <p>Créez un compte employé avec les informations utiles à l'administration interne.</p>
             </div>
         </section>
 
@@ -35,56 +35,62 @@
 
         {# Formulaire envoyé au serveur pour créer le compte employé dans la base de données. #}
         <form method="post" class="admin-employee-create-form">
-            {# Token CSRF : protege la creation d un compte employe. #}
+            {# Token CSRF : protège la création d'un compte employé. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
 
             {# Identité de l'employé. #}
             <label>
                 <span>Nom *</span>
-                <input type="text" name="nom" value="{{ employee.nom }}" required>
+                <input type="text" name="nom" value="{{ employee.nom|default('') }}" placeholder="Votre nom" required>
             </label>
 
             <label>
-                <span>Pr&eacute;nom *</span>
-                <input type="text" name="prenom" value="{{ employee.prenom }}" required>
+                <span>Prénom *</span>
+                <input type="text" name="prenom" value="{{ employee.prenom|default('') }}" placeholder="Votre prénom" required>
             </label>
 
             {# Informations de naissance demandées pour compléter la fiche administrative. #}
             <label>
                 <span>Date de naissance *</span>
-                <input type="date" name="date_naissance" value="{{ employee.date_naissance }}" required>
+                <input type="date" name="date_naissance" value="{{ employee.date_naissance|default('') }}" required>
             </label>
 
             <label>
                 <span>Lieu de naissance *</span>
-                <input type="text" name="lieu_naissance" value="{{ employee.lieu_naissance }}" required>
+                <input type="text" name="lieu_naissance" value="{{ employee.lieu_naissance|default('') }}" placeholder="Votre lieu de naissance" required>
             </label>
 
             {# Adresse postale complète de l'employé. #}
             <label class="admin-employee-create-form__full">
                 <span>Adresse postale *</span>
-                <input type="text" name="adresse_postale" value="{{ employee.adresse_postale }}" required>
+                <input type="text" name="adresse_postale" value="{{ employee.adresse_postale|default('') }}" placeholder="Votre adresse postale" required>
             </label>
 
             <label>
                 <span>Code postal *</span>
-                <input type="text" name="code_postal" value="{{ employee.code_postal }}" required>
+                <input type="text" name="code_postal" value="{{ employee.code_postal|default('') }}" placeholder="Votre code postal" required>
             </label>
 
             <label>
                 <span>Ville *</span>
-                <input type="text" name="ville" value="{{ employee.ville }}" required>
+                <input type="text" name="ville" value="{{ employee.ville|default('') }}" placeholder="Votre ville" required>
             </label>
 
-            {# Coordonnées professionnelles utilisées pour la connexion et les échanges internes. #}
+            {# L'email professionnel sert à la connexion de l'employé. #}
             <label>
-                <span>Email professionnelle *</span>
-                <input type="email" name="email" value="{{ employee.email }}" placeholder="prenom.nom@vite-gourmand.fr" required>
+                <span>Email professionnel *</span>
+                <input type="email" name="email" value="{{ employee.email|default('') }}" placeholder="votre.email@vite-gourmand.fr" required>
             </label>
 
+            {# L'email personnel sert uniquement à envoyer la confirmation de création du compte. #}
             <label>
-                <span>Num&eacute;ro de t&eacute;l&eacute;phone *</span>
-                <input type="text" name="telephone" value="{{ employee.telephone }}" required>
+                <span>Email personnel *</span>
+                <input type="email" name="email_personnel" value="{{ employee.email_personnel|default('') }}" placeholder="votre.email@exemple.fr" required>
+            </label>
+
+            <label class="admin-employee-create-form__full">
+                <span>Numéro de téléphone *</span>
+                <input type="text" name="telephone" value="{{ employee.telephone|default('') }}" placeholder="Votre numéro de téléphone" required>
             </label>
 
             {# Poste de l'employé : la liste vient du contrôleur pour garder les postes cohérents partout. #}
@@ -94,14 +100,47 @@
                     <option value="">Choisir un poste</option>
                     {# Si le formulaire est réaffiché après une erreur, le poste déjà choisi reste sélectionné. #}
                     {% for job in jobs %}
-                        <option value="{{ job }}" {{ employee.poste == job ? 'selected' : '' }}>{{ job }}</option>
+                        <option value="{{ job }}" {{ (employee.poste|default('')) == job ? 'selected' }}>{{ job }}</option>
                     {% endfor %}
                 </select>
             </label>
 
+            {# Mot de passe créé par l'administrateur pour le compte employé. #}
+            <label>
+                <span>Création de mot de passe *</span>
+                <span class="auth-password-control">
+                    <input type="password" name="password" value="{{ employee.password|default('') }}" placeholder="Créer un mot de passe" data-password-input required>
+                    <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
+                        <span aria-hidden="true">Afficher</span>
+                    </button>
+                </span>
+            </label>
+
+            <label>
+                <span>Confirmation du mot de passe *</span>
+                <span class="auth-password-control">
+                    <input type="password" name="password_confirm" value="{{ employee.password_confirm|default('') }}" placeholder="Confirmer le mot de passe" data-password-input required>
+                    <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher la confirmation du mot de passe" title="Afficher la confirmation du mot de passe">
+                        <span aria-hidden="true">Afficher</span>
+                    </button>
+                </span>
+            </label>
+
+            {# Rappel des règles de sécurité appliquées côté serveur avant l'enregistrement. #}
+            <div class="register-password-info admin-employee-password-info admin-employee-create-form__full">
+                <p><strong>Le mot de passe doit contenir au minimum :</strong></p>
+                <ul>
+                    <li>10 caractères minimum</li>
+                    <li>Au minimum 1 caractère spécial</li>
+                    <li>Une majuscule</li>
+                    <li>Une minuscule</li>
+                    <li>Au minimum 1 chiffre</li>
+                </ul>
+            </div>
+
             {# Actions finales : créer l'employé ou revenir à la liste sans enregistrer. #}
             <div class="admin-employee-create-form__actions">
-                <button type="submit" class="buttonprimary">Cr&eacute;er l'employ&eacute;</button>
+                <button type="submit" class="buttonprimary">Créer l'employé</button>
                 <a href="{{ path('admin_employees') }}" class="buttonoffwhite">Annuler</a>
             </div>
         </form>

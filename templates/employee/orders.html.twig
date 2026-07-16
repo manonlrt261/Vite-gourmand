@@ -12,7 +12,8 @@
     } %}
 
     {# Contenu principal de la page de gestion des commandes. #}
-    <main class="employee-orders-management-page" data-employee-orders-page>
+<main class="employee-orders-management-page" data-employee-orders-page>
+    {% set today = 'now'|date('Y-m-d') %}
         {# Lien de retour adapte selon le role connecte. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
@@ -157,30 +158,44 @@
                                     <span class="ordergestion-dot" aria-hidden="true"></span>
                                     <p>Total <strong class="ordergestion-total">{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} &euro;</strong></p>
                                 </div>
+                                {% if order.pret_materiel|default(0) %}
+                                    <div class="ordergestion-total-line">
+                                        <span class="ordergestion-dot" aria-hidden="true"></span>
+                                        <p>Mat&eacute;riel demand&eacute;</p>
+                                    </div>
+                                {% endif %}
                                 <p class="ordergestion-delivery">
                                     Command&eacute;e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
                                 </p>
                             </div>
                         </div>
 
-                        {# Formulaire qui fait avancer le statut de la commande. #}
+                        {# Formulaire de choix du statut : le select garde le visuel du badge mais permet de choisir directement le statut voulu. #}
                         <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-order-status-form>
                             {# Token CSRF : protege le changement de statut d une commande. #}
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
-                                <button
-                                type="submit"
-                                class="{{ statusClass }} ordergestion-status"
-                                data-order-status-button
-                                aria-label="{% if statusCode in ['livree', 'annulee'] %}Statut non modifiable pour la commande n&deg;{{ order.commande_id }}{% else %}Faire avancer le statut de la commande n&deg;{{ order.commande_id }}{% endif %}"
-                                {% if statusCode in ['livree', 'annulee'] %}disabled{% endif %}
-                            >
-                                {{ order.statut_libelle|default('En attente') }}
-                            </button>
+                            <label class="ordergestion-status-wrapper">
+                                <span class="sr-only">Statut de la commande n&deg;{{ order.commande_id }}</span>
+                                <select
+                                    name="status"
+                                    class="{{ statusClass }} ordergestion-status"
+                                    data-order-status-select
+                                    aria-label="Choisir le statut de la commande n&deg;{{ order.commande_id }}"
+                                    {% if statusCode == 'annulee' %}disabled{% endif %}
+                                >
+                                    {% for status in statuses %}
+                                        {% if status.code != 'annulee' or statusCode == 'annulee' %}
+                                            <option value="{{ status.code }}" {% if status.code == statusCode %}selected{% endif %}>
+                                                {{ status.libelle }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </label>
                         </form>
 
-                        {# Tant que la commande est en attente, l'employe peut la modifier ou l'annuler apres contact client. #}
-                        {% if statusCode == 'en_attente' %}
-                            <section class="employee-order-contact-actions" data-order-contact-actions>
+                        {# Les actions restent presentes dans la page pour pouvoir etre reactivees sans rechargement si le statut repasse en attente. #}
+                        <section class="employee-order-contact-actions{% if statusCode != 'en_attente' %} is-disabled{% endif %}" data-order-contact-actions aria-disabled="{{ statusCode == 'en_attente' ? 'false' : 'true' }}">
                                 {# Formulaire de modification de commande. #}
                                 <details>
                                     <summary>Modifier la commande</summary>
@@ -195,7 +210,7 @@
                                             </label>
                                             <label>
                                                 <span>Heure de livraison</span>
-                                                <input type="time" name="heure_de_livraison" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
+                                                <input type="time" name="heure_de_livraison" min="08:00" max="22:00" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
                                             </label>
                                             <label>
                                                 <span>Nombre de personnes</span>
@@ -228,7 +243,7 @@
                                             </label>
                                             <label>
                                                 <span>Date du contact</span>
-                                                <input type="date" name="contact_date_client" required>
+                                                <input type="date" name="contact_date_client" max="{{ today }}" required>
                                             </label>
                                             <label>
                                                 <span>Heure du contact</span>
@@ -265,7 +280,7 @@
                                             </label>
                                             <label>
                                                 <span>Date du contact</span>
-                                                <input type="date" name="contact_date_client" required>
+                                                <input type="date" name="contact_date_client" max="{{ today }}" required>
                                             </label>
                                             <label>
                                                 <span>Heure du contact</span>
@@ -282,10 +297,10 @@
                                         <button type="submit" class="buttonoffwhite">Confirmer l'annulation</button>
                                     </form>
                                 </details>
-                            </section>
-                        {% elseif order.contact_methode_client or order.contact_message_client %}
+                        </section>
+                        {% if statusCode != 'en_attente' and (order.contact_methode_client or order.contact_message_client) %}
                             {# Resume du dernier contact client quand la commande n'est plus modifiable. #}
-                            <section class="employee-order-contact-log">
+                            <section class="employee-order-contact-log" data-order-contact-log>
                                 <p>Contact client : {{ order.contact_methode_client|default('non renseign&eacute;') }}</p>
                                 {% if order.contact_client_at %}
                                     <p>Le {{ order.contact_client_at|date('d/m/Y H:i') }}</p>

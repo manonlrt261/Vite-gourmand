@@ -9,6 +9,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 // Controleur de l'espace administrateur et des statistiques.
 class AdminController extends AbstractController
@@ -45,7 +47,7 @@ class AdminController extends AbstractController
     }
 
     // Cree un compte employe depuis l espace administrateur.
-    public function createEmployee(Request $request, Connection $connection): Response
+    public function createEmployee(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
             return $this->redirectToAdminLogin($request);
@@ -70,10 +72,9 @@ class AdminController extends AbstractController
             }
 
             // Controle les donnees avant de creer un compte employe.
-            $errors = $this->validateEmployeeData($connection, $formData);
+            $errors = $this->validateEmployeeData($connection, $formData, null, true);
 
             if ($errors === []) {
-                $temporaryPassword = $this->generateTemporaryEmployeePassword();
                 $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
                 $connection->insert('utilisateurs', [
@@ -85,16 +86,21 @@ class AdminController extends AbstractController
                     'code_postal' => $formData['code_postal'],
                     'ville' => $formData['ville'],
                     'email' => $formData['email'],
+                    'email_personnel' => $formData['email_personnel'],
                     'telephone' => $formData['telephone'],
                     'poste' => $formData['poste'],
-                    'mot_de_passe' => password_hash($temporaryPassword, PASSWORD_DEFAULT),
+                    'mot_de_passe' => password_hash($formData['password'], PASSWORD_DEFAULT),
+                    // Mot de passe initial visible par l'administrateur tant que l'employe ne l'a pas change.
+                    'mot_de_passe_initial' => $formData['password'],
                     'role_id' => $this->getEmployeeRoleId($connection),
                     'actif' => 1,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
 
-                $this->addFlash('employee_success', 'Compte employe cree. Mot de passe provisoire a transmettre a l employe : ' . $temporaryPassword);
+                $this->sendEmployeeCreationEmail($mailer, $formData);
+
+                $this->addFlash('employee_success', 'Compte employé créé. Un email de confirmation a été envoyé à l’adresse personnelle de l’employé.');
 
                 return $this->redirectToRoute('admin_employees');
             }
@@ -209,6 +215,7 @@ class AdminController extends AbstractController
             'date_naissance' => trim((string) $request->request->get('date_naissance')),
             'lieu_naissance' => trim((string) $request->request->get('lieu_naissance')),
             'email' => trim((string) $request->request->get('email')),
+            'email_personnel' => trim((string) $request->request->get('email_personnel')),
             'telephone' => trim((string) $request->request->get('telephone')),
             'adresse_postale' => trim((string) $request->request->get('adresse_postale')),
             'ville' => trim((string) $request->request->get('ville')),
@@ -254,7 +261,7 @@ class AdminController extends AbstractController
         if ($payload['prenom'] === '' || $payload['nom'] === '' || $payload['email'] === '' || $payload['poste'] === '') {
             return $this->json([
                 'success' => false,
-                'message' => 'Les champs prÃ©nom, nom, email et poste sont obligatoires.',
+                'message' => 'Les champs prénom, nom, email et poste sont obligatoires.',
             ], 422);
         }
 
@@ -565,14 +572,14 @@ class AdminController extends AbstractController
         $this->ensureEmployeeIdentityColumns($connection);
 
         return $connection->fetchAllAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.telephone, u.date_naissance, u.lieu_naissance,
+            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone, u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal, u.created_at, u.actif, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
-             WHERE r.libelle IN (?, ?)
+             WHERE r.libelle IN (?, ?, ?)
              ORDER BY u.created_at DESC, u.id DESC
              LIMIT 4',
-            ['employe', 'employÃ©']
+            ['employe', 'employé', 'employÃ©']
         );
     }
 
@@ -580,7 +587,20 @@ class AdminController extends AbstractController
     private function ensureEmployeeColumns(Connection $connection): void
     {
         try {
-            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN poste VARCHAR(100) NOT NULL DEFAULT "EmployÃ© polyvalent"');
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN poste VARCHAR(100) NOT NULL DEFAULT "Employé polyvalent"');
+        } catch (\Throwable) {
+        }
+
+        try {
+            // Corrige les anciennes valeurs de poste qui avaient ete enregistrees avec un mauvais encodage.
+            $connection->executeStatement(
+                'UPDATE utilisateurs SET poste = ? WHERE poste IN (?, ?)',
+                ['Employé polyvalent', 'EmployÃ© polyvalent', 'EmployÃƒÂ© polyvalent']
+            );
+            $connection->executeStatement(
+                'UPDATE utilisateurs SET poste = ? WHERE poste IN (?, ?)',
+                ['Chargé de clientèle', 'ChargÃ© de clientÃ¨le', 'ChargÃƒÂ© de clientÃƒÂ¨le']
+            );
         } catch (\Throwable) {
         }
     }
@@ -595,6 +615,19 @@ class AdminController extends AbstractController
 
         try {
             $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN lieu_naissance VARCHAR(150) DEFAULT NULL');
+        } catch (\Throwable) {
+        }
+
+        try {
+            // L'email personnel sert à prévenir l'employé que son compte professionnel a été créé.
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN email_personnel VARCHAR(255) DEFAULT NULL');
+        } catch (\Throwable) {
+        }
+
+        try {
+            // Ce champ conserve uniquement le mot de passe cree par l'administrateur.
+            // Il reste vide si l'employe a deja defini son propre mot de passe.
+            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN mot_de_passe_initial VARCHAR(255) DEFAULT NULL');
         } catch (\Throwable) {
         }
     }
@@ -614,8 +647,11 @@ class AdminController extends AbstractController
             'code_postal' => trim((string) $request->request->get('code_postal')),
             'ville' => trim((string) $request->request->get('ville')),
             'email' => trim((string) $request->request->get('email')),
+            'email_personnel' => trim((string) $request->request->get('email_personnel')),
             'telephone' => trim((string) $request->request->get('telephone')),
             'poste' => trim((string) $request->request->get('poste')),
+            'password' => (string) $request->request->get('password'),
+            'password_confirm' => (string) $request->request->get('password_confirm'),
         ];
     }
 
@@ -624,7 +660,7 @@ class AdminController extends AbstractController
      * @return list<string>
      */
     // Valide les informations employe avant creation ou modification.
-    private function validateEmployeeData(Connection $connection, array $data, ?int $ignoredUserId = null): array
+    private function validateEmployeeData(Connection $connection, array $data, ?int $ignoredUserId = null, bool $isCreation = false): array
     {
         $errors = [];
 
@@ -638,6 +674,26 @@ class AdminController extends AbstractController
 
         if (($data['email'] ?? '') !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Veuillez renseigner une adresse email professionnelle valide.';
+        }
+
+        if ($isCreation && ($data['email_personnel'] ?? '') === '') {
+            $errors[] = 'Veuillez renseigner une adresse email personnelle.';
+        }
+
+        if (($data['email_personnel'] ?? '') !== '' && !filter_var($data['email_personnel'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Veuillez renseigner une adresse email personnelle valide.';
+        }
+
+        if ($isCreation && (($data['password'] ?? '') === '' || ($data['password_confirm'] ?? '') === '')) {
+            $errors[] = 'Veuillez créer et confirmer le mot de passe de l’employé.';
+        }
+
+        if ($isCreation && ($data['password'] ?? '') !== ($data['password_confirm'] ?? '')) {
+            $errors[] = 'Les mots de passe ne correspondent pas.';
+        }
+
+        if ($isCreation && ($data['password'] ?? '') !== '' && !$this->isStrongPassword($data['password'])) {
+            $errors[] = 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
         }
 
         // La date de naissance doit exister et ne pas etre dans le futur.
@@ -674,6 +730,7 @@ class AdminController extends AbstractController
             'code_postal' => 10,
             'ville' => 250,
             'email' => 255,
+            'email_personnel' => 255,
             'telephone' => 20,
             'poste' => 100,
         ];
@@ -711,10 +768,65 @@ class AdminController extends AbstractController
         return $parsedDate instanceof \DateTimeImmutable && $parsedDate->format('Y-m-d') === $date;
     }
 
+    // Vérifie que le mot de passe employé respecte les mêmes règles que les comptes clients.
+    private function isStrongPassword(string $password): bool
+    {
+        return strlen($password) >= 10
+            && preg_match('/[A-Z]/', $password)
+            && preg_match('/[a-z]/', $password)
+            && preg_match('/\d/', $password)
+            && preg_match('/[^A-Za-z0-9]/', $password);
+    }
+
+    /**
+     * @param array<string, string> $employeeData
+     */
+    // Envoie un email de confirmation sur l'adresse personnelle du nouvel employé.
+    private function sendEmployeeCreationEmail(MailerInterface $mailer, array $employeeData): void
+    {
+        $personalEmail = $employeeData['email_personnel'] ?? '';
+
+        if (!filter_var($personalEmail, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $adminEmail = $_ENV['ADMIN_EMAIL'] ?? $_SERVER['ADMIN_EMAIL'] ?? $from;
+        $firstname = trim($employeeData['prenom'] ?? '');
+        $lastname = trim($employeeData['nom'] ?? '');
+        $professionalEmail = $employeeData['email'] ?? '';
+        $fullName = trim($firstname . ' ' . $lastname);
+
+        try {
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($personalEmail)
+                ->subject('Votre compte employé Vite & Gourmand a été créé')
+                ->text(
+                    "Bonjour {$fullName},\n\n"
+                    . "Votre compte employé Vite & Gourmand a bien été créé.\n\n"
+                    . "Votre email professionnel est : {$professionalEmail}\n\n"
+                    . "Pour obtenir votre mot de passe, merci de vous rapprocher de l'administrateur.\n\n"
+                    . "À bientôt,\n"
+                    . "L'équipe Vite & Gourmand"
+                )
+                ->html(
+                    '<p>Bonjour ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',</p>'
+                    . '<p>Votre compte employé <strong>Vite & Gourmand</strong> a bien été créé.</p>'
+                    . '<p>Votre email professionnel est : <strong>' . htmlspecialchars($professionalEmail, ENT_QUOTES, 'UTF-8') . '</strong></p>'
+                    . '<p>Pour obtenir votre mot de passe, merci de vous rapprocher de l’administrateur.</p>'
+                    . '<p>Adresse de contact administrateur : ' . htmlspecialchars($adminEmail, ENT_QUOTES, 'UTF-8') . '</p>'
+                    . '<p>À bientôt,<br>L’équipe Vite & Gourmand</p>'
+                ));
+        } catch (\Throwable) {
+            // L'email ne doit pas bloquer la création du compte si le SMTP est indisponible.
+        }
+    }
+
     // Recupere l identifiant du role employe.
     private function getEmployeeRoleId(Connection $connection): int
     {
-        $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employÃƒÂ©']);
+        $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employé', 'employÃ©']);
 
         return $roleId ? (int) $roleId : 2;
     }
@@ -740,9 +852,9 @@ class AdminController extends AbstractController
             'Commis de cuisine',
             'Responsable livraison',
             'Livreur',
-            'ChargÃ© de clientÃ¨le',
+            'Chargé de clientèle',
             'Gestionnaire administratif',
-            'EmployÃ© polyvalent',
+            'Employé polyvalent',
         ];
     }
 
@@ -764,15 +876,15 @@ class AdminController extends AbstractController
     private function getEmployees(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.telephone,
+            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone,
                     u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
-             WHERE r.libelle IN (?, ?)
+             WHERE r.libelle IN (?, ?, ?)
              ORDER BY u.created_at DESC, u.id DESC',
-            ['employe', 'employÃ©']
+            ['employe', 'employé', 'employÃ©']
         );
     }
 
@@ -783,14 +895,14 @@ class AdminController extends AbstractController
     private function getEmployeeById(Connection $connection, int $id): array|false
     {
         return $connection->fetchAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.telephone,
+            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone,
                     u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
-             WHERE u.id = ? AND r.libelle IN (?, ?)',
-            [$id, 'employe', 'employÃ©']
+             WHERE u.id = ? AND r.libelle IN (?, ?, ?)',
+            [$id, 'employe', 'employé', 'employÃ©']
         );
     }
 }

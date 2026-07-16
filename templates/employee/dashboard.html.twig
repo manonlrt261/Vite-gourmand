@@ -124,8 +124,25 @@
                                     </p>
                                 </div>
 
-                                {# Badge de statut visible sur la carte. #}
-                                <span class="{{ statusClass }} cardvieworderemployee-status">{{ order.statut_libelle }}</span>
+                                {# Le statut garde le style d'un badge, mais devient un menu deroulant pour choisir directement le statut voulu. #}
+                                <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-dashboard-order-status-form>
+                                    {# Token CSRF : protege le changement de statut d'une commande. #}
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                                    <select
+                                        name="status"
+                                        class="{{ statusClass }} cardvieworderemployee-status"
+                                        data-dashboard-order-status-select
+                                        aria-label="Choisir le statut de la commande n°{{ order.commande_id }}"
+                                    >
+                                        {% for status in statuses %}
+                                            {% if status.code != 'annulee' or order.statut_code == 'annulee' %}
+                                                <option value="{{ status.code }}" {% if status.code == order.statut_code %}selected{% endif %}>
+                                                    {{ status.libelle }}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </form>
                             </article>
                         {% endfor %}
                     {% endif %}
@@ -160,7 +177,7 @@
 
                                 <div class="latestreview-actions">
                                     {# Formulaire pour refuser l'avis. #}
-                                    <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}">
+                                    <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-dashboard-review-action>
                                         {# Token CSRF : protege le refus d un avis. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="refuse">
@@ -168,7 +185,7 @@
                                     </form>
 
                                     {# Formulaire pour accepter l'avis. #}
-                                    <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}">
+                                    <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-dashboard-review-action>
                                         {# Token CSRF : protege l acceptation d un avis. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="accept">

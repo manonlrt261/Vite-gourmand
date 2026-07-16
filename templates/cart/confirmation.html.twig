@@ -13,6 +13,9 @@
 
 {# Page affichee apres la validation du panier. #}
 <main class="customer-page order-detail-page order-confirmation-page">
+    {# Lien de retour vers l'espace client pour retrouver rapidement ses commandes. #}
+    <a href="{{ path('customer_account') }}" class="cart-back-link">&larr; Retour &agrave; mon espace</a>
+
     {# Bloc d'introduction confirmant que la commande a bien ete enregistree. #}
     <section class="cart-card cart-empty-card order-confirmation-intro">
         <h2>Merci pour votre commande</h2>
@@ -99,6 +102,10 @@
                         <div>
                             <dt>Frais de livraison</dt>
                             <dd>{{ order.prix_livraison|number_format(2, ',', ' ') }} &euro;</dd>
+                        </div>
+                        <div>
+                            <dt>Mat&eacute;riel</dt>
+                            <dd>{{ order.pret_materiel|default(0) ? 'Demand&eacute;' : 'Non demand&eacute;' }}</dd>
                         </div>
                         <div>
                             <dt>Total de la commande</dt>

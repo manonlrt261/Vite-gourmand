@@ -364,3 +364,137 @@ MongoDB est utilisé comme base non relationnelle pour les statistiques administ
 
 Les fichiers CSS, JavaScript, Twig et PHP sont organisés selon leur rôle afin de faciliter la maintenance du projet.
 
+```md
+---
+
+## Configuration des emails
+
+Le projet utilise le composant **Symfony Mailer** pour envoyer les emails automatiquement depuis l'application.
+
+Les emails sont envoyés avec un service SMTP externe. Pour ce projet, le service utilisé est **Brevo**.
+
+Brevo permet à Symfony d'envoyer les emails depuis l'application, y compris en environnement local.
+
+### Emails envoyés par l'application
+
+L'application peut envoyer plusieurs types d'emails :
+
+- email de bienvenue après l'inscription d'un utilisateur ;
+- email de réinitialisation du mot de passe ;
+- email de confirmation de commande ;
+- email invitant le client à laisser un avis lorsque la commande passe au statut terminée ;
+- email de rappel de retour du matériel lorsque la commande contient du matériel prêté ;
+- email envoyé à l'entreprise lorsqu'un visiteur utilise le formulaire de contact.
+
+### Service SMTP utilisé
+
+Le service SMTP utilisé est :
+
+```text
+Brevo
+```
+
+Le serveur SMTP utilisé est :
+
+```text
+smtp-relay.brevo.com
+```
+
+Le port utilisé est :
+
+```text
+587
+```
+
+### Variables d'environnement utilisées
+
+La configuration des emails se fait dans le fichier :
+
+```text
+.env.local
+```
+
+Les variables utilisées sont :
+
+```env
+MAILER_DSN="smtp://IDENTIFIANT_SMTP:MOT_DE_PASSE_SMTP@smtp-relay.brevo.com:587"
+MAILER_FROM="adresse-expeditrice@example.com"
+ADMIN_EMAIL="adresse-reception@example.com"
+```
+
+### Rôle des variables
+
+#### MAILER_DSN
+
+`MAILER_DSN` contient les informations de connexion au serveur SMTP.
+
+Elle permet à Symfony de savoir quel service utiliser pour envoyer les emails.
+
+Dans ce projet, elle pointe vers le serveur SMTP de Brevo :
+
+```text
+smtp-relay.brevo.com
+```
+
+#### MAILER_FROM
+
+`MAILER_FROM` définit l'adresse email utilisée comme expéditeur des emails envoyés par le site.
+
+Cette adresse doit être validée dans Brevo avant de pouvoir être utilisée.
+
+#### ADMIN_EMAIL
+
+`ADMIN_EMAIL` définit l'adresse email qui reçoit les demandes envoyées depuis le formulaire de contact.
+
+Dans ce projet, cette adresse correspond à l'adresse de l'entreprise.
+
+### Sécurité
+
+Le fichier `.env.local` contient des informations sensibles, notamment la clé SMTP Brevo.
+
+Il ne doit jamais être envoyé sur GitHub.
+
+Le fichier `.env.local` doit rester uniquement sur l'ordinateur local.
+
+La clé SMTP doit être régénérée si elle a été partagée publiquement ou copiée dans un endroit non sécurisé.
+
+### Fonctionnement général
+
+Lorsqu'une action déclenche un email, Symfony utilise automatiquement la configuration définie dans `MAILER_DSN`.
+
+Exemples :
+
+- lorsqu'un utilisateur crée un compte, un email de bienvenue est envoyé ;
+- lorsqu'un utilisateur demande une réinitialisation de mot de passe, un email contenant un lien sécurisé est envoyé ;
+- lorsqu'une commande est validée, un email de confirmation est envoyé au client ;
+- lorsqu'une commande passe au statut terminée, un email invite le client à laisser un avis ;
+- lorsqu'une commande terminée contient du matériel prêté, un email rappelle les règles de retour du matériel ;
+- lorsqu'un visiteur envoie un message de contact, un email est envoyé à l'entreprise.
+
+### Test des emails
+
+Pour tester l'envoi des emails, il faut d'abord vérifier que le site est lancé en local.
+
+Commande de lancement du projet :
+
+```powershell
+& "C:\laragon\bin\php\php-8.4.12-nts-Win32-vs17-x64\php.exe" -S 127.0.0.1:8005 -t public public/router.php
+```
+
+Ensuite, il est possible de tester les emails en utilisant les fonctionnalités du site :
+
+- créer un compte pour tester l'email de bienvenue ;
+- utiliser la page mot de passe oublié pour tester l'email de réinitialisation ;
+- passer une commande pour tester l'email de confirmation ;
+- passer une commande au statut terminée pour tester l'email d'avis ;
+- passer une commande avec matériel au statut terminée pour tester l'email de retour matériel ;
+- envoyer un message depuis la page contact pour tester l'email envoyé à l'entreprise.
+
+Il est aussi possible de tester rapidement la configuration mailer avec la commande Symfony suivante :
+
+```powershell
+& "C:\laragon\bin\php\php-8.4.12-nts-Win32-vs17-x64\php.exe" bin/console mailer:test adresse@example.com
+```
+
+Cette commande permet de vérifier que Symfony arrive bien à envoyer un email avec la configuration SMTP.
+```

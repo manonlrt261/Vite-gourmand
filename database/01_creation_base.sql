@@ -274,6 +274,32 @@ CREATE TABLE `utilisateurs` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Triggers to keep only one administrator account
+--
+
+DELIMITER ;;
+CREATE TRIGGER `trg_utilisateurs_single_admin_insert`
+BEFORE INSERT ON `utilisateurs`
+FOR EACH ROW
+BEGIN
+  IF NEW.`role_id` = (SELECT `role_id` FROM `roles` WHERE `libelle` = 'administrateur' LIMIT 1)
+     AND (SELECT COUNT(*) FROM `utilisateurs` WHERE `role_id` = NEW.`role_id`) > 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un seul compte administrateur est autorise';
+  END IF;
+END;;
+
+CREATE TRIGGER `trg_utilisateurs_single_admin_update`
+BEFORE UPDATE ON `utilisateurs`
+FOR EACH ROW
+BEGIN
+  IF NEW.`role_id` = (SELECT `role_id` FROM `roles` WHERE `libelle` = 'administrateur' LIMIT 1)
+     AND (SELECT COUNT(*) FROM `utilisateurs` WHERE `role_id` = NEW.`role_id` AND `id` <> NEW.`id`) > 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un seul compte administrateur est autorise';
+  END IF;
+END;;
+DELIMITER ;
+
+--
 -- Dumping routines for database 'vite_et_gourmand'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

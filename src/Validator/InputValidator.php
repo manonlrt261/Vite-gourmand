@@ -54,6 +54,20 @@ final class InputValidator
         return preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/', $time) === 1;
     }
 
+    // Verifie qu une heure est comprise dans le creneau autorise, bornes incluses.
+    public static function isTimeBetween(string $time, string $minimumTime, string $maximumTime): bool
+    {
+        if (!self::isValidTime($time) || !self::isValidTime($minimumTime) || !self::isValidTime($maximumTime)) {
+            return false;
+        }
+
+        $normalizedTime = substr($time, 0, 5);
+        $normalizedMinimumTime = substr($minimumTime, 0, 5);
+        $normalizedMaximumTime = substr($maximumTime, 0, 5);
+
+        return $normalizedTime >= $normalizedMinimumTime && $normalizedTime <= $normalizedMaximumTime;
+    }
+
     // Limite la taille des textes pour proteger la base et eviter les saisies trop longues.
     public static function hasMaxLength(?string $value, int $max): bool
     {

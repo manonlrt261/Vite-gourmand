@@ -17,6 +17,11 @@ use Symfony\Component\Mime\Email;
 // Controleur du panier, de la validation de commande et de la confirmation.
 class CartController extends AbstractController
 {
+    private const BORDEAUX_LATITUDE = 44.837789;
+    private const BORDEAUX_LONGITUDE = -0.57918;
+    private const DELIVERY_BASE_PRICE = 5.00;
+    private const DELIVERY_PRICE_PER_KM = 0.59;
+
     private const REQUIRED_CHECKOUT_FIELDS = [
         'nom',
         'prenom',
@@ -203,10 +208,17 @@ class CartController extends AbstractController
         }
 
         $this->updateCartQuantitiesFromRequest($request, $connection);
-        $summary = $this->getCartSummary($request, $connection);
+        $summary = $this->getCartSummary($request, $connection, $checkoutData);
 
         if (!$summary || $summary['items'] === []) {
             $this->addFlash('cart_error', 'Votre panier est vide.');
+
+            return $this->redirectToRoute('cart_index');
+        }
+
+        $leadTimeError = $this->validateMenuLeadTimes($summary['items'], $checkoutData['date_prestation']);
+        if ($leadTimeError !== null) {
+            $this->addFlash('cart_error', $leadTimeError);
 
             return $this->redirectToRoute('cart_index');
         }
@@ -219,12 +231,84 @@ class CartController extends AbstractController
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $today = (new \DateTimeImmutable())->format('Y-m-d');
         $orderIds = [];
+        // Le client ne peut demander du materiel que si au moins un menu du panier le propose dans ses conditions.
+        $materialRequested = $request->request->getBoolean('pret_materiel');
+        $hasMaterialMenu = false;
+        foreach ($summary['items'] as $item) {
+            if ($this->menuProvidesMaterial($item['menu'] ?? [])) {
+                $hasMaterialMenu = true;
+                break;
+            }
+        }
+        $pretMateriel = $materialRequested && $hasMaterialMenu ? 1 : 0;
 
-        $connection->beginTransaction();
+        // La table des menus commandes est verifiee avant la transaction :
+        // une requete CREATE TABLE peut fermer automatiquement une transaction MySQL.
+        $this->ensureOrderMenuTable($connection);
 
         try {
+            // La transaction regroupe la commande, ses menus et son historique.
+            $connection->beginTransaction();
+
             $commandeColumns = $this->getTableColumns($connection, 'commandes');
             $historiqueColumns = $this->getTableColumns($connection, 'historique_statuts_commande');
+
+            $firstItem = $summary['items'][0];
+            $totalPeople = array_sum(array_map(static fn (array $item): int => (int) $item['nombrePersonnes'], $summary['items']));
+            $commandeData = [
+                'utilisateur_id' => $userId,
+                // Cette colonne reste remplie pour garder la compatibilite avec les anciennes pages.
+                'menu_id' => (int) $firstItem['menu']['menu_id'],
+                'date_commande' => $today,
+                'date_prestation' => $checkoutData['date_prestation'],
+                'heure_livraison' => $checkoutData['heure_livraison'],
+                'heure_de_livraison' => $checkoutData['heure_livraison'],
+                'adresse_livraison' => $checkoutData['adresse_livraison'],
+                'ville_livraison' => $checkoutData['ville_livraison'],
+                'code_postal_livraison' => $checkoutData['code_postal_livraison'],
+                'nombre_personnes' => $totalPeople,
+                'prix_menu' => $summary['prixMenu'] - $summary['reduction'],
+                'prix_livraison' => $summary['prixLivraison'],
+                'prix_total' => $summary['prixTotal'],
+                'pret_materiel' => $pretMateriel,
+                'motif_annulation' => '',
+                'created_at' => $now,
+                'updated_at' => $now,
+                'statut_id' => $statusId,
+            ];
+
+            $connection->insert('commandes', array_intersect_key($commandeData, array_flip($commandeColumns)));
+            $orderId = (int) $connection->lastInsertId();
+            $orderIds[] = $orderId;
+
+            foreach ($summary['items'] as $item) {
+                $connection->insert('commande_menus', [
+                    'commande_id' => $orderId,
+                    'menu_id' => (int) $item['menu']['menu_id'],
+                    'nombre_personnes' => (int) $item['nombrePersonnes'],
+                    'prix_par_personne' => (float) $item['menu']['prix_par_personne'],
+                    'prix_menu' => (float) ($item['prixLigne'] - $item['reductionLigne']),
+                    'reduction' => (float) $item['reductionLigne'],
+                    'created_at' => $now,
+                ]);
+            }
+
+            if ($historiqueColumns !== []) {
+                $historiqueData = [
+                    'commande_id' => $orderId,
+                    'statut_id' => $statusId,
+                    'date_changement' => $now,
+                    'commentaire' => 'Commande créée depuis le panier.',
+                ];
+
+                $connection->insert(
+                    'historique_statuts_commande',
+                    array_intersect_key($historiqueData, array_flip($historiqueColumns))
+                );
+            }
+
+            // Les menus ont deja ete enregistres dans commande_menus : on evite l'ancien comportement qui creait une commande par menu.
+            $summary['items'] = [];
 
             foreach ($summary['items'] as $index => $item) {
                 $deliveryPrice = $index === 0 ? $summary['prixLivraison'] : 0;
@@ -243,7 +327,7 @@ class CartController extends AbstractController
                     'prix_menu' => $lineTotalAfterDiscount,
                     'prix_livraison' => $deliveryPrice,
                     'prix_total' => $lineTotalAfterDiscount + $deliveryPrice,
-                    'pret_materiel' => 0,
+                    'pret_materiel' => $pretMateriel,
                     'motif_annulation' => '',
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -269,9 +353,20 @@ class CartController extends AbstractController
                 }
             }
 
-            $connection->commit();
+            // On valide uniquement si MySQL garde encore une transaction active.
+            try {
+                if ($connection->isTransactionActive()) {
+                    $connection->commit();
+                }
+            } catch (\Doctrine\DBAL\Exception\NoActiveTransaction) {
+            }
         } catch (\Throwable $exception) {
-            $connection->rollBack();
+            try {
+                if ($connection->isTransactionActive()) {
+                    $connection->rollBack();
+                }
+            } catch (\Doctrine\DBAL\Exception\NoActiveTransaction) {
+            }
             $this->addFlash('cart_error', 'Impossible d’enregistrer la commande pour le moment.');
 
             return $this->redirectToRoute('cart_index');
@@ -331,6 +426,10 @@ class CartController extends AbstractController
         );
 
         foreach ($orders as $index => $order) {
+            $orders[$index]['orderMenus'] = $this->getOrderMenuLines($connection, $order);
+            foreach ($orders[$index]['orderMenus'] as $menuIndex => $orderMenu) {
+                $orders[$index]['orderMenus'][$menuIndex]['mealItems'] = $this->getOrderMealItems($connection, (int) $orderMenu['menu_id']);
+            }
             $orders[$index]['mealItems'] = $this->getOrderMealItems($connection, (int) $order['menu_id']);
             $orders[$index]['statusHistory'] = $this->getOrderStatusHistory($connection, (int) $order['commande_id'], $order);
         }
@@ -358,35 +457,42 @@ class CartController extends AbstractController
         $lines = [
             '<h1>Confirmation de votre commande</h1>',
             '<p>Bonjour ' . $firstName . ',</p>',
-            '<p>Nous avons bien recu votre commande Vite & Gourmand.</p>',
-            '<p>Elle est actuellement en attente de validation par notre equipe. Vous trouverez ci-dessous le recapitulatif de votre demande.</p>',
+            '<p>Nous avons bien reçu votre commande Vite & Gourmand.</p>',
+            '<p>Elle est actuellement en attente de validation par notre équipe. Vous trouverez ci-dessous le récapitulatif de votre demande.</p>',
         ];
 
         foreach ($orders as $order) {
-            $subtotal = (float) $order['prix_par_personne'] * (int) $order['nombre_personnes'];
-            $discount = $subtotal - (float) $order['prix_menu'];
+            $subtotal = 0;
+            $discount = 0;
+            foreach (($order['orderMenus'] ?? []) as $orderMenu) {
+                $subtotal += (float) $orderMenu['prix_par_personne'] * (int) $orderMenu['nombre_personnes'];
+                $discount += (float) $orderMenu['reduction'];
+            }
 
             $lines[] = '<hr>';
             $lines[] = '<h2>Commande n&deg;' . (int) $order['commande_id'] . '</h2>';
-            $lines[] = '<p><strong>Menu :</strong> ' . htmlspecialchars((string) $order['nom_menu'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<h3>Prestation</h3>';
             $lines[] = '<p><strong>Date de prestation :</strong> ' . htmlspecialchars((string) $order['date_prestation'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Heure de livraison :</strong> ' . htmlspecialchars((string) $order['heure_de_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Adresse :</strong> ' . htmlspecialchars((string) $order['adresse_livraison'], ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars((string) $order['code_postal_livraison'], ENT_QUOTES, 'UTF-8') . ' ' . htmlspecialchars((string) $order['ville_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
-            $lines[] = '<p><strong>Nombre de personnes :</strong> ' . (int) $order['nombre_personnes'] . '</p>';
-            $lines[] = '<h3>Detail du menu</h3>';
-            foreach (($order['mealItems'] ?? []) as $category => $item) {
-                if (!$item) {
-                    continue;
-                }
+            $lines[] = '<h3>Détail des menus</h3>';
+            foreach (($order['orderMenus'] ?? []) as $orderMenu) {
+                $lines[] = '<p><strong>Menu :</strong> ' . htmlspecialchars((string) $orderMenu['nom_menu'], ENT_QUOTES, 'UTF-8') . '</p>';
+                $lines[] = '<p><strong>Nombre de personnes :</strong> ' . (int) $orderMenu['nombre_personnes'] . '</p>';
+                foreach (($orderMenu['mealItems'] ?? []) as $category => $item) {
+                    if (!$item) {
+                        continue;
+                    }
 
-                $lines[] = '<p><strong>' . htmlspecialchars((string) $category, ENT_QUOTES, 'UTF-8') . ' :</strong> ' . htmlspecialchars((string) $item['nom'], ENT_QUOTES, 'UTF-8') . '</p>';
+                    $categoryLabel = htmlspecialchars((string) $category, ENT_QUOTES, 'UTF-8');
+                    $mealName = htmlspecialchars((string) ($item['nom'] ?? ''), ENT_QUOTES, 'UTF-8');
+                    $lines[] = '<p><strong>' . $categoryLabel . ' :</strong> ' . $mealName . '</p>';
+                }
             }
             $lines[] = '<h3>Tarifs</h3>';
-            $lines[] = '<p><strong>Prix par personne :</strong> ' . number_format((float) $order['prix_par_personne'], 2, ',', ' ') . ' &euro;</p>';
             $lines[] = '<p><strong>Sous-total :</strong> ' . number_format($subtotal, 2, ',', ' ') . ' &euro;</p>';
             if ($discount > 0) {
-                $lines[] = '<p><strong>Reduction :</strong> - ' . number_format($discount, 2, ',', ' ') . ' &euro;</p>';
+                $lines[] = '<p><strong>Réduction :</strong> - ' . number_format($discount, 2, ',', ' ') . ' &euro;</p>';
             }
             $lines[] = '<p><strong>Livraison :</strong> ' . number_format((float) $order['prix_livraison'], 2, ',', ' ') . ' &euro;</p>';
             $lines[] = '<p><strong>Total TTC :</strong> ' . number_format((float) $order['prix_total'], 2, ',', ' ') . ' &euro;</p>';
@@ -430,6 +536,10 @@ class CartController extends AbstractController
 
         if (!InputValidator::isValidTime($checkoutData['heure_livraison'] ?? '')) {
             return 'Veuillez renseigner une heure de livraison valide.';
+        }
+
+        if (!InputValidator::isTimeBetween($checkoutData['heure_livraison'] ?? '', '08:00', '22:00')) {
+            return 'Les livraisons sont possibles entre 8h00 et 22h00';
         }
 
         $lengths = [
@@ -480,6 +590,46 @@ class CartController extends AbstractController
                 [$menuId]
             ),
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    // Recupere les menus contenus dans une commande, avec une compatibilite pour les anciennes commandes a menu unique.
+    private function getOrderMenuLines(Connection $connection, array $order): array
+    {
+        try {
+            $lines = $connection->fetchAllAssociative(
+                'SELECT cm.commande_menu_id, cm.menu_id, cm.nombre_personnes,
+                        cm.prix_par_personne, cm.prix_menu, cm.reduction,
+                        m.nom_menu, m.description AS menu_description,
+                        m.image_url AS menu_image_url, m.image_alt AS menu_image_alt
+                 FROM commande_menus cm
+                 LEFT JOIN menus m ON m.menu_id = cm.menu_id
+                 WHERE cm.commande_id = ?
+                 ORDER BY cm.commande_menu_id ASC',
+                [(int) $order['commande_id']]
+            );
+
+            if ($lines !== []) {
+                return $lines;
+            }
+        } catch (\Throwable) {
+            // Si la table commande_menus n existe pas encore, on garde l ancien affichage.
+        }
+
+        return [[
+            'commande_menu_id' => null,
+            'menu_id' => (int) $order['menu_id'],
+            'nombre_personnes' => (int) $order['nombre_personnes'],
+            'prix_par_personne' => (float) $order['prix_par_personne'],
+            'prix_menu' => (float) $order['prix_menu'],
+            'reduction' => max(0, ((float) $order['prix_par_personne'] * (int) $order['nombre_personnes']) - (float) $order['prix_menu']),
+            'nom_menu' => $order['nom_menu'],
+            'menu_description' => $order['menu_description'],
+            'menu_image_url' => $order['menu_image_url'],
+            'menu_image_alt' => $order['menu_image_alt'],
+        ]];
     }
 
     /**
@@ -618,11 +768,15 @@ class CartController extends AbstractController
 
         $this->saveCartItems($request, $normalizedCartItems);
 
-        $prixLivraison = 0;
-        $prixTotal = $prixMenu - $reduction + $prixLivraison;
         $session = $request->getSession();
         $customer = $session->get('utilisateur', []);
         $isConnected = $this->getUser() !== null || $session->has('utilisateur_id');
+        $prixLivraison = $this->calculateDeliveryPrice([
+            'adresse_livraison' => (string) ($customer['adresse_postale'] ?? ''),
+            'code_postal_livraison' => (string) ($customer['code_postal'] ?? ''),
+            'ville_livraison' => (string) ($customer['ville'] ?? ''),
+        ]);
+        $prixTotal = $prixMenu - $reduction + $prixLivraison;
 
         if ($request->isMethod('POST') && !$isConnected) {
             $this->addFlash('error', 'Vous devez vous connecter ou creer un compte pour valider votre panier.');
@@ -705,7 +859,11 @@ class CartController extends AbstractController
 
         $this->saveCartItems($request, $normalizedCartItems);
 
-        $prixLivraison = 0;
+        $prixLivraison = $this->calculateDeliveryPrice([
+            'adresse_livraison' => trim((string) $request->request->get('adresse_livraison')),
+            'code_postal_livraison' => trim((string) $request->request->get('code_postal_livraison')),
+            'ville_livraison' => trim((string) $request->request->get('ville_livraison')),
+        ]);
 
         return $this->json([
             'success' => true,
@@ -751,7 +909,7 @@ class CartController extends AbstractController
     }
 
     // Calcule les totaux du panier, la reduction et la livraison.
-    private function getCartSummary(Request $request, Connection $connection): ?array
+    private function getCartSummary(Request $request, Connection $connection, ?array $deliveryData = null): ?array
     {
         $cartItems = $this->getCartItems($request);
 
@@ -761,7 +919,7 @@ class CartController extends AbstractController
 
         $menuIds = array_keys($cartItems);
         $menus = $connection->fetchAllAssociative(
-            'SELECT menu_id, nom_menu, personnes_minimum, prix_par_personne
+            'SELECT menu_id, nom_menu, personnes_minimum, prix_par_personne, conditions
              FROM menus
              WHERE menu_id IN (?) AND actif = 1',
             [$menuIds],
@@ -798,7 +956,11 @@ class CartController extends AbstractController
             ];
         }
 
-        $prixLivraison = 0;
+        $prixLivraison = $this->calculateDeliveryPrice($deliveryData ?? [
+            'adresse_livraison' => '',
+            'code_postal_livraison' => '',
+            'ville_livraison' => '',
+        ]);
 
         return [
             'items' => $items,
@@ -807,6 +969,218 @@ class CartController extends AbstractController
             'prixLivraison' => $prixLivraison,
             'prixTotal' => $prixMenu - $reduction + $prixLivraison,
         ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     */
+    // Verifie que la date choisie respecte le delai minimum indique dans les conditions du menu.
+    private function validateMenuLeadTimes(array $items, string $datePrestation): ?string
+    {
+        try {
+            $today = new \DateTimeImmutable('today');
+            $deliveryDate = new \DateTimeImmutable($datePrestation);
+        } catch (\Throwable) {
+            return 'La date de livraison est invalide.';
+        }
+
+        $daysBeforeDelivery = (int) $today->diff($deliveryDate)->format('%r%a');
+
+        foreach ($items as $item) {
+            $menu = $item['menu'] ?? [];
+            $conditions = (string) ($menu['conditions'] ?? '');
+            $leadTime = $this->extractLeadTimeFromConditions($conditions);
+
+            if ($leadTime['days'] <= 0) {
+                continue;
+            }
+
+            if ($daysBeforeDelivery < $leadTime['days']) {
+                return sprintf(
+                    '%s doit être commandé au minimum %s avant la date de livraison. Veuillez choisir une date plus éloignée.',
+                    (string) ($menu['nom_menu'] ?? 'Ce menu'),
+                    $leadTime['label']
+                );
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{days: int, label: string}
+     */
+    // Extrait un delai comme "5 jours", "1 semaine" ou "2 mois" depuis le texte des conditions.
+    private function extractLeadTimeFromConditions(string $conditions): array
+    {
+        $normalized = mb_strtolower($conditions);
+
+        if (preg_match('/minimum\s+(\d+)\s+(jour|jours|journée|journées)/u', $normalized, $matches)) {
+            $days = (int) $matches[1];
+
+            return ['days' => $days, 'label' => $days . ' jour' . ($days > 1 ? 's' : '')];
+        }
+
+        if (preg_match('/minimum\s+(\d+)\s+(semaine|semaines)/u', $normalized, $matches)) {
+            $weeks = (int) $matches[1];
+
+            return ['days' => $weeks * 7, 'label' => $weeks . ' semaine' . ($weeks > 1 ? 's' : '')];
+        }
+
+        if (preg_match('/minimum\s+(\d+)\s+(mois)/u', $normalized, $matches)) {
+            $months = (int) $matches[1];
+
+            return ['days' => $months * 30, 'label' => $months . ' mois'];
+        }
+
+        return ['days' => 0, 'label' => ''];
+    }
+
+    /**
+     * @param array<string, string> $deliveryData
+     */
+    // Calcule les frais : gratuit pour Bordeaux 33000, sinon 5 euros + 0,59 euro par kilometre.
+    private function calculateDeliveryPrice(array $deliveryData): float
+    {
+        $postalCode = preg_replace('/\D/', '', (string) ($deliveryData['code_postal_livraison'] ?? ''));
+
+        if ($postalCode === '' || $postalCode === '33000') {
+            return 0.0;
+        }
+
+        $coordinates = $this->findDeliveryCoordinates($deliveryData);
+        $distanceKm = $coordinates
+            ? $this->findDrivingDistanceKm($coordinates['lat'], $coordinates['lon'])
+            : $this->estimateDistanceFromPostalCode($postalCode);
+
+        return round(self::DELIVERY_BASE_PRICE + ($distanceKm * self::DELIVERY_PRICE_PER_KM), 2);
+    }
+
+    /**
+     * @param array<string, string> $deliveryData
+     * @return array{lat: float, lon: float}|null
+     */
+    // Essaie de convertir l'adresse de livraison en coordonnees GPS via le service public adresse.data.gouv.fr.
+    private function findDeliveryCoordinates(array $deliveryData): ?array
+    {
+        $query = trim(sprintf(
+            '%s %s %s',
+            (string) ($deliveryData['adresse_livraison'] ?? ''),
+            (string) ($deliveryData['code_postal_livraison'] ?? ''),
+            (string) ($deliveryData['ville_livraison'] ?? '')
+        ));
+
+        if ($query === '') {
+            return null;
+        }
+
+        $url = 'https://api-adresse.data.gouv.fr/search/?limit=1&q=' . rawurlencode($query);
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 2,
+            ],
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            return null;
+        }
+
+        $payload = json_decode($response, true);
+        $coordinates = $payload['features'][0]['geometry']['coordinates'] ?? null;
+
+        if (!is_array($coordinates) || !isset($coordinates[0], $coordinates[1])) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $coordinates[1],
+            'lon' => (float) $coordinates[0],
+        ];
+    }
+
+    // Recupere une distance routiere quand le service public de calcul d itineraire est disponible.
+    private function findDrivingDistanceKm(float $endLat, float $endLon): float
+    {
+        $url = sprintf(
+            'https://router.project-osrm.org/route/v1/driving/%F,%F;%F,%F?overview=false',
+            self::BORDEAUX_LONGITUDE,
+            self::BORDEAUX_LATITUDE,
+            $endLon,
+            $endLat
+        );
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 2,
+            ],
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            return $this->calculateDistanceKm(self::BORDEAUX_LATITUDE, self::BORDEAUX_LONGITUDE, $endLat, $endLon);
+        }
+
+        $payload = json_decode($response, true);
+        $distanceMeters = $payload['routes'][0]['distance'] ?? null;
+
+        if (!is_numeric($distanceMeters)) {
+            return $this->calculateDistanceKm(self::BORDEAUX_LATITUDE, self::BORDEAUX_LONGITUDE, $endLat, $endLon);
+        }
+
+        return ((float) $distanceMeters) / 1000;
+    }
+
+    // Distance geographique entre Bordeaux et l'adresse de livraison.
+    private function calculateDistanceKm(float $startLat, float $startLon, float $endLat, float $endLon): float
+    {
+        $earthRadiusKm = 6371;
+        $latDistance = deg2rad($endLat - $startLat);
+        $lonDistance = deg2rad($endLon - $startLon);
+
+        $a = sin($latDistance / 2) ** 2
+            + cos(deg2rad($startLat)) * cos(deg2rad($endLat)) * sin($lonDistance / 2) ** 2;
+
+        return $earthRadiusKm * (2 * atan2(sqrt($a), sqrt(1 - $a)));
+    }
+
+    // Estimation de secours si l'adresse ne peut pas etre geocodee.
+    private function estimateDistanceFromPostalCode(string $postalCode): float
+    {
+        $knownDistances = [
+            '33100' => 5.0,
+            '33200' => 4.0,
+            '33300' => 4.0,
+            '33800' => 3.0,
+            '33110' => 4.0,
+            '33130' => 4.0,
+            '33140' => 7.0,
+            '33150' => 5.0,
+            '33160' => 13.0,
+            '33170' => 8.0,
+            '33185' => 8.0,
+            '33270' => 5.0,
+            '33290' => 10.0,
+            '33310' => 6.0,
+            '33320' => 8.0,
+            '33360' => 9.0,
+            '33370' => 8.0,
+            '33400' => 4.0,
+            '33450' => 14.0,
+            '33500' => 35.0,
+            '33520' => 6.0,
+            '33530' => 8.0,
+            '33560' => 9.0,
+            '33600' => 7.0,
+            '33610' => 15.0,
+            '33700' => 7.0,
+            '33710' => 30.0,
+            '33720' => 35.0,
+            '33850' => 15.0,
+            '33950' => 55.0,
+            '37000' => 300.0,
+        ];
+
+        return $knownDistances[$postalCode] ?? 25.0;
     }
 
     /**
@@ -828,6 +1202,26 @@ class CartController extends AbstractController
         } catch (\Throwable) {
             return [];
         }
+    }
+
+    // Cree la table des lignes de commande si elle n'existe pas encore.
+    private function ensureOrderMenuTable(Connection $connection): void
+    {
+        $connection->executeStatement(
+            'CREATE TABLE IF NOT EXISTS commande_menus (
+                commande_menu_id INT AUTO_INCREMENT NOT NULL,
+                commande_id INT NOT NULL,
+                menu_id INT NOT NULL,
+                nombre_personnes INT NOT NULL,
+                prix_par_personne DECIMAL(10,2) NOT NULL,
+                prix_menu DECIMAL(10,2) NOT NULL,
+                reduction DECIMAL(10,2) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                PRIMARY KEY(commande_menu_id),
+                INDEX idx_commande_menus_commande (commande_id),
+                INDEX idx_commande_menus_menu (menu_id)
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB'
+        );
     }
 
     /**

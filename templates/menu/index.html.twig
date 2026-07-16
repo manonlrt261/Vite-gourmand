@@ -12,6 +12,9 @@
 
 {# Contenu principal de la page de liste des menus. #}
 <main class="menus-page">
+    {# Lien de retour rapide vers la page d'accueil. #}
+    <a href="{{ path('home_show') }}" class="cart-back-link menus-back-link">&larr; Retour &agrave; l'accueil</a>
+
     {# Panneau de filtres utilise par JavaScript pour afficher les resultats sans recharger la page. #}
     <section class="menus-filter-panel" aria-label="Filtres de recherche" data-menu-filters>
         {# En-tete des filtres avec le bouton de remise a zero. #}
@@ -98,7 +101,7 @@
         'Menus intemporels': 'Menus intemporels',
         'Menus evenementiels': 'Menus &eacute;v&eacute;nementiels',
         'Menus saisonniers': 'Menus saisonniers',
-        'Regime particulier': 'R&eacute;gime particulier'
+        'Regime particulier': 'R&eacute;gimes particuliers'
     } %}
 
     {# Boucle sur les menus regroupes par theme. #}
@@ -108,13 +111,21 @@
             <section class="menus-section" aria-labelledby="section-{{ loop.index }}" data-menu-section>
                 {# Titre de la categorie avec ligne decorative. #}
                 <header class="menus-section__header">
-                    <h2 id="section-{{ loop.index }}">{{ sectionLabels[title]|default(title)|raw }}</h2>
-                    <span class="menus-section__line" aria-hidden="true"></span>
-                    <span class="menus-section__arrow" aria-hidden="true">&rsaquo;</span>
+                    <button
+                        type="button"
+                        class="menus-section__toggle"
+                        aria-expanded="true"
+                        aria-controls="section-grid-{{ loop.index }}"
+                        data-menu-section-toggle
+                    >
+                        <span class="menus-section__title" id="section-{{ loop.index }}" role="heading" aria-level="2">{{ sectionLabels[title]|default(title)|raw }}</span>
+                        <span class="menus-section__line" aria-hidden="true"></span>
+                        <span class="menus-section__arrow" aria-hidden="true"></span>
+                    </button>
                 </header>
 
                 {# Grille des cartes de menus. #}
-                <div class="menus-section__grid" data-menu-grid>
+                <div class="menus-section__grid" id="section-grid-{{ loop.index }}" data-menu-grid>
                     {% for menu in sectionMenus %}
                         {# Carte reutilisable qui affiche les informations principales du menu. #}
                         {% include 'components/_menu_card.html.twig' with { menu: menu } %}

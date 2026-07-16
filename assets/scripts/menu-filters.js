@@ -146,6 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     emptyMessage.hidden = true;
   };
 
+  filterPanel.addEventListener('keydown', (event) => {
+    // La touche Entree applique les filtres comme le bouton principal.
+    if (event.key === 'Enter' && event.target.matches('input, select')) {
+      event.preventDefault();
+      applyFilters();
+    }
+  });
+
   submitButton.addEventListener('click', applyFilters);
   resetButton.addEventListener('click', resetFilters);
 });

@@ -82,7 +82,7 @@
                         class="admin-employee-row"
                         data-employee-card
                         data-employee-id="{{ employee.id }}"
-                        data-search="{{ (employee.id ~ ' ' ~ employee.nom ~ ' ' ~ employee.prenom ~ ' ' ~ employee.email ~ ' ' ~ employee.telephone ~ ' ' ~ employee.poste)|lower }}"
+                        data-search="{{ (employee.id ~ ' ' ~ employee.nom ~ ' ' ~ employee.prenom ~ ' ' ~ employee.email ~ ' ' ~ (employee.email_personnel|default('')) ~ ' ' ~ employee.telephone ~ ' ' ~ employee.poste)|lower }}"
                         data-status="{{ employee.actif }}"
                         data-job="{{ employee.poste }}"
                     >
@@ -125,6 +125,8 @@
                             data-date-naissance="{{ birthDate }}"
                             data-lieu-naissance="{{ employee.lieu_naissance }}"
                             data-email="{{ employee.email }}"
+                            data-email-personnel="{{ employee.email_personnel|default('') }}"
+                            data-initial-password="{{ employee.mot_de_passe_initial|default('')|e('html_attr') }}"
                             data-telephone="{{ employee.telephone }}"
                             data-adresse="{{ employee.adresse_postale }}"
                             data-ville="{{ employee.ville }}"
@@ -147,6 +149,7 @@
                             data-date-naissance="{{ birthDate }}"
                             data-lieu-naissance="{{ employee.lieu_naissance }}"
                             data-email="{{ employee.email }}"
+                            data-email-personnel="{{ employee.email_personnel|default('') }}"
                             data-telephone="{{ employee.telephone }}"
                             data-adresse="{{ employee.adresse_postale }}"
                             data-ville="{{ employee.ville }}"
@@ -213,7 +216,16 @@
                     <div><dt>Adresse postale</dt><dd data-view-adresse></dd></div>
                     <div><dt>Code postal</dt><dd data-view-code-postal></dd></div>
                     <div><dt>Ville</dt><dd data-view-ville></dd></div>
-                    <div><dt>Email professionnelle</dt><dd data-view-email></dd></div>
+                    <div><dt>Email professionnel</dt><dd data-view-email></dd></div>
+                    <div><dt>Email personnel</dt><dd data-view-email-personnel></dd></div>
+                    <div>
+                        <dt>Mot de passe</dt>
+                        <dd class="admin-employee-password-view">
+                            <span data-view-password>••••••••••</span>
+                            <button type="button" class="buttonoffwhite admin-employee-password-toggle" data-view-password-toggle hidden>Afficher</button>
+                            <small data-view-password-unavailable hidden>Non visible car l'employ&eacute; a modifi&eacute; son mot de passe.</small>
+                        </dd>
+                    </div>
                     <div><dt>Num&eacute;ro de t&eacute;l&eacute;phone</dt><dd data-view-telephone></dd></div>
                     <div><dt>Poste</dt><dd data-view-poste></dd></div>
                 </dl>
@@ -265,8 +277,13 @@
                     </label>
 
                     <label>
-                        <span>Email professionnelle</span>
+                        <span>Email professionnel</span>
                         <input type="email" name="email" required data-edit-email>
+                    </label>
+
+                    <label>
+                        <span>Email personnel</span>
+                        <input type="email" name="email_personnel" data-edit-email-personnel>
                     </label>
 
                     <label>

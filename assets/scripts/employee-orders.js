@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const setOrderContactActionsState = (card, status) => {
     const actions = card.querySelector('[data-order-contact-actions]');
+    const contactLogs = card.querySelectorAll('[data-order-contact-log]');
 
     if (!actions) {
       return;
@@ -159,24 +160,42 @@ document.addEventListener('DOMContentLoaded', () => {
     actions.querySelectorAll('input, select, textarea, button').forEach((field) => {
       field.disabled = !isPending;
     });
+
+    // Quand une commande revient en attente, les actions reapparaissent
+    // et le resume du dernier contact se masque pour laisser place aux formulaires.
+    contactLogs.forEach((log) => {
+      log.hidden = isPending;
+    });
   };
 
   page.querySelectorAll('[data-order-status-form]').forEach((form) => {
+    const select = form.querySelector('[data-order-status-select]');
+
+    if (!select) {
+      return;
+    }
+
+    let previousStatus = select.value;
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const button = form.querySelector('[data-order-status-button]');
       const card = form.closest('[data-order-card]');
 
-      if (!button || !card) {
+      if (!card) {
         return;
       }
 
-      button.disabled = true;
+      // On prepare les donnees avant de desactiver le select :
+      // un champ disabled n'est pas inclus dans FormData.
+      const formData = new FormData(form);
+      select.disabled = true;
 
       try {
+        // Le formulaire contient le token CSRF cache : on l envoie aussi en AJAX.
         const response = await fetch(form.action, {
           method: 'POST',
+          body: formData,
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
@@ -187,25 +206,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           card.dataset.orderStatus = data.status;
-          button.textContent = data.label;
-          button.classList.remove('badgeattente', 'badgevalidee', 'badgeterminee');
-          button.classList.add(data.className);
-          button.disabled = ['livree', 'annulee'].includes(data.status);
+          select.value = data.status;
+          previousStatus = data.status;
+          select.classList.remove('badgeattente', 'badgevalidee', 'badgeterminee');
+          select.classList.add(data.className);
           setOrderContactActionsState(card, data.status);
           applyFilters();
+        } else {
+          select.value = previousStatus;
         }
       } catch (error) {
         console.error(error);
+        select.value = previousStatus;
       } finally {
-        if (!['livree', 'annulee'].includes(card.dataset.orderStatus || '')) {
-          button.disabled = false;
-        }
+        select.disabled = (card.dataset.orderStatus || '') === 'annulee';
       }
+    });
+
+    // Le changement de statut se fait des que l'employe choisit une valeur dans le menu.
+    select.addEventListener('change', () => {
+      form.requestSubmit();
     });
   });
 
   cards.forEach((card) => {
     setOrderContactActionsState(card, card.dataset.orderStatus || 'en_attente');
+  });
+
+  filters.addEventListener('keydown', (event) => {
+    // La touche Entree applique les filtres comme le bouton principal.
+    if (event.key === 'Enter' && event.target.matches('input, select')) {
+      event.preventDefault();
+      applyFilters();
+    }
   });
 
   applyButton.addEventListener('click', applyFilters);

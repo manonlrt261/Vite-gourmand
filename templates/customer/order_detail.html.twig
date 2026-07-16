@@ -1,18 +1,23 @@
 ﻿{% extends 'base.html.twig' %}
 
 {# Titre affiche dans l'onglet du navigateur pour la page detail de commande. #}
-{% block title %}DÃ©tails des commandes - Vite & Gourmand{% endblock %}
+{% block title %}Détails des commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
 {# Bandeau principal reutilisable avec le titre de la page. #}
 {% include 'components/_big_title.html.twig' with {
-    title: 'DÃ©tails des commandes',
-    image_alt: 'D&eacute;tail de commande Vite et Gourmand'
+    title: 'Détails des commandes',
+    image_alt: 'Détail de commande Vite et Gourmand'
 } %}
 
 {# Calculs utiles pour afficher le recapitulatif financier de la commande. #}
-{% set subtotal = order.prix_par_personne * order.nombre_personnes %}
-{% set discount = subtotal - order.prix_menu %}
+{% set firstOrderMenu = orderMenus|first %}
+{% set subtotal = 0 %}
+{% set discount = 0 %}
+{% for orderMenu in orderMenus %}
+    {% set subtotal = subtotal + (orderMenu.prix_par_personne * orderMenu.nombre_personnes) %}
+    {% set discount = discount + orderMenu.reduction %}
+{% endfor %}
 {# Indique si le client a deja laisse un avis pour cette commande. #}
 {% set hasReview = order.avis_count|default(0) > 0 %}
 {# Preparation du statut et de la classe CSS du badge. #}
@@ -44,20 +49,21 @@
     {# Carte de synthese : image du menu, informations principales et statut. #}
     <section class="order-detail-summary-card">
         {# Image du menu commande, ou emplacement vide si aucune image n'est disponible. #}
-        {% if order.menu_image_url %}
-            <img src="{{ asset(order.menu_image_url) }}" alt="{{ order.menu_image_alt ?: order.nom_menu }}" class="order-detail-summary-card__image">
+        {% if firstOrderMenu.menu_image_url|default(null) %}
+            <img src="{{ asset(firstOrderMenu.menu_image_url) }}" alt="{{ firstOrderMenu.menu_image_alt ?: firstOrderMenu.nom_menu }}" class="order-detail-summary-card__image">
         {% else %}
             <div class="order-detail-summary-card__image order-detail-summary-card__image--empty"></div>
         {% endif %}
 
         {# Informations principales de la commande. #}
         <div class="order-detail-summary-card__content">
-            <h2>Commande nÂ°{{ order.commande_id }}</h2>
-            <p>CommandÃ©e le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
-            <p>Livraison Ã  domicile : {{ order.adresse_livraison }}, {{ order.code_postal_livraison }} {{ order.ville_livraison }}</p>
-            <p>{{ order.nom_menu }}</p>
-            <p>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</p>
-            <p>{{ order.prix_total|number_format(2, ',', ' ') }} â‚¬</p>
+            <h2>Commande n°{{ order.commande_id }}</h2>
+            <p>Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
+            <p>Livraison à domicile : {{ order.adresse_livraison }}, {{ order.code_postal_livraison }} {{ order.ville_livraison }}</p>
+            {% for orderMenu in orderMenus %}
+                <p>{{ orderMenu.nom_menu }} - {{ orderMenu.nombre_personnes }} personne{{ orderMenu.nombre_personnes > 1 ? 's' : '' }}</p>
+            {% endfor %}
+            <p>{{ order.prix_total|number_format(2, ',', ' ') }} €</p>
         </div>
 
         {# Badge affichant le statut actuel de la commande. #}
@@ -83,7 +89,7 @@
                     </label>
                     <label>
                         <span>Heure de livraison</span>
-                        <input type="time" name="heure_de_livraison" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
+                        <input type="time" name="heure_de_livraison" min="08:00" max="22:00" value="{{ order.heure_de_livraison ? order.heure_de_livraison|date('H:i') : '' }}" required>
                     </label>
                     <label>
                         <span>Nombre de personnes</span>
@@ -158,38 +164,48 @@
 
     {# Section de contenu detaille de la commande. #}
     <section class="order-detail-section">
-        <h2>RÃ©capitulatif de ma commande</h2>
+        <h2>Récapitulatif de ma commande</h2>
 
         {# Liste descriptive du menu, des quantites, des reductions et du total. #}
         <div class="order-detail-recap-card">
             <dl>
+                {% for orderMenu in orderMenus %}
+                    <div>
+                        <dt>Menu choisi</dt>
+                        <dd>{{ orderMenu.nom_menu }}</dd>
+                    </div>
+                    <div>
+                        <dt>Nombre de personnes</dt>
+                        <dd>{{ orderMenu.nombre_personnes }} personne{{ orderMenu.nombre_personnes > 1 ? 's' : '' }}</dd>
+                    </div>
+                    <div>
+                        <dt>Prix unitaire</dt>
+                        <dd>{{ orderMenu.prix_par_personne|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Total du menu</dt>
+                        <dd>{{ orderMenu.prix_menu|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                {% endfor %}
                 <div>
-                    <dt>Menu choisi</dt>
-                    <dd>{{ order.nom_menu }}</dd>
+                    <dt>Sous-total avant réduction</dt>
+                    <dd>{{ subtotal|number_format(2, ',', ' ') }} €</dd>
                 </div>
                 <div>
-                    <dt>Nombre de personnes</dt>
-                    <dd>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</dd>
-                </div>
-                <div>
-                    <dt>Prix unitaire</dt>
-                    <dd>{{ order.prix_par_personne|number_format(2, ',', ' ') }} â‚¬</dd>
-                </div>
-                <div>
-                    <dt>Sous-total</dt>
-                    <dd>{{ subtotal|number_format(2, ',', ' ') }} â‚¬</dd>
-                </div>
-                <div>
-                    <dt>RÃ©duction</dt>
-                    <dd>- {{ discount > 0 ? discount|number_format(2, ',', ' ') : '0,00' }} â‚¬</dd>
+                    <dt>Réduction</dt>
+                    <dd>- {{ discount > 0 ? discount|number_format(2, ',', ' ') : '0,00' }} €</dd>
                 </div>
                 <div>
                     <dt>Frais de livraison</dt>
-                    <dd>{{ order.prix_livraison|number_format(2, ',', ' ') }} â‚¬</dd>
+                    <dd>{{ order.prix_livraison|number_format(2, ',', ' ') }} €</dd>
+                </div>
+                <div>
+                    <dt>Mat&eacute;riel</dt>
+                    <dd>{{ order.pret_materiel|default(0) ? 'Demand&eacute;' : 'Non demand&eacute;' }}</dd>
                 </div>
                 <div>
                     <dt>Total de la commande</dt>
-                    <dd>{{ order.prix_total|number_format(2, ',', ' ') }} â‚¬</dd>
+                    <dd>{{ order.prix_total|number_format(2, ',', ' ') }} €</dd>
                 </div>
             </dl>
         </div>
@@ -199,28 +215,31 @@
 
     {# Section de contenu detaille de la commande. #}
     <section class="order-detail-section">
-        <h2>DÃ©tail du menu</h2>
+        <h2>Détail du menu</h2>
 
-        {# Liste des elements du menu commande. #}
+        {# Liste des elements de chaque menu commande. #}
         <div class="order-detail-meal-list">
-            {# Boucle sur l'entree, le plat et le dessert. #}
-            {% for category, item in mealItems %}
-                {% if item %}
-                    <article class="order-detail-meal-card">
-                        {# Image de l'element du menu, ou emplacement vide si aucune image n'existe. #}
-                        {% if item.image_url %}
-                            <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
-                        {% else %}
-                            <div class="order-detail-meal-card__image-empty"></div>
-                        {% endif %}
+            {% for orderMenu in orderMenus %}
+                <h3>{{ orderMenu.nom_menu }}</h3>
+                {# Boucle sur l entree, le plat et le dessert du menu. #}
+                {% for category, item in orderMenu.mealItems %}
+                    {% if item %}
+                        <article class="order-detail-meal-card">
+                            {# Image de l'element du menu, ou emplacement vide si aucune image n'existe. #}
+                            {% if item.image_url %}
+                                <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
+                            {% else %}
+                                <div class="order-detail-meal-card__image-empty"></div>
+                            {% endif %}
 
-                        <div>
-                            <h3>{{ category }}</h3>
-                            <h4>{{ item.nom }}</h4>
-                            <p>{{ item.description }}</p>
-                        </div>
-                    </article>
-                {% endif %}
+                            <div>
+                                <h4>{{ category }}</h4>
+                                <h5>{{ item.nom }}</h5>
+                                <p>{{ item.description }}</p>
+                            </div>
+                        </article>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
         </div>
     </section>
@@ -239,7 +258,7 @@
                     <span aria-hidden="true"></span>
                     <div>
                         <h3>{{ step.statut_libelle }}</h3>
-                        <p>{{ step.date_changement ? step.date_changement|date('d/m/Y Ã  H\\hi') : 'Date non renseignÃ©e' }}</p>
+                        <p>{{ step.date_changement ? step.date_changement|date('d/m/Y à H\\hi') : 'Date non renseignée' }}</p>
                         {# Commentaire eventuel associe au changement de statut. #}
                         {% if step.commentaire %}
                             <p>{{ step.commentaire }}</p>
@@ -264,14 +283,14 @@
         {# Si un avis existe deja, le formulaire n'est plus affiche. #}
         {% elseif hasReview %}
             <div class="customer-review-card order-detail-review-card">
-                <h3>Merci, votre avis a dÃ©jÃ  Ã©tÃ© envoyÃ© pour cette commande.</h3>
+                <h3>Merci, votre avis a déjà été envoyé pour cette commande.</h3>
             </div>
         {% else %}
             {# Formulaire d'avis pour une commande terminee sans avis existant. #}
             <form class="customer-review-card order-detail-review-card" method="post" action="{{ path('customer_order_detail', { id: order.commande_id }) }}">
                 {# Token CSRF : protege l avis envoye depuis le detail de commande. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
-                <h3>Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
+                <h3>Comment évalueriez-vous votre expérience ?</h3>
                 <input type="hidden" name="commande_id" value="{{ order.commande_id }}">
 
                 {# Note obligatoire de 1 a 5 etoiles. #}
@@ -280,7 +299,7 @@
                     <div class="customer-rating-stars">
                         {% for note in 5..1 %}
                             <input id="detail-note-{{ note }}" type="radio" name="note" value="{{ note }}" required>
-                            <label for="detail-note-{{ note }}" aria-label="{{ note }} Ã©toile{{ note > 1 ? 's' : '' }}">â˜…</label>
+                            <label for="detail-note-{{ note }}" aria-label="{{ note }} étoile{{ note > 1 ? 's' : '' }}">★</label>
                         {% endfor %}
                     </div>
                 </fieldset>
@@ -288,7 +307,7 @@
                 {# Commentaire facultatif du client. #}
                 <label class="customer-review-field">
                     <span>Votre commentaire (facultatif)</span>
-                    <textarea name="commentaire" placeholder="Ã‰crivez votre commentaire ici."></textarea>
+                    <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
                 </label>
 
                 {# Bouton d'envoi de l'avis. #}
