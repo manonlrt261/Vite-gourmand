@@ -21,7 +21,14 @@
 
                 {# Formulaire qui permet d'activer ou desactiver l'element sans changer de page. #}
                 <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
-                    <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button>
+                    {# Token CSRF : protege l activation ou la desactivation de l element. #}
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                    <button
+                        type="submit"
+                        class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}"
+                        data-status-button
+                        aria-label="{{ isActive ? 'D&eacute;sactiver' : 'Activer' }} {{ item.title }}"
+                    >
                         {{ isActive ? 'Actif' : 'Inactif' }}
                     </button>
                 </form>
@@ -42,11 +49,13 @@
 
                 {# Actions de gestion de l'element. #}
                 <div class="editablemenucard-actions">
-                    <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
+                    <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit" aria-label="Modifier {{ item.title }}">Modifier</a>
 
                     {# Suppression protegee par une modale de confirmation. #}
                     <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
-                        <button type="submit" class="buttondelete">Supprimer</button>
+                        {# Token CSRF : protege la suppression logique de l element. #}
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                        <button type="submit" class="buttondelete" aria-label="Supprimer {{ item.title }}">Supprimer</button>
                     </form>
                 </div>
             </div>
@@ -186,8 +195,8 @@
             <p>Voulez-vous vraiment supprimer cet &eacute;l&eacute;ment ? Il ne sera plus visible sur le site.</p>
 
             <div class="employee-delete-modal__actions">
-                <button type="button" class="buttonoffwhite" data-delete-confirm>Supprimer</button>
-                <button type="button" class="buttonprimary" data-delete-cancel>Annuler</button>
+                <button type="button" class="buttonoffwhite" aria-label="Confirmer la suppression de l'&eacute;l&eacute;ment" data-delete-confirm>Supprimer</button>
+                <button type="button" class="buttonprimary" aria-label="Annuler la suppression de l'&eacute;l&eacute;ment" data-delete-cancel>Annuler</button>
             </div>
         </section>
     </div>

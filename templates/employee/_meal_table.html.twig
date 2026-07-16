@@ -27,7 +27,15 @@
                     <td>
                         {# Formulaire permettant d'activer ou desactiver l'element. #}
                         <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
-                            <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-status-button title="{{ hasInactiveMenu ? 'Le menu associ&eacute; est inactif.' : '' }}">
+                            {# Token CSRF : protege l activation ou la desactivation depuis le tableau. #}
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                            <button
+                                type="submit"
+                                class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}"
+                                data-status-button
+                                title="{{ hasInactiveMenu ? 'Le menu associ&eacute; est inactif.' : '' }}"
+                                aria-label="{{ isActive ? 'D&eacute;sactiver' : 'Activer' }} {{ item.title }}"
+                            >
                                 {{ isActive ? 'Actif' : 'Inactif' }}
                             </button>
                         </form>
@@ -35,11 +43,13 @@
                     <td>
                         {# Actions de modification ou suppression de l'element. #}
                         <div class="employee-table-actions">
-                            <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit">Modifier</a>
+                            <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit" aria-label="Modifier {{ item.title }}">Modifier</a>
 
                             {# Suppression protegee par une confirmation JavaScript. #}
                             <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
-                                <button type="submit" class="buttondelete">Supprimer</button>
+                                {# Token CSRF : protege la suppression depuis le tableau. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                                <button type="submit" class="buttondelete" aria-label="Supprimer {{ item.title }}">Supprimer</button>
                             </form>
                         </div>
                     </td>

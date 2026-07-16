@@ -35,6 +35,9 @@
 
         {# Formulaire envoyé au serveur pour créer le compte employé dans la base de données. #}
         <form method="post" class="admin-employee-create-form">
+            {# Token CSRF : protege la creation d un compte employe. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
+
             {# Identité de l'employé. #}
             <label>
                 <span>Nom *</span>

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,6 +18,13 @@ class ContactController extends AbstractController
     {
         // Si le formulaire est envoye, on recupere et nettoie les champs.
         if ($request->isMethod('POST')) {
+            // Token CSRF : confirme que le message vient bien du formulaire de contact du site.
+            if (!$this->isCsrfTokenValid('contact_action', (string) $request->request->get('_csrf_token'))) {
+                $this->addFlash('contact_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('contact_index');
+            }
+
             $email = trim((string) $request->request->get('email'));
             $titre = trim((string) $request->request->get('titre'));
             $description = trim((string) $request->request->get('description'));
@@ -31,6 +39,17 @@ class ContactController extends AbstractController
             // Verification du format de l'adresse email.
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $this->addFlash('contact_error', 'Veuillez renseigner une adresse email valide.');
+
+                return $this->redirectToRoute('contact_index');
+            }
+
+            // Bloque les messages trop longs avant l enregistrement et l envoi email.
+            if (
+                !InputValidator::hasMaxLength($email, 255)
+                || !InputValidator::hasMaxLength($titre, 150)
+                || !InputValidator::hasMaxLength($description, 5000)
+            ) {
+                $this->addFlash('contact_error', 'Votre demande contient un champ trop long.');
 
                 return $this->redirectToRoute('contact_index');
             }

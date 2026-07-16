@@ -29,6 +29,9 @@
 
         {# Formulaire envoye au serveur pour creer un nouvel utilisateur. #}
         <form class="register-form" method="post" action="{{ path('register', app.request.query.all) }}">
+            {# Token CSRF : protege la creation de compte. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('auth_action') }}">
+
             {# Grille de champs : elle organise les informations personnelles et l'adresse. #}
             <div class="register-grid">
                 {# Prenom du client, conserve dans formData si le formulaire revient avec une erreur. #}
@@ -54,7 +57,7 @@
                     <span>Mot de passe *</span>
                     <span class="auth-password-control">
                         <input type="password" name="password" placeholder="Votre mot de passe" autocomplete="new-password" data-password-input required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher ou masquer le mot de passe">Afficher</button>
                     </span>
                 </label>
 
@@ -75,7 +78,7 @@
                     <span>Confirmation du mot de passe *</span>
                     <span class="auth-password-control">
                         <input type="password" name="password_confirm" placeholder="Confirmez votre mot de passe" autocomplete="new-password" data-password-input required>
-                        <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                        <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher ou masquer la confirmation du mot de passe">Afficher</button>
                     </span>
                 </label>
 

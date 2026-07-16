@@ -165,11 +165,14 @@
 
                         {# Formulaire qui fait avancer le statut de la commande. #}
                         <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-order-status-form>
+                            {# Token CSRF : protege le changement de statut d une commande. #}
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <button
                                 type="submit"
                                 class="{{ statusClass }} ordergestion-status"
                                 data-order-status-button
-                                {% if statusCode in ['livree', 'annulee'] %}disabled aria-label="Statut non modifiable"{% endif %}
+                                aria-label="{% if statusCode in ['livree', 'annulee'] %}Statut non modifiable pour la commande n&deg;{{ order.commande_id }}{% else %}Faire avancer le statut de la commande n&deg;{{ order.commande_id }}{% endif %}"
+                                {% if statusCode in ['livree', 'annulee'] %}disabled{% endif %}
                             >
                                 {{ order.statut_libelle|default('En attente') }}
                             </button>
@@ -182,6 +185,8 @@
                                 <details>
                                     <summary>Modifier la commande</summary>
                                     <form method="post" action="{{ path('employee_order_update', { id: order.commande_id }) }}" class="employee-order-contact-form">
+                                        {# Token CSRF : protege la modification employee d une commande. #}
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         {# Nouvelles informations de prestation et de livraison. #}
                                         <div class="employee-order-contact-grid">
                                             <label>
@@ -245,6 +250,8 @@
                                 <details>
                                     <summary>Annuler la commande</summary>
                                     <form method="post" action="{{ path('employee_order_cancel', { id: order.commande_id }) }}" class="employee-order-contact-form">
+                                        {# Token CSRF : protege l annulation employee d une commande. #}
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         {# Methode, date et heure du contact client. #}
                                         <div class="employee-order-contact-grid employee-order-contact-grid--contact">
                                             <label>

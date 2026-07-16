@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\MongoStatsService;
+use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -57,6 +58,18 @@ class AdminController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
+            // Le token CSRF confirme que la creation vient bien du formulaire administrateur.
+            if (!$this->isValidAdminCsrf($request)) {
+                $errors[] = 'Le formulaire a expire, veuillez reessayer.';
+
+                return $this->render('admin/employee_form.html.twig', [
+                    'jobs' => $this->getEmployeeJobs(),
+                    'employee' => $formData,
+                    'errors' => $errors,
+                ]);
+            }
+
+            // Controle les donnees avant de creer un compte employe.
             $errors = $this->validateEmployeeData($connection, $formData);
 
             if ($errors === []) {
@@ -142,6 +155,11 @@ class AdminController extends AbstractController
             return $this->json(['success' => false], 403);
         }
 
+        // Protection CSRF : l activation/desactivation d un employe est une action sensible.
+        if (!$this->isValidAdminCsrf($request)) {
+            return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
+        }
+
         $this->ensureEmployeeColumns($connection);
         $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
@@ -172,6 +190,11 @@ class AdminController extends AbstractController
             return $this->json(['success' => false], 403);
         }
 
+        // Protection CSRF : la modification d un employe doit venir de la fenetre du site.
+        if (!$this->isValidAdminCsrf($request)) {
+            return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
+        }
+
         $this->ensureEmployeeColumns($connection);
         $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
@@ -193,6 +216,15 @@ class AdminController extends AbstractController
             'poste' => trim((string) $request->request->get('poste')),
             'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
+
+        // Reutilise les memes controles que la creation pour securiser la modification.
+        $errors = $this->validateEmployeeData($connection, $payload, $id);
+        if ($errors !== []) {
+            return $this->json([
+                'success' => false,
+                'message' => implode(' ', $errors),
+            ], 422);
+        }
 
         if (
             $payload['prenom'] === ''
@@ -257,6 +289,11 @@ class AdminController extends AbstractController
             return $this->json(['success' => false], 403);
         }
 
+        // Protection CSRF : empeche la suppression d un employe par une requete externe.
+        if (!$this->isValidAdminCsrf($request)) {
+            return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
+        }
+
         $this->ensureEmployeeColumns($connection);
         $this->ensureEmployeeIdentityColumns($connection);
         $employee = $this->getEmployeeById($connection, $id);
@@ -278,6 +315,12 @@ class AdminController extends AbstractController
         $roleId = is_array($user) ? (int) ($user['role_id'] ?? 0) : 0;
 
         return $role === 'administrateur' || $roleId === 3;
+    }
+
+    // Verifie le token CSRF commun aux actions sensibles de gestion des employes.
+    private function isValidAdminCsrf(Request $request): bool
+    {
+        return $this->isCsrfTokenValid('admin_employee_action', (string) $request->request->get('_csrf_token'));
     }
 
     // Redirige vers la connexion si l administrateur n est pas connecte.
@@ -585,6 +628,7 @@ class AdminController extends AbstractController
     {
         $errors = [];
 
+        // Tous les champs d identite employe sont obligatoires.
         foreach (['nom', 'prenom', 'date_naissance', 'lieu_naissance', 'adresse_postale', 'code_postal', 'ville', 'email', 'telephone', 'poste'] as $field) {
             if (($data[$field] ?? '') === '') {
                 $errors[] = 'Tous les champs sont obligatoires.';
@@ -596,10 +640,52 @@ class AdminController extends AbstractController
             $errors[] = 'Veuillez renseigner une adresse email professionnelle valide.';
         }
 
+        // La date de naissance doit exister et ne pas etre dans le futur.
         if (($data['date_naissance'] ?? '') !== '' && !$this->isValidDate($data['date_naissance'])) {
             $errors[] = 'Veuillez renseigner une date de naissance valide.';
         }
 
+        if (($data['date_naissance'] ?? '') !== '' && $this->isValidDate($data['date_naissance'])) {
+            $birthDate = new \DateTimeImmutable($data['date_naissance']);
+            if ($birthDate > new \DateTimeImmutable('today')) {
+                $errors[] = 'La date de naissance ne peut pas etre dans le futur.';
+            }
+        }
+
+        // Controle les formats metier : telephone, code postal et poste autorise.
+        if (($data['telephone'] ?? '') !== '' && !InputValidator::isValidPhone($data['telephone'])) {
+            $errors[] = 'Veuillez renseigner un numero de telephone valide.';
+        }
+
+        if (($data['code_postal'] ?? '') !== '' && !InputValidator::isValidPostalCode($data['code_postal'])) {
+            $errors[] = 'Veuillez renseigner un code postal valide a 5 chiffres.';
+        }
+
+        if (($data['poste'] ?? '') !== '' && !in_array($data['poste'], $this->getEmployeeJobs(), true)) {
+            $errors[] = 'Le poste selectionne est invalide.';
+        }
+
+        // Protege la base en limitant chaque champ a la taille prevue.
+        $maxLengths = [
+            'nom' => 100,
+            'prenom' => 100,
+            'lieu_naissance' => 150,
+            'adresse_postale' => 255,
+            'code_postal' => 10,
+            'ville' => 250,
+            'email' => 255,
+            'telephone' => 20,
+            'poste' => 100,
+        ];
+
+        foreach ($maxLengths as $field => $maxLength) {
+            if (!InputValidator::hasMaxLength($data[$field] ?? '', $maxLength)) {
+                $errors[] = 'Certaines informations employe sont trop longues.';
+                break;
+            }
+        }
+
+        // Evite les doublons d email, sauf pour l employe actuellement modifie.
         if (($data['email'] ?? '') !== '') {
             $parameters = [$data['email']];
             $sql = 'SELECT id FROM utilisateurs WHERE email = ?';

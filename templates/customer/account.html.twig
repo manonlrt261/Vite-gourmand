@@ -70,7 +70,7 @@
                                 <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
                                 {# Le bouton modifier n'apparait que si la commande est encore en attente. #}
                                 {% if statusCode == 'en_attente' %}
-                                    <a href="{{ path('customer_orders') }}" class="buttonedit cardvieworder-edit">Modifier</a>
+                                    <a href="{{ path('customer_orders') }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n&deg;{{ order.commande_id }}">Modifier</a>
                                 {% endif %}
                             </div>
                         </article>
@@ -95,6 +95,8 @@
 
         {# Formulaire d'avis envoye depuis l'espace client. #}
         <form class="customer-review-card" method="post" action="{{ path('customer_account') }}">
+            {# Token CSRF : verifie que l avis est envoye depuis le formulaire du site. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
             <h3>Comment évalueriez-vous votre expérience ?</h3>
 
             {# Message de succes apres l'envoi d'un avis. #}

@@ -37,6 +37,8 @@
             <p>S&eacute;lectionnez une commande et compl&eacute;tez les informations utiles. Le mail est pr&eacute;par&eacute; automatiquement pour le client.</p>
 
             <form method="post" action="{{ path('employee_material_return_email') }}" class="employee-material-email-form">
+                {# Token CSRF : protege l envoi d un rappel de retour materiel. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                 {# Selection de la commande concernee par le retour materiel. #}
                 <label>
                     <span>Commande concern&eacute;e</span>
@@ -132,12 +134,14 @@
                     {# Formulaire de reponse, masque dans les onglets repondus et supprimes. #}
                     {% if currentTab not in ['replied', 'deleted'] %}
                         <form method="post" action="{{ path('employee_message_reply', { id: contactMessage.contact_id }) }}" class="employee-message-reply-form">
+                            {# Token CSRF : protege l envoi d une reponse au message client. #}
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                             <input type="hidden" name="tab" value="{{ currentTab }}">
                             <label>
                                 <span>Répondre au message</span>
                                 <textarea name="reponse" rows="4" placeholder="Écrivez votre réponse ici."></textarea>
                             </label>
-                            <button type="submit" class="buttonprimary">Répondre</button>
+                            <button type="submit" class="buttonprimary" aria-label="R&eacute;pondre au message n&deg;{{ contactMessage.contact_id }}">Répondre</button>
                         </form>
                     {% endif %}
 
@@ -146,22 +150,32 @@
                         {# Depuis les messages recus, on peut archiver. #}
                         {% if currentTab == 'active' %}
                             <form method="post" action="{{ path('employee_message_archive', { id: contactMessage.contact_id }) }}">
+                                {# Token CSRF : protege l archivage d un message. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <input type="hidden" name="tab" value="{{ currentTab }}">
-                                <button type="submit" class="buttonoffwhite">Archiver</button>
+                                <button type="submit" class="buttonoffwhite" aria-label="Archiver le message n&deg;{{ contactMessage.contact_id }}">Archiver</button>
                             </form>
                         {% endif %}
 
                         {# Depuis les archives, on peut remettre dans les messages recus. #}
                         {% if currentTab == 'archived' %}
                             <form method="post" action="{{ path('employee_message_unarchive', { id: contactMessage.contact_id }) }}">
-                                <button type="submit" class="buttonprimary">Déplacer dans messages reçus</button>
+                                {# Token CSRF : protege le retour d un message archive. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                                <button type="submit" class="buttonprimary" aria-label="D&eacute;placer le message n&deg;{{ contactMessage.contact_id }} dans les messages re&ccedil;us">Déplacer dans messages reçus</button>
                             </form>
                         {% endif %}
 
                         {# Depuis les messages supprimes, on peut restaurer selon l'etat de reponse. #}
                         {% if currentTab == 'deleted' %}
                             <form method="post" action="{{ path('employee_message_restore', { id: contactMessage.contact_id }) }}">
-                                <button type="submit" class="buttonprimary">
+                                {# Token CSRF : protege la restauration d un message supprime. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+                                <button
+                                    type="submit"
+                                    class="buttonprimary"
+                                    aria-label="{{ contactMessage.reponse ? 'D&eacute;placer le message n&deg;' ~ contactMessage.contact_id ~ ' dans les messages r&eacute;pondus' : 'D&eacute;placer le message n&deg;' ~ contactMessage.contact_id ~ ' dans les messages re&ccedil;us' }}"
+                                >
                                     {{ contactMessage.reponse ? 'Déplacer dans messages répondus' : 'Déplacer dans messages reçus' }}
                                 </button>
                             </form>
@@ -170,8 +184,10 @@
                         {# Suppression possible depuis les messages actifs, archives ou repondus. #}
                         {% if currentTab in ['active', 'archived', 'replied'] %}
                             <form method="post" action="{{ path('employee_message_delete', { id: contactMessage.contact_id }) }}">
+                                {# Token CSRF : protege la suppression d un message. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <input type="hidden" name="tab" value="{{ currentTab }}">
-                                <button type="submit" class="buttonoffwhite">Supprimer</button>
+                                <button type="submit" class="buttonoffwhite" aria-label="Supprimer le message n&deg;{{ contactMessage.contact_id }}">Supprimer</button>
                             </form>
                         {% endif %}
                     </div>

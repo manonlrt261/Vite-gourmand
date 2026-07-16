@@ -42,6 +42,9 @@
 
     {# Formulaire principal du panier : il sert a mettre a jour les quantites et a commander. #}
     <form class="cart-layout" method="post" action="{{ path('cart_update') }}" data-cart-form>
+        {# Token CSRF : protege la mise a jour du panier et la validation de commande. #}
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
+
         {# Colonne gauche : informations client et adresse de livraison. #}
         <div class="cart-left-column">
             {# Bloc des informations personnelles du client. #}
@@ -168,7 +171,13 @@
 
                             {# Actions possibles sur la ligne : mettre a jour ou supprimer le menu. #}
                             <div class="cart-item-actions">
-                                <button type="submit" class="cart-update-button" data-cart-update-button formnovalidate>
+                                <button
+                                    type="submit"
+                                    class="cart-update-button"
+                                    data-cart-update-button
+                                    formnovalidate
+                                    aria-label="Mettre &agrave; jour le nombre de personnes pour {{ menu.nom_menu }}"
+                                >
                                     Mettre &agrave; jour
                                 </button>
 
@@ -178,6 +187,7 @@
                                     class="cart-remove-button"
                                     data-cart-remove-button
                                     data-menu-id="{{ menu.menu_id }}"
+                                    aria-label="Supprimer {{ menu.nom_menu }} du panier"
                                 >
                                     Supprimer
                                 </button>
@@ -255,7 +265,10 @@
 
     {# Formulaires separes de suppression : chaque bouton supprimer cible son propre formulaire. #}
     {% for item in cartItems %}
-        <form id="cart-remove-{{ item.menu.menu_id }}" method="post" action="{{ path('cart_remove', { id: item.menu.menu_id }) }}"></form>
+        <form id="cart-remove-{{ item.menu.menu_id }}" method="post" action="{{ path('cart_remove', { id: item.menu.menu_id }) }}">
+            {# Token CSRF : protege la suppression d un menu du panier. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
+        </form>
     {% endfor %}
 </main>
 {% endblock %}

@@ -89,7 +89,7 @@
 
                     {# Boutons pour appliquer ou reinitialiser les filtres. #}
                     <div class="employee-filter-actions">
-                        <button type="submit" class="buttonprimary employee-filter-submit">Valider</button>
+                        <button type="submit" class="buttonprimary employee-filter-submit" aria-label="Appliquer les filtres des commandes">Valider</button>
                         <button type="reset" class="buttonwhite employee-filter-reset">Réinitialiser</button>
                     </div>
                 </form>
@@ -161,14 +161,18 @@
                                 <div class="latestreview-actions">
                                     {# Formulaire pour refuser l'avis. #}
                                     <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}">
+                                        {# Token CSRF : protege le refus d un avis. #}
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="refuse">
-                                        <button type="submit" class="buttonrefuse latestreview-refuse">Refuser</button>
+                                        <button type="submit" class="buttonrefuse latestreview-refuse" aria-label="Refuser l'avis n&deg;{{ review.avis_id }}">Refuser</button>
                                     </form>
 
                                     {# Formulaire pour accepter l'avis. #}
                                     <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}">
+                                        {# Token CSRF : protege l acceptation d un avis. #}
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="accept">
-                                        <button type="submit" class="buttonaccept latestreview-accept">Valider</button>
+                                        <button type="submit" class="buttonaccept latestreview-accept" aria-label="Valider l'avis n&deg;{{ review.avis_id }}">Valider</button>
                                     </form>
                                 </div>
                             </article>

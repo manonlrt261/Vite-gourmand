@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,6 +22,13 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Le token CSRF evite qu un avis soit envoye depuis une page externe au site.
+            if (!$this->isValidCustomerCsrf($request)) {
+                $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('customer_account');
+            }
+
             $this->handleReviewSubmit($request, $connection, $userId);
 
             return $this->redirectToRoute('customer_account');
@@ -43,6 +51,13 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Protection CSRF du formulaire d avis ouvert depuis la liste des commandes.
+            if (!$this->isValidCustomerCsrf($request)) {
+                $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('customer_orders');
+            }
+
             $this->handleReviewSubmit($request, $connection, $userId);
 
             return $this->redirectToRoute('customer_orders');
@@ -63,6 +78,13 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Protection CSRF du formulaire d avis disponible sur le detail d une commande.
+            if (!$this->isValidCustomerCsrf($request)) {
+                $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+            }
+
             $this->handleReviewSubmit($request, $connection, $userId);
 
             return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
@@ -107,6 +129,13 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
         }
 
+        // La modification d une commande est une action sensible : le token CSRF est obligatoire.
+        if (!$this->isValidCustomerCsrf($request)) {
+            $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
         $order = $this->getPendingCustomerOrder($connection, $id, $userId);
 
         if (!$order) {
@@ -124,6 +153,14 @@ class CustomerController extends AbstractController
 
         if ($datePrestation === '' || $heureLivraison === '' || $adresse === '' || $ville === '' || $codePostal === '') {
             $this->addFlash('order_error', 'Tous les champs de livraison doivent etre renseignes.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        // Verifie les nouvelles informations de livraison avant de modifier la commande.
+        $deliveryError = $this->validateDeliveryData($datePrestation, $heureLivraison, $adresse, $ville, $codePostal);
+        if ($deliveryError !== null) {
+            $this->addFlash('order_error', $deliveryError);
 
             return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
         }
@@ -163,6 +200,13 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
         }
 
+        // Le token CSRF protege l ajout d un menu dans une commande existante.
+        if (!$this->isValidCustomerCsrf($request)) {
+            $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
         $order = $this->getPendingCustomerOrder($connection, $id, $userId);
 
         if (!$order) {
@@ -186,6 +230,12 @@ class CustomerController extends AbstractController
         }
 
         $nombrePersonnes = max((int) $menu['personnes_minimum'], (int) $request->request->get('nombre_personnes'));
+        if ($nombrePersonnes < 1 || $nombrePersonnes > 500) {
+            $this->addFlash('order_error', 'Le nombre de personnes demande est invalide.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
         $lineTotal = (float) $menu['prix_par_personne'] * $nombrePersonnes;
         $discount = $nombrePersonnes >= (int) $menu['personnes_minimum'] + 5 ? $lineTotal * 0.10 : 0;
         $priceMenu = $lineTotal - $discount;
@@ -226,6 +276,13 @@ class CustomerController extends AbstractController
 
         if ($userId <= 0) {
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_orders')]);
+        }
+
+        // Annuler une commande modifie la base : le token CSRF empeche une annulation non voulue.
+        if (!$this->isValidCustomerCsrf($request)) {
+            $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('customer_orders');
         }
 
         $order = $connection->fetchAssociative(
@@ -297,6 +354,13 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Les informations personnelles et le mot de passe sont proteges par un token CSRF.
+            if (!$this->isValidCustomerCsrf($request)) {
+                $this->addFlash('profile_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('customer_profile');
+            }
+
             $this->handleProfileSubmit($request, $connection, $customer);
 
             return $this->redirectToRoute('customer_profile');
@@ -305,6 +369,12 @@ class CustomerController extends AbstractController
         return $this->render('customer/profile.html.twig', [
             'customer' => $customer,
         ]);
+    }
+
+    // Verifie le token CSRF commun aux formulaires de l espace client.
+    private function isValidCustomerCsrf(Request $request): bool
+    {
+        return $this->isCsrfTokenValid('customer_action', (string) $request->request->get('_csrf_token'));
     }
 
     // Enregistre les modifications des informations personnelles ou du mot de passe.
@@ -378,6 +448,14 @@ class CustomerController extends AbstractController
             return;
         }
 
+        // Controle les informations personnelles modifiees par le client.
+        $profileError = $this->validateProfileData($data);
+        if ($profileError !== null) {
+            $this->addFlash('profile_error', $profileError);
+
+            return;
+        }
+
         $existingUser = $connection->fetchOne(
             'SELECT id FROM utilisateurs WHERE email = ? AND id <> ?',
             [$data['email'], $userId]
@@ -436,6 +514,13 @@ class CustomerController extends AbstractController
 
         if ($commandeId <= 0 || $note < 1 || $note > 5) {
             $this->addFlash('review_error', 'Veuillez sélectionner une commande et une note entre 1 et 5.');
+
+            return;
+        }
+
+        // Limite la taille du commentaire pour eviter une saisie trop longue en base.
+        if (!InputValidator::hasMaxLength($commentaire, 1500)) {
+            $this->addFlash('review_error', 'Votre commentaire est trop long.');
 
             return;
         }
@@ -729,5 +814,64 @@ class CustomerController extends AbstractController
             && preg_match('/[a-z]/', $password)
             && preg_match('/\d/', $password)
             && preg_match('/[^A-Za-z0-9]/', $password);
+    }
+
+    // Valide les champs modifiables d une commande cote client.
+    private function validateDeliveryData(string $datePrestation, string $heureLivraison, string $adresse, string $ville, string $codePostal): ?string
+    {
+        if (!InputValidator::isFutureOrTodayDate($datePrestation)) {
+            return 'La date de prestation doit etre valide et ne peut pas etre dans le passe.';
+        }
+
+        if (!InputValidator::isValidTime($heureLivraison)) {
+            return 'Veuillez renseigner une heure de livraison valide.';
+        }
+
+        if (!InputValidator::isValidPostalCode($codePostal)) {
+            return 'Veuillez renseigner un code postal valide a 5 chiffres.';
+        }
+
+        if (
+            !InputValidator::hasMaxLength($adresse, 255)
+            || !InputValidator::hasMaxLength($ville, 100)
+            || !InputValidator::hasMaxLength($codePostal, 10)
+        ) {
+            return 'Certaines informations de livraison sont trop longues.';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    // Valide les informations du profil avant leur sauvegarde.
+    private function validateProfileData(array $data): ?string
+    {
+        if (!InputValidator::isValidPhone($data['telephone'] ?? '')) {
+            return 'Veuillez renseigner un numero de telephone valide.';
+        }
+
+        if (!InputValidator::isValidPostalCode($data['code_postal'] ?? '')) {
+            return 'Veuillez renseigner un code postal valide a 5 chiffres.';
+        }
+
+        $lengths = [
+            'prenom' => 100,
+            'nom' => 100,
+            'email' => 255,
+            'telephone' => 20,
+            'adresse_postale' => 255,
+            'code_postal' => 10,
+            'ville' => 250,
+        ];
+
+        foreach ($lengths as $field => $maxLength) {
+            if (!InputValidator::hasMaxLength($data[$field] ?? '', $maxLength)) {
+                return 'Certaines informations personnelles sont trop longues.';
+            }
+        }
+
+        return null;
     }
 }

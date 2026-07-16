@@ -80,7 +80,9 @@
                         {# Annulation possible uniquement tant que la commande est en attente. #}
                         {% if statusCode == 'en_attente' %}
                             <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment annuler cette commande ?');">
-                                <button type="submit" class="buttonoffwhite">Annuler</button>
+                                {# Token CSRF : protege l annulation de commande. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
+                                <button type="submit" class="buttonoffwhite" aria-label="Annuler la commande n&deg;{{ order.commande_id }}">Annuler</button>
                             </form>
                         {% endif %}
                         {# L'avis peut etre laisse seulement si la commande est terminee et sans avis existant. #}
@@ -91,6 +93,7 @@
                                 data-review-open
                                 data-order-id="{{ order.commande_id }}"
                                 data-order-label="Commande nÂ°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}"
+                                aria-label="Laisser un avis pour la commande n&deg;{{ order.commande_id }}"
                             >
                                 Laisser un avis
                             </button>
@@ -119,6 +122,8 @@
 
         {# Formulaire d'avis envoye vers la page Mes commandes. #}
         <form class="customer-review-card customer-review-card--modal" method="post" action="{{ path('customer_orders') }}">
+            {# Token CSRF : protege l envoi d un avis client. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
             <h3 id="review-modal-title">Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
 
             {# Identifiant de commande rempli par JavaScript au clic sur Laisser un avis. #}

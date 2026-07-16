@@ -26,6 +26,8 @@
         <div class="employee-hours-layout">
             {# Formulaire de sauvegarde des horaires de la semaine. #}
             <form method="post" class="employee-schedule-card" data-hours-form>
+                {# Token CSRF : protege l enregistrement des horaires. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                 {# Champ cache indiquant au controleur que l'action concerne les horaires. #}
                 <input type="hidden" name="action" value="save_hours">
 
@@ -79,6 +81,8 @@
 
                     {# Formulaire pour ajouter une fermeture exceptionnelle. #}
                     <form method="post" class="employee-closure-form">
+                        {# Token CSRF : protege l ajout d une fermeture exceptionnelle. #}
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                         {# Champ cache indiquant au controleur que l'action ajoute une fermeture. #}
                         <input type="hidden" name="action" value="add_closure">
 
@@ -108,6 +112,8 @@
 
                                 {# Formulaire de suppression d'une fermeture. #}
                                 <form method="post" action="{{ path('employee_closure_delete', { id: closure.fermeture_id }) }}">
+                                    {# Token CSRF : protege la suppression d une fermeture exceptionnelle. #}
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                     <button type="submit" class="employee-icon-button" aria-label="Supprimer cette fermeture">Suppr.</button>
                                 </form>
                             </article>

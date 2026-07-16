@@ -40,7 +40,7 @@
     {# Contenu textuel et actions de la carte. #}
     <div class="menucard-content">
         {# Nom du menu. #}
-        <h2 class="menucard-title">{{ menu.nom_menu }}</h2>
+        <h3 class="menucard-title">{{ menu.nom_menu }}</h3>
 
         {# Description courte du menu. #}
         <p class="menucard-description">{{ menu.description }}</p>
@@ -63,6 +63,7 @@
                 class="buttonprimary menucard-cart-button"
                 data-add-to-cart
                 data-cart-url="{{ path('cart_add', { id: menu.menu_id }) }}"
+                data-cart-token="{{ csrf_token('cart_action') }}"
             >
                 Ajouter au panier
             </button>

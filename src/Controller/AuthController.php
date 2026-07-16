@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,13 @@ class AuthController extends AbstractController
     public function login(Request $request, Connection $connection): Response
     {
         if ($request->isMethod('POST')) {
+            // Token CSRF : confirme que la connexion vient bien du formulaire du site.
+            if (!$this->isValidAuthCsrf($request)) {
+                $this->addFlash('error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('login');
+            }
+
             $email = trim((string) $request->request->get('email'));
             $password = (string) $request->request->get('password');
 
@@ -75,6 +83,13 @@ class AuthController extends AbstractController
     public function register(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
+            // Token CSRF : protege la creation de compte contre les envois non voulus.
+            if (!$this->isValidAuthCsrf($request)) {
+                $this->addFlash('register_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->render('auth/register.html.twig', ['formData' => []]);
+            }
+
             $data = [
                 'prenom' => trim((string) $request->request->get('prenom')),
                 'nom' => trim((string) $request->request->get('nom')),
@@ -98,6 +113,27 @@ class AuthController extends AbstractController
 
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
                 $this->addFlash('register_error', 'Veuillez renseigner une adresse email valide.');
+
+                return $this->render('auth/register.html.twig', ['formData' => $data]);
+            }
+
+            // Verifie le telephone cote serveur, meme si le formulaire HTML a deja des contraintes.
+            if (!InputValidator::isValidPhone($data['telephone'])) {
+                $this->addFlash('register_error', 'Veuillez renseigner un numero de telephone valide.');
+
+                return $this->render('auth/register.html.twig', ['formData' => $data]);
+            }
+
+            // Verifie que le code postal est bien au format francais attendu.
+            if (!InputValidator::isValidPostalCode($data['code_postal'])) {
+                $this->addFlash('register_error', 'Veuillez renseigner un code postal valide a 5 chiffres.');
+
+                return $this->render('auth/register.html.twig', ['formData' => $data]);
+            }
+
+            // Limite la taille des donnees envoyees avant insertion dans la table utilisateurs.
+            if (!$this->hasValidRegistrationLengths($data)) {
+                $this->addFlash('register_error', 'Certaines informations sont trop longues.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
@@ -175,6 +211,13 @@ class AuthController extends AbstractController
     public function forgotPassword(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
+            // Token CSRF : protege la demande de reinitialisation de mot de passe.
+            if (!$this->isValidAuthCsrf($request)) {
+                $this->addFlash('forgot_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('forgot_password');
+            }
+
             $email = trim((string) $request->request->get('email'));
 
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -238,6 +281,13 @@ class AuthController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Token CSRF : protege l enregistrement du nouveau mot de passe.
+            if (!$this->isValidAuthCsrf($request)) {
+                $this->addFlash('reset_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('reset_password', ['token' => $token]);
+            }
+
             $password = (string) $request->request->get('password');
             $passwordConfirm = (string) $request->request->get('password_confirm');
 
@@ -274,6 +324,12 @@ class AuthController extends AbstractController
         return $this->render('auth/reset_password.html.twig', [
             'token' => $token,
         ]);
+    }
+
+    // Verifie le token CSRF commun aux formulaires d authentification.
+    private function isValidAuthCsrf(Request $request): bool
+    {
+        return $this->isCsrfTokenValid('auth_action', (string) $request->request->get('_csrf_token'));
     }
 
     // Verifie que le mot de passe saisi correspond au mot de passe stocke.
@@ -372,6 +428,21 @@ class AuthController extends AbstractController
             && preg_match('/[a-z]/', $password)
             && preg_match('/\d/', $password)
             && preg_match('/[^A-Za-z0-9]/', $password);
+    }
+
+    /**
+     * @param array<string, string> $data
+     */
+    // Regroupe les limites de longueur du formulaire d inscription.
+    private function hasValidRegistrationLengths(array $data): bool
+    {
+        return InputValidator::hasMaxLength($data['prenom'] ?? '', 100)
+            && InputValidator::hasMaxLength($data['nom'] ?? '', 100)
+            && InputValidator::hasMaxLength($data['email'] ?? '', 255)
+            && InputValidator::hasMaxLength($data['telephone'] ?? '', 20)
+            && InputValidator::hasMaxLength($data['adresse_postale'] ?? '', 255)
+            && InputValidator::hasMaxLength($data['ville'] ?? '', 250)
+            && InputValidator::hasMaxLength($data['code_postal'] ?? '', 10);
     }
 
     // Cree la table de reinitialisation si elle n existe pas encore.

@@ -25,35 +25,47 @@
         {# Filtres JavaScript pour rechercher et trier les avis sans rechargement. #}
         <section class="employee-review-filters" data-review-filters>
             {# Recherche par client ou numero de commande. #}
-            <input type="search" name="search" placeholder="Rechercher par client ou num&eacute;ro de commande" data-review-search>
+            <label>
+                <span class="sr-only">Rechercher un avis par client ou num&eacute;ro de commande</span>
+                <input type="search" name="search" placeholder="Rechercher par client ou num&eacute;ro de commande" data-review-search>
+            </label>
 
             <div class="employee-review-filter-row">
                 {# Filtre par note. #}
-                <select name="note" data-review-note>
-                    <option value="">Note</option>
-                    {% for note in 1..5 %}
-                        <option value="{{ note }}">{{ note }}/5</option>
-                    {% endfor %}
-                </select>
+                <label>
+                    <span class="sr-only">Filtrer les avis par note</span>
+                    <select name="note" data-review-note>
+                        <option value="">Note</option>
+                        {% for note in 1..5 %}
+                            <option value="{{ note }}">{{ note }}/5</option>
+                        {% endfor %}
+                    </select>
+                </label>
 
                 {# Filtre par periode. #}
-                <select name="period" data-review-period>
-                    <option value="">P&eacute;riode</option>
-                    <option value="10days">10 derniers jours</option>
-                    <option value="previous_month">Mois pr&eacute;c&eacute;dent</option>
-                    <option value="6months">6 derniers mois</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="other">Autres</option>
-                </select>
+                <label>
+                    <span class="sr-only">Filtrer les avis par p&eacute;riode</span>
+                    <select name="period" data-review-period>
+                        <option value="">P&eacute;riode</option>
+                        <option value="10days">10 derniers jours</option>
+                        <option value="previous_month">Mois pr&eacute;c&eacute;dent</option>
+                        <option value="6months">6 derniers mois</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="other">Autres</option>
+                    </select>
+                </label>
 
                 {# Filtre par menu concerne. #}
-                <select name="menu" data-review-menu>
-                    <option value="">Menu</option>
-                    {% for menu in menus %}
-                        <option value="{{ menu.menu_id }}">{{ menu.nom_menu }}</option>
-                    {% endfor %}
-                </select>
+                <label>
+                    <span class="sr-only">Filtrer les avis par menu</span>
+                    <select name="menu" data-review-menu>
+                        <option value="">Menu</option>
+                        {% for menu in menus %}
+                            <option value="{{ menu.menu_id }}">{{ menu.nom_menu }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
             </div>
 
             {# Boutons pour appliquer ou reinitialiser les filtres. #}

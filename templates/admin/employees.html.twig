@@ -12,7 +12,7 @@
     } %}
 
     {# Conteneur principal de la page. L'attribut data sert au JavaScript des filtres et modales. #}
-    <main class="admin-employees-page" data-admin-employees-page>
+    <main class="admin-employees-page" data-admin-employees-page data-admin-csrf-token="{{ csrf_token('admin_employee_action') }}">
         {# Lien de retour vers le tableau de bord administrateur. #}
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
@@ -35,11 +35,13 @@
         <section class="admin-employees-filters" data-admin-employee-filters>
             {# Champ de recherche instantanée sur le nom, prénom, id, email, téléphone ou poste. #}
             <label class="admin-employee-filter admin-employee-filter--search">
+                <span class="sr-only">Rechercher un employ&eacute; par nom, pr&eacute;nom, identifiant, email ou poste</span>
                 <input type="search" placeholder="Rechercher un employ&eacute;" data-employee-search>
             </label>
 
             {# Filtre permettant d'afficher les employés actifs ou inactifs. #}
             <label class="admin-employee-filter">
+                <span class="sr-only">Filtrer les employ&eacute;s par statut</span>
                 <select data-employee-status>
                     <option value="">Statut</option>
                     <option value="1">Actif</option>
@@ -49,6 +51,7 @@
 
             {# Filtre permettant d'afficher les employés selon leur poste. #}
             <label class="admin-employee-filter">
+                <span class="sr-only">Filtrer les employ&eacute;s par poste</span>
                 <select data-employee-job>
                     <option value="">Tous les postes</option>
                     {% for job in jobs %}
@@ -85,7 +88,14 @@
                     >
                         {# Badge actif/inactif cliquable : il permet de désactiver ou réactiver un employé. #}
                         <form method="post" action="{{ path('admin_employee_toggle', { id: employee.id }) }}" data-employee-toggle-form>
-                            <button type="submit" class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}" data-employee-status-button>
+                            {# Token CSRF : protege l activation ou la desactivation d un employe. #}
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
+                            <button
+                                type="submit"
+                                class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}"
+                                data-employee-status-button
+                                aria-label="{{ isActive ? 'D&eacute;sactiver' : 'Activer' }} l'employ&eacute; {{ fullName }}"
+                            >
                                 {{ isActive ? 'Actif' : 'Inactif' }}
                             </button>
                         </form>
@@ -128,6 +138,7 @@
                         <button
                             type="button"
                             class="buttonedit"
+                            aria-label="Modifier les informations de l'employ&eacute; {{ fullName }}"
                             data-employee-edit
                             data-update-url="{{ path('admin_employee_update', { id: employee.id }) }}"
                             data-id="{{ employee.id }}"
@@ -149,6 +160,7 @@
                         <button
                             type="button"
                             class="buttondelete"
+                            aria-label="Supprimer l'employ&eacute; {{ fullName }}"
                             data-employee-delete
                             data-delete-url="{{ path('admin_employee_delete', { id: employee.id }) }}"
                         >
@@ -219,6 +231,8 @@
             <div class="admin-employee-modal__overlay" data-employee-modal-close></div>
 
             <form class="admin-employee-modal__dialog" method="post" data-employee-edit-form>
+                {# Token CSRF : protege la modification d une fiche employe. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
                 {# En-tête de la fenêtre de modification. #}
                 <div class="admin-employee-modal__header">
                     <h2>Modifier l'employ&eacute;</h2>
@@ -291,8 +305,8 @@
 
                 {# Boutons de validation ou d'annulation de la modification. #}
                 <div class="admin-employee-modal__actions">
-                    <button type="submit" class="buttonprimary">Valider</button>
-                    <button type="button" class="buttonoffwhite" data-employee-modal-close>Annuler</button>
+                    <button type="submit" class="buttonprimary" aria-label="Valider les modifications de l'employ&eacute;">Valider</button>
+                    <button type="button" class="buttonoffwhite" aria-label="Annuler la modification de l'employ&eacute;" data-employee-modal-close>Annuler</button>
                 </div>
             </form>
         </div>
@@ -314,8 +328,8 @@
 
                 {# Actions de la fenêtre : confirmer la suppression ou annuler. #}
                 <div class="admin-employee-modal__actions">
-                    <button type="button" class="buttonoffwhite" data-delete-confirm>Supprimer</button>
-                    <button type="button" class="buttonprimary" data-delete-modal-close>Annuler</button>
+                    <button type="button" class="buttonoffwhite" aria-label="Confirmer la suppression de l'employ&eacute;" data-delete-confirm>Supprimer</button>
+                    <button type="button" class="buttonprimary" aria-label="Annuler la suppression de l'employ&eacute;" data-delete-modal-close>Annuler</button>
                 </div>
             </section>
         </div>

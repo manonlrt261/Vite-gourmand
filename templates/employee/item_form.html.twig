@@ -23,6 +23,8 @@
 
         {# Formulaire d'ajout ou modification d'un menu, entree, plat ou dessert. #}
         <form method="post" class="employee-edit-form">
+            {# Token CSRF : protege la creation ou la modification d un menu, plat, entree ou dessert. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
             {# Champs specifiques aux menus complets. #}
             {% if isMenu %}
                 {# Nom public du menu. #}

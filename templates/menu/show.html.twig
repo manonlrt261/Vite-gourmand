@@ -91,9 +91,12 @@
                 {% endif %}
             </section>
 
-            {# Bouton qui ajoute le menu au panier et lance le parcours de commande. #}
+            {# Formulaire POST protege par CSRF : le bouton Commander ajoute le menu au panier sans passer par une action sensible en simple lien GET. #}
             <section class="menu-detail-order">
-                <a href="{{ path('cart_show', { id: menu.menu_id }) }}" class="buttonprimary menu-detail-order__button">Commander</a>
+                <form action="{{ path('cart_add', { id: menu.menu_id }) }}" method="post">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
+                    <button type="submit" class="buttonprimary menu-detail-order__button">Commander</button>
+                </form>
                 <p>Connectez-vous pour pouvoir commander ce menu</p>
             </section>
         </aside>

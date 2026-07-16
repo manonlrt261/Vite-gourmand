@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\MongoStatsService;
+use App\Validator\InputValidator;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
@@ -34,24 +35,42 @@ class CartController extends AbstractController
         return $this->renderCart($request, $connection);
     }
 
-    // Affiche le panier apres l ajout ou la consultation d un menu.
-    public function show(int $id, Request $request, Connection $connection): Response
+    // Ancienne route conservee pour compatibilite : elle ne modifie plus le panier en GET.
+    public function show(int $id): Response
     {
-        if (!$this->addMenuToCart($id, $request, $connection)) {
-            throw $this->createNotFoundException('Menu introuvable.');
-        }
-
         return $this->redirectToRoute('cart_index');
     }
 
     // Ajoute un menu au panier depuis une action rapide.
     public function add(int $id, Request $request, Connection $connection): Response
     {
+        // Protection CSRF de l ajout rapide au panier depuis les cartes menus.
+        if (!$this->isValidCartCsrf($request)) {
+            if (!$request->isXmlHttpRequest()) {
+                $this->addFlash('cart_error', 'Le formulaire d ajout au panier a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('menu_show', ['id' => $id]);
+            }
+
+            return $this->json([
+                'success' => false,
+                'message' => 'Formulaire d ajout au panier invalide.',
+            ], 403);
+        }
+
         if (!$this->addMenuToCart($id, $request, $connection)) {
+            if (!$request->isXmlHttpRequest()) {
+                throw $this->createNotFoundException('Menu introuvable.');
+            }
+
             return $this->json([
                 'success' => false,
                 'message' => 'Ce menu est introuvable ou indisponible.',
             ], 404);
+        }
+
+        if (!$request->isXmlHttpRequest()) {
+            return $this->redirectToRoute('cart_index');
         }
 
         return $this->json([
@@ -64,6 +83,13 @@ class CartController extends AbstractController
     // Met a jour le panier et renvoie le nouveau recapitulatif.
     public function update(Request $request, Connection $connection): Response
     {
+        // Le token CSRF confirme que la demande vient bien du formulaire du site.
+        if (!$this->isValidCartCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire de panier invalide.'], 403)
+                : $this->redirectToRoute('cart_index');
+        }
+
         $cartItems = $this->getCartItems($request);
         $quantities = $request->request->all('quantities');
 
@@ -107,6 +133,13 @@ class CartController extends AbstractController
     // Supprime un menu du panier.
     public function remove(int $id, Request $request, Connection $connection): Response
     {
+        // Protection CSRF : evite qu un autre site supprime un menu du panier a la place du client.
+        if (!$this->isValidCartCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire de suppression invalide.'], 403)
+                : $this->redirectToRoute('cart_index');
+        }
+
         $cartItems = $this->getCartItems($request);
         unset($cartItems[$id]);
         $this->saveCartItems($request, $cartItems);
@@ -135,6 +168,13 @@ class CartController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('cart_index')]);
         }
 
+        // La validation finale de commande est sensible : elle doit venir du vrai formulaire panier.
+        if (!$this->isValidCartCsrf($request)) {
+            $this->addFlash('cart_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('cart_index');
+        }
+
         $checkoutData = [];
         foreach (self::REQUIRED_CHECKOUT_FIELDS as $field) {
             $checkoutData[$field] = trim((string) $request->request->get($field));
@@ -150,6 +190,14 @@ class CartController extends AbstractController
 
         if (!filter_var($checkoutData['email'], FILTER_VALIDATE_EMAIL)) {
             $this->addFlash('cart_error', 'Veuillez renseigner une adresse email valide.');
+
+            return $this->redirectToRoute('cart_index');
+        }
+
+        // Controle les informations de commande cote serveur avant creation en base.
+        $checkoutError = $this->validateCheckoutData($checkoutData);
+        if ($checkoutError !== null) {
+            $this->addFlash('cart_error', $checkoutError);
 
             return $this->redirectToRoute('cart_index');
         }
@@ -363,6 +411,47 @@ class CartController extends AbstractController
     }
 
     /**
+     * @param array<string, string> $checkoutData
+     */
+    // Verifie les formats, les dates et les longueurs du formulaire panier.
+    private function validateCheckoutData(array $checkoutData): ?string
+    {
+        if (!InputValidator::isValidPhone($checkoutData['telephone'] ?? '')) {
+            return 'Veuillez renseigner un numero de telephone valide.';
+        }
+
+        if (!InputValidator::isValidPostalCode($checkoutData['code_postal_livraison'] ?? '')) {
+            return 'Veuillez renseigner un code postal de livraison valide a 5 chiffres.';
+        }
+
+        if (!InputValidator::isFutureOrTodayDate($checkoutData['date_prestation'] ?? '')) {
+            return 'La date de prestation doit etre valide et ne peut pas etre dans le passe.';
+        }
+
+        if (!InputValidator::isValidTime($checkoutData['heure_livraison'] ?? '')) {
+            return 'Veuillez renseigner une heure de livraison valide.';
+        }
+
+        $lengths = [
+            'nom' => 100,
+            'prenom' => 100,
+            'email' => 255,
+            'telephone' => 20,
+            'adresse_livraison' => 255,
+            'code_postal_livraison' => 10,
+            'ville_livraison' => 100,
+        ];
+
+        foreach ($lengths as $field => $maxLength) {
+            if (!InputValidator::hasMaxLength($checkoutData[$field] ?? '', $maxLength)) {
+                return 'Certaines informations de commande sont trop longues.';
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array<string, array<string, mixed>|false>
      */
     // Recupere l entree, le plat et le dessert associes a un menu commande.
@@ -550,6 +639,12 @@ class CartController extends AbstractController
             'isConnected' => $isConnected,
             'customer' => $customer,
         ]);
+    }
+
+    // Verifie le token CSRF commun aux actions sensibles du panier.
+    private function isValidCartCsrf(Request $request): bool
+    {
+        return $this->isCsrfTokenValid('cart_action', (string) $request->request->get('_csrf_token'));
     }
 
     // Renvoie le resume du panier en JSON pour les actions sans rechargement.

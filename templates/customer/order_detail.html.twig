@@ -7,7 +7,7 @@
 {# Bandeau principal reutilisable avec le titre de la page. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'DÃ©tails des commandes',
-    image_alt: 'DÃ©tail de commande Vite et Gourmand'
+    image_alt: 'D&eacute;tail de commande Vite et Gourmand'
 } %}
 
 {# Calculs utiles pour afficher le recapitulatif financier de la commande. #}
@@ -74,6 +74,8 @@
 
             {# Formulaire de modification des informations de livraison et du nombre de personnes. #}
             <form method="post" action="{{ path('customer_order_update', { id: order.commande_id }) }}" class="customer-order-edit-form">
+                {# Token CSRF : protege la modification des informations de livraison. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <div class="customer-order-edit-grid">
                     <label>
                         <span>Jour de livraison</span>
@@ -112,6 +114,8 @@
 
             {# Formulaire permettant d'ajouter un autre menu a la commande. #}
             <form method="post" action="{{ path('customer_order_add_menu', { id: order.commande_id }) }}" class="customer-order-edit-form">
+                {# Token CSRF : protege l ajout d un menu a la commande. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <h3>Ajouter un menu</h3>
                 <div class="customer-order-edit-grid customer-order-edit-grid--two">
                     <label>
@@ -142,6 +146,8 @@
                     <p>Cette action annule uniquement cette ligne de commande.</p>
                 </div>
                 <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce menu de votre commande ?');">
+                    {# Token CSRF : protege l annulation de la commande. #}
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                     <button type="submit" class="buttonoffwhite">Supprimer ce menu</button>
                 </form>
             </div>
@@ -263,6 +269,8 @@
         {% else %}
             {# Formulaire d'avis pour une commande terminee sans avis existant. #}
             <form class="customer-review-card order-detail-review-card" method="post" action="{{ path('customer_order_detail', { id: order.commande_id }) }}">
+                {# Token CSRF : protege l avis envoye depuis le detail de commande. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <h3>Comment Ã©valueriez-vous votre expÃ©rience ?</h3>
                 <input type="hidden" name="commande_id" value="{{ order.commande_id }}">
 

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,6 +34,7 @@ class EmployeeController extends AbstractController
         }
 
         $this->ensureOrderStatuses($connection);
+        $this->ensureOrderContactColumns($connection);
         $this->completeDeliveredOrders($connection, $mailer);
 
         return $this->render('employee/orders.html.twig', [
@@ -45,6 +47,11 @@ class EmployeeController extends AbstractController
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->json(['success' => false], 403);
+        }
+
+        // Changer un statut de commande modifie la base : le token CSRF est obligatoire.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
         }
 
         $this->ensureOrderStatuses($connection);
@@ -108,6 +115,141 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    public function updateOrder(int $id, Request $request, Connection $connection): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : la modification employe d une commande est une action sensible.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $this->ensureOrderStatuses($connection);
+        $this->ensureOrderContactColumns($connection);
+
+        $order = $this->getEmployeeEditableOrder($connection, $id);
+        if (!$order) {
+            $this->addFlash('employee_error', 'Cette commande ne peut plus etre modifiee.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $datePrestation = trim((string) $request->request->get('date_prestation'));
+        $heureLivraison = trim((string) $request->request->get('heure_de_livraison'));
+        $adresse = trim((string) $request->request->get('adresse_livraison'));
+        $codePostal = trim((string) $request->request->get('code_postal_livraison'));
+        $ville = trim((string) $request->request->get('ville_livraison'));
+        $nombrePersonnes = max(1, (int) $request->request->get('nombre_personnes'));
+        $contactError = $this->validateEmployeeContactFields($request);
+
+        if (
+            $contactError !== null
+            || !InputValidator::isFutureOrTodayDate($datePrestation)
+            || !InputValidator::isValidTime($heureLivraison)
+            || !InputValidator::isValidPostalCode($codePostal)
+            || !InputValidator::hasMaxLength($adresse, 255)
+            || !InputValidator::hasMaxLength($ville, 100)
+        ) {
+            $this->addFlash('employee_error', $contactError ?? 'Les informations de commande sont invalides.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $minimum = (int) ($order['personnes_minimum'] ?? 1);
+        if ($nombrePersonnes < $minimum) {
+            $this->addFlash('employee_error', 'Le nombre de personnes ne peut pas etre inferieur au minimum du menu.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $lineTotal = (float) $order['prix_par_personne'] * $nombrePersonnes;
+        $discount = $nombrePersonnes >= $minimum + 5 ? $lineTotal * 0.10 : 0;
+        $priceMenu = $lineTotal - $discount;
+        $deliveryPrice = (float) ($order['prix_livraison'] ?? 0);
+        $contactAt = $this->buildContactDateTime($request);
+
+        $connection->update('commandes', [
+            'date_prestation' => $datePrestation,
+            'heure_de_livraison' => $heureLivraison,
+            'adresse_livraison' => $adresse,
+            'code_postal_livraison' => $codePostal,
+            'ville_livraison' => $ville,
+            'nombre_personnes' => $nombrePersonnes,
+            'prix_menu' => $priceMenu,
+            'prix_total' => $priceMenu + $deliveryPrice,
+            'contact_methode_client' => trim((string) $request->request->get('contact_methode_client')),
+            'contact_client_at' => $contactAt,
+            'contact_message_client' => trim((string) $request->request->get('contact_message_client')),
+            'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ], [
+            'commande_id' => $id,
+        ]);
+
+        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiee par un employe apres contact client.');
+        $this->addFlash('employee_success', 'La commande a ete modifiee.');
+
+        return $this->redirectToRoute('employee_orders');
+    }
+
+    public function cancelOrder(int $id, Request $request, Connection $connection): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : l annulation d une commande doit venir du formulaire employe.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $this->ensureOrderStatuses($connection);
+        $this->ensureOrderContactColumns($connection);
+
+        $order = $this->getEmployeeEditableOrder($connection, $id);
+        if (!$order) {
+            $this->addFlash('employee_error', 'Cette commande ne peut plus etre annulee par un employe.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $contactError = $this->validateEmployeeContactFields($request);
+        if ($contactError !== null) {
+            $this->addFlash('employee_error', $contactError);
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $cancelStatusId = (int) $connection->fetchOne('SELECT statut_id FROM statuts_commande WHERE code = ? LIMIT 1', ['annulee']);
+        if ($cancelStatusId === 0) {
+            $this->addFlash('employee_error', 'Le statut annulee est introuvable.');
+
+            return $this->redirectToRoute('employee_orders');
+        }
+
+        $reason = trim((string) $request->request->get('contact_message_client'));
+        $connection->update('commandes', [
+            'statut_id' => $cancelStatusId,
+            'motif_annulation' => $reason,
+            'contact_methode_client' => trim((string) $request->request->get('contact_methode_client')),
+            'contact_client_at' => $this->buildContactDateTime($request),
+            'contact_message_client' => $reason,
+            'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ], [
+            'commande_id' => $id,
+        ]);
+
+        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par un employe apres contact client : ' . $reason);
+        $this->addFlash('employee_success', 'La commande a ete annulee.');
+
+        return $this->redirectToRoute('employee_orders');
+    }
+
     public function menus(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -143,7 +285,24 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $connection->insert('menus', $this->getMenuPayload($request));
+            // Protection CSRF du formulaire de creation d un menu.
+            if (!$this->isValidEmployeeCsrf($request)) {
+                $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', null, true, $connection));
+            }
+
+            $payload = $this->getMenuPayload($request);
+            // Controle le menu avant insertion : theme, dates, prix, stock et longueurs.
+            $error = $this->validateItemPayload('menu', $payload);
+
+            if ($error !== null) {
+                $this->addFlash('employee_error', $error);
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', $payload, true, $connection));
+            }
+
+            $connection->insert('menus', $payload);
 
             return $this->redirectToRoute('employee_items_all');
         }
@@ -163,7 +322,23 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Protection CSRF du formulaire de creation d une entree, d un plat ou d un dessert.
+            if (!$this->isValidEmployeeCsrf($request)) {
+                $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, null, true, $connection));
+            }
+
             $payload = $this->getMealPayload($request);
+            // Controle l entree, le plat ou le dessert avant insertion en base.
+            $error = $this->validateItemPayload($type, $payload);
+
+            if ($error !== null) {
+                $this->addFlash('employee_error', $error);
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, $payload, true, $connection));
+            }
+
             $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
             $connection->insert($config['table'], $payload);
 
@@ -194,7 +369,23 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Protection CSRF du formulaire de modification d un menu ou d un element de repas.
+            if (!$this->isValidEmployeeCsrf($request)) {
+                $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, $item, false, $connection));
+            }
+
             $payload = $type === 'menu' ? $this->getMenuPayload($request) : $this->getMealPayload($request);
+            // Applique les memes regles de securite lors de la modification d un element.
+            $error = $this->validateItemPayload($type, $payload);
+
+            if ($error !== null) {
+                $this->addFlash('employee_error', $error);
+
+                return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, $payload, false, $connection));
+            }
+
             if ($type !== 'menu') {
                 $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
             }
@@ -214,6 +405,13 @@ class EmployeeController extends AbstractController
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Protection CSRF : empeche l activation/desactivation d un element par une requete externe.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
+                : $this->redirectToRoute('employee_menus');
         }
 
         $config = $this->getItemConfig($type);
@@ -275,6 +473,13 @@ class EmployeeController extends AbstractController
             return $this->redirectToEmployeeLogin($request);
         }
 
+        // Protection CSRF : une suppression doit venir de la fenetre de confirmation du site.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
+                : $this->redirectToRoute('employee_menus');
+        }
+
         $config = $this->getItemConfig($type);
         if (!$config) {
             throw $this->createNotFoundException('Element introuvable.');
@@ -298,15 +503,22 @@ class EmployeeController extends AbstractController
         $this->ensureScheduleTables($connection);
 
         if ($request->isMethod('POST')) {
+            // Protection CSRF des actions de gestion des horaires et fermetures.
+            if (!$this->isValidEmployeeCsrf($request)) {
+                $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+                return $this->redirectToRoute('employee_hours');
+            }
+
             $action = (string) $request->request->get('action');
 
             if ($action === 'save_hours') {
                 $this->saveWeeklyHours($request, $connection);
             }
 
-            if ($action === 'add_closure') {
-                $this->addExceptionalClosure($request, $connection);
-            }
+        if ($action === 'add_closure') {
+            $this->addExceptionalClosure($request, $connection);
+        }
 
             return $this->redirectToRoute('employee_hours');
         }
@@ -324,6 +536,13 @@ class EmployeeController extends AbstractController
         }
 
         $this->ensureScheduleTables($connection);
+        // Protection CSRF avant suppression d une fermeture exceptionnelle.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('employee_hours');
+        }
+
         $connection->delete('fermetures_exceptionnelles', ['fermeture_id' => $id]);
 
         return $this->redirectToRoute('employee_hours');
@@ -362,6 +581,13 @@ class EmployeeController extends AbstractController
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Protection CSRF des actions d acceptation, refus ou remise en attente d un avis.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
+                : $this->redirectToRoute('employee_dashboard');
         }
 
         $action = (string) $request->request->get('action');
@@ -424,6 +650,405 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_dashboard');
     }
 
+    public function messages(Request $request, Connection $connection): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        $this->ensureContactMessageColumns($connection);
+        $tab = $this->normalizeMessageTab((string) $request->query->get('tab', 'active'));
+
+        return $this->render('employee/messages.html.twig', [
+            'messages' => $this->getContactMessages($connection, $tab),
+            'counts' => $this->getContactMessageCounts($connection),
+            'currentTab' => $tab,
+            'materialOrders' => $this->getMaterialReturnOrders($connection),
+        ]);
+    }
+
+    public function sendMaterialReturnEmail(Request $request, Connection $connection, MailerInterface $mailer): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : protege l envoi manuel d un email de retour materiel.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('employee_messages');
+        }
+
+        $orderId = (int) $request->request->get('commande_id');
+        $returnDate = trim((string) $request->request->get('date_retour'));
+        $material = trim((string) $request->request->get('materiel'));
+        $instructions = trim((string) $request->request->get('instructions'));
+
+        if ($orderId <= 0 || !InputValidator::isFutureOrTodayDate($returnDate) || $material === '' || !InputValidator::hasMaxLength($material, 1000) || !InputValidator::hasMaxLength($instructions, 2000)) {
+            $this->addFlash('message_error', 'Les informations de retour materiel sont invalides.');
+
+            return $this->redirectToRoute('employee_messages');
+        }
+
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, u.email, u.prenom, u.nom, m.nom_menu
+             FROM commandes c
+             LEFT JOIN utilisateurs u ON u.id = c.utilisateur_id
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             WHERE c.commande_id = ?',
+            [$orderId]
+        );
+
+        if (!$order || !filter_var((string) ($order['email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+            $this->addFlash('message_error', 'La commande ou l email client est introuvable.');
+
+            return $this->redirectToRoute('employee_messages');
+        }
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $firstName = htmlspecialchars((string) ($order['prenom'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $menuName = htmlspecialchars((string) ($order['nom_menu'] ?? 'votre menu'), ENT_QUOTES, 'UTF-8');
+
+        try {
+            $mailer->send((new Email())
+                ->from($from)
+                ->to((string) $order['email'])
+                ->subject('Retour du materiel - Vite & Gourmand')
+                ->html(sprintf(
+                    '<h1>Demande de retour de materiel</h1>
+                    <p>Bonjour %s,</p>
+                    <p>Nous vous contactons au sujet de votre commande n&deg;%d, correspondant au menu <strong>%s</strong>.</p>
+                    <p><strong>Materiel a retourner :</strong><br>%s</p>
+                    <p><strong>Date limite de retour :</strong> %s</p>
+                    %s
+                    <p>Merci pour votre retour et votre confiance.</p>
+                    <p>L equipe Vite & Gourmand</p>',
+                    $firstName,
+                    (int) $order['commande_id'],
+                    $menuName,
+                    nl2br(htmlspecialchars($material, ENT_QUOTES, 'UTF-8')),
+                    (new \DateTimeImmutable($returnDate))->format('d/m/Y'),
+                    $instructions !== '' ? '<p><strong>Informations complementaires :</strong><br>' . nl2br(htmlspecialchars($instructions, ENT_QUOTES, 'UTF-8')) . '</p>' : ''
+                )));
+
+            $this->addFlash('message_success', 'La demande de retour materiel a ete envoyee.');
+        } catch (\Throwable) {
+            $this->addFlash('message_error', 'Impossible d envoyer l email pour le moment.');
+        }
+
+        return $this->redirectToRoute('employee_messages');
+    }
+
+    public function replyContactMessage(int $id, Request $request, Connection $connection, MailerInterface $mailer): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : protege la reponse envoyee au client depuis la messagerie.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToMessageTab($request);
+        }
+
+        $this->ensureContactMessageColumns($connection);
+        $reply = trim((string) $request->request->get('reponse'));
+        if ($reply === '' || !InputValidator::hasMaxLength($reply, 5000)) {
+            $this->addFlash('message_error', 'La reponse est obligatoire et ne doit pas etre trop longue.');
+
+            return $this->redirectToMessageTab($request);
+        }
+
+        $message = $this->getContactMessage($connection, $id);
+        if (!$message || !filter_var((string) $message['email'], FILTER_VALIDATE_EMAIL)) {
+            $this->addFlash('message_error', 'Le message client est introuvable.');
+
+            return $this->redirectToMessageTab($request);
+        }
+
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $employeeId = $this->getConnectedEmployeeId($request);
+
+        $connection->update('contact', [
+            'reponse' => $reply,
+            'responded_at' => $now,
+            'respondent_id' => $employeeId > 0 ? $employeeId : null,
+            'statut' => 'repondu',
+            'updated_at' => $now,
+        ], [
+            'contact_id' => $id,
+        ]);
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        try {
+            $mailer->send((new Email())
+                ->from($from)
+                ->to((string) $message['email'])
+                ->subject('Reponse a votre demande - Vite & Gourmand')
+                ->html(sprintf(
+                    '<h1>Reponse a votre demande</h1>
+                    <p>Bonjour,</p>
+                    <p>Vous nous avez contacte au sujet de : <strong>%s</strong>.</p>
+                    <p>%s</p>
+                    <p>L equipe Vite & Gourmand</p>',
+                    htmlspecialchars((string) $message['titre'], ENT_QUOTES, 'UTF-8'),
+                    nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'))
+                )));
+        } catch (\Throwable) {
+            // La reponse reste enregistree dans la messagerie meme si l email ne part pas.
+        }
+
+        $this->addFlash('message_success', 'La reponse a ete enregistree et envoyee au client.');
+
+        return $this->redirectToRoute('employee_messages', ['tab' => 'replied']);
+    }
+
+    public function archiveContactMessage(int $id, Request $request, Connection $connection): Response
+    {
+        return $this->changeContactMessageStatus($id, $request, $connection, 'archive', 'Message archive.');
+    }
+
+    public function unarchiveContactMessage(int $id, Request $request, Connection $connection): Response
+    {
+        return $this->changeContactMessageStatus($id, $request, $connection, 'nouveau', 'Message deplace dans les messages recus.');
+    }
+
+    public function restoreContactMessage(int $id, Request $request, Connection $connection): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : protege la restauration d un message supprime.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('employee_messages', ['tab' => 'deleted']);
+        }
+
+        $this->ensureContactMessageColumns($connection);
+        $message = $this->getContactMessage($connection, $id);
+        if (!$message) {
+            $this->addFlash('message_error', 'Message introuvable.');
+
+            return $this->redirectToRoute('employee_messages', ['tab' => 'deleted']);
+        }
+
+        $status = !empty($message['reponse']) ? 'repondu' : 'nouveau';
+        $connection->update('contact', [
+            'statut' => $status,
+            'deleted_at' => null,
+            'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ], [
+            'contact_id' => $id,
+        ]);
+
+        $this->addFlash('message_success', 'Le message a ete restaure.');
+
+        return $this->redirectToRoute('employee_messages', ['tab' => $status === 'repondu' ? 'replied' : 'active']);
+    }
+
+    public function deleteContactMessage(int $id, Request $request, Connection $connection): Response
+    {
+        return $this->changeContactMessageStatus($id, $request, $connection, 'supprime', 'Message supprime recemment.');
+    }
+
+    private function changeContactMessageStatus(int $id, Request $request, Connection $connection, string $status, string $successMessage): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        // Token CSRF : protege les actions de classement ou suppression des messages.
+        if (!$this->isValidEmployeeCsrf($request)) {
+            $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToMessageTab($request);
+        }
+
+        $this->ensureContactMessageColumns($connection);
+        $message = $this->getContactMessage($connection, $id);
+        if (!$message) {
+            $this->addFlash('message_error', 'Message introuvable.');
+
+            return $this->redirectToMessageTab($request);
+        }
+
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $payload = [
+            'statut' => $status,
+            'updated_at' => $now,
+        ];
+
+        if ($status === 'archive') {
+            $payload['archived_at'] = $now;
+            $payload['deleted_at'] = null;
+        } elseif ($status === 'supprime') {
+            $payload['deleted_at'] = $now;
+        } elseif ($status === 'nouveau') {
+            $payload['archived_at'] = null;
+            $payload['deleted_at'] = null;
+        }
+
+        $connection->update('contact', $payload, ['contact_id' => $id]);
+        $this->addFlash('message_success', $successMessage);
+
+        return match ($status) {
+            'archive' => $this->redirectToRoute('employee_messages', ['tab' => 'archived']),
+            'supprime' => $this->redirectToRoute('employee_messages', ['tab' => 'deleted']),
+            default => $this->redirectToRoute('employee_messages'),
+        };
+    }
+
+    private function redirectToMessageTab(Request $request): Response
+    {
+        $tab = $this->normalizeMessageTab((string) $request->request->get('tab', 'active'));
+
+        return $this->redirectToRoute('employee_messages', $tab === 'active' ? [] : ['tab' => $tab]);
+    }
+
+    private function normalizeMessageTab(string $tab): string
+    {
+        return in_array($tab, ['active', 'archived', 'deleted', 'replied'], true) ? $tab : 'active';
+    }
+
+    private function getConnectedEmployeeId(Request $request): int
+    {
+        $user = $request->getSession()->get('utilisateur');
+
+        return is_array($user) ? (int) ($user['id'] ?? 0) : 0;
+    }
+
+    private function getEmployeeEditableOrder(Connection $connection, int $id): array|false
+    {
+        return $connection->fetchAssociative(
+            'SELECT c.commande_id, c.statut_id, c.prix_livraison,
+                    m.prix_par_personne, m.personnes_minimum,
+                    COALESCE(sc.code, "en_attente") AS statut_code
+             FROM commandes c
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+             WHERE c.commande_id = ?
+               AND COALESCE(sc.code, "en_attente") = "en_attente"',
+            [$id]
+        );
+    }
+
+    private function validateEmployeeContactFields(Request $request): ?string
+    {
+        $method = trim((string) $request->request->get('contact_methode_client'));
+        $date = trim((string) $request->request->get('contact_date_client'));
+        $time = trim((string) $request->request->get('contact_heure_client'));
+        $message = trim((string) $request->request->get('contact_message_client'));
+
+        if (!in_array($method, ['telephone', 'email', 'sms'], true)) {
+            return 'La methode de contact client est obligatoire.';
+        }
+
+        if (!InputValidator::isValidDate($date) || !InputValidator::isValidTime($time)) {
+            return 'La date et l heure du contact client sont obligatoires.';
+        }
+
+        if ($message === '' || !InputValidator::hasMaxLength($message, 2000)) {
+            return 'Le message de contact client est obligatoire et ne doit pas etre trop long.';
+        }
+
+        return null;
+    }
+
+    private function buildContactDateTime(Request $request): string
+    {
+        $date = trim((string) $request->request->get('contact_date_client'));
+        $time = trim((string) $request->request->get('contact_heure_client'));
+
+        return (new \DateTimeImmutable($date . ' ' . $time))->format('Y-m-d H:i:s');
+    }
+
+    private function ensureOrderContactColumns(Connection $connection): void
+    {
+        $columns = [
+            'contact_methode_client VARCHAR(50) DEFAULT NULL',
+            'contact_client_at DATETIME DEFAULT NULL',
+            'contact_message_client TEXT DEFAULT NULL',
+        ];
+
+        foreach ($columns as $definition) {
+            try {
+                // Ces colonnes gardent la trace du contact client avant modification ou annulation.
+                $connection->executeStatement('ALTER TABLE commandes ADD COLUMN ' . $definition);
+            } catch (\Throwable) {
+            }
+        }
+    }
+
+    private function ensureContactMessageColumns(Connection $connection): void
+    {
+        $columns = [
+            'reponse TEXT DEFAULT NULL',
+            'responded_at DATETIME DEFAULT NULL',
+            'respondent_id INT DEFAULT NULL',
+            'archived_at DATETIME DEFAULT NULL',
+            'deleted_at DATETIME DEFAULT NULL',
+        ];
+
+        foreach ($columns as $definition) {
+            try {
+                // Ces colonnes permettent de suivre les reponses, archives et suppressions de la messagerie.
+                $connection->executeStatement('ALTER TABLE contact ADD COLUMN ' . $definition);
+            } catch (\Throwable) {
+            }
+        }
+    }
+
+    private function getContactMessage(Connection $connection, int $id): array|false
+    {
+        return $connection->fetchAssociative('SELECT * FROM contact WHERE contact_id = ?', [$id]);
+    }
+
+    private function getContactMessages(Connection $connection, string $tab): array
+    {
+        $where = match ($tab) {
+            'archived' => 'c.statut = "archive"',
+            'deleted' => 'c.statut = "supprime" AND (c.deleted_at IS NULL OR c.deleted_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH))',
+            'replied' => 'c.statut = "repondu"',
+            default => '(c.statut IS NULL OR c.statut = "" OR c.statut = "nouveau")',
+        };
+
+        return $connection->fetchAllAssociative(
+            'SELECT c.*, u.prenom AS respondent_prenom, u.nom AS respondent_nom
+             FROM contact c
+             LEFT JOIN utilisateurs u ON u.id = c.respondent_id
+             WHERE ' . $where . '
+             ORDER BY c.created_at DESC, c.contact_id DESC'
+        );
+    }
+
+    private function getContactMessageCounts(Connection $connection): array
+    {
+        return [
+            'active' => (int) $connection->fetchOne('SELECT COUNT(*) FROM contact WHERE statut IS NULL OR statut = "" OR statut = "nouveau"'),
+            'archived' => (int) $connection->fetchOne('SELECT COUNT(*) FROM contact WHERE statut = "archive"'),
+            'deleted' => (int) $connection->fetchOne('SELECT COUNT(*) FROM contact WHERE statut = "supprime" AND (deleted_at IS NULL OR deleted_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH))'),
+            'replied' => (int) $connection->fetchOne('SELECT COUNT(*) FROM contact WHERE statut = "repondu"'),
+        ];
+    }
+
+    private function getMaterialReturnOrders(Connection $connection): array
+    {
+        return $connection->fetchAllAssociative(
+            'SELECT c.commande_id, c.date_prestation, u.nom, u.prenom, m.nom_menu
+             FROM commandes c
+             LEFT JOIN utilisateurs u ON u.id = c.utilisateur_id
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+             WHERE c.pret_materiel = 1
+               AND COALESCE(sc.code, "en_attente") IN ("terminee", "en_attente_retour_materiel")
+             ORDER BY c.date_prestation DESC, c.commande_id DESC'
+        );
+    }
+
     private function canAccessEmployeeSpace(Request $request, Connection $connection): bool
     {
         $user = $request->getSession()->get('utilisateur');
@@ -437,6 +1062,12 @@ class EmployeeController extends AbstractController
         }
 
         return $isActive && (in_array($role, ['employe', 'employé', 'administrateur'], true) || in_array($roleId, [2, 3], true));
+    }
+
+    // Verifie le token CSRF commun aux formulaires sensibles de l espace employe.
+    private function isValidEmployeeCsrf(Request $request): bool
+    {
+        return $this->isCsrfTokenValid('employee_action', (string) $request->request->get('_csrf_token'));
     }
 
     private function redirectToEmployeeLogin(Request $request): Response
@@ -489,6 +1120,7 @@ class EmployeeController extends AbstractController
             'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
                     c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
                     c.nombre_personnes, c.prix_total,
+                    c.contact_methode_client, c.contact_client_at, c.contact_message_client,
                     u.nom, u.prenom,
                     m.nom_menu,
                     COALESCE(sc.code, "en_attente") AS statut_code,
@@ -946,6 +1578,11 @@ class EmployeeController extends AbstractController
             $start = $isOpen ? $this->nullableValue($day['heure_ouverture'] ?? null) : null;
             $end = $isOpen ? $this->nullableValue($day['heure_fermeture'] ?? null) : null;
 
+            // Ignore une ligne horaire invalide au lieu d enregistrer une heure incorrecte.
+            if ($isOpen && (!is_string($start) || !is_string($end) || !InputValidator::isValidTime($start) || !InputValidator::isValidTime($end))) {
+                continue;
+            }
+
             $connection->update('horaires_ouverture', [
                 'est_ouvert' => $isOpen,
                 'heure_ouverture' => $start,
@@ -960,14 +1597,21 @@ class EmployeeController extends AbstractController
     private function addExceptionalClosure(Request $request, Connection $connection): void
     {
         $date = $this->nullableValue($request->request->get('date_fermeture'));
-        if ($date === null) {
+        // Une fermeture exceptionnelle doit avoir une vraie date, aujourd hui ou dans le futur.
+        if (!is_string($date) || !InputValidator::isFutureOrTodayDate($date)) {
+            return;
+        }
+
+        $motif = trim((string) $request->request->get('motif', 'Fermeture exceptionnelle'));
+        // Le motif est limite pour rester compatible avec la colonne SQL.
+        if (!InputValidator::hasMaxLength($motif, 255)) {
             return;
         }
 
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $connection->insert('fermetures_exceptionnelles', [
             'date_fermeture' => $date,
-            'motif' => trim((string) $request->request->get('motif', 'Fermeture exceptionnelle')),
+            'motif' => $motif,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -1079,6 +1723,90 @@ class EmployeeController extends AbstractController
             'image_url' => trim((string) $request->request->get('image_url')),
             'image_alt' => trim((string) $request->request->get('image_alt')),
         ] + $this->getMealNamePayload($request);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    // Valide les donnees envoyees par les formulaires de menus, entrees, plats et desserts.
+    private function validateItemPayload(string $type, array $payload): ?string
+    {
+        // Regle commune : le theme doit venir de la liste autorisee.
+        if (!InputValidator::isAllowedMenuTheme((string) ($payload['theme'] ?? ''))) {
+            return 'Le theme selectionne est invalide.';
+        }
+
+        // Regle commune : les textes et chemins d images ne doivent pas depasser la taille prevue.
+        if (!InputValidator::hasMaxLength((string) ($payload['theme'] ?? ''), 250)
+            || !InputValidator::hasMaxLength((string) ($payload['description'] ?? ''), 800)
+            || !InputValidator::hasMaxLength((string) ($payload['image_url'] ?? ''), 255)
+            || !InputValidator::hasMaxLength((string) ($payload['image_alt'] ?? ''), 255)
+        ) {
+            return 'Certaines informations sont trop longues.';
+        }
+
+        if ($type === 'menu') {
+            // Regles specifiques aux menus : nom, prix, stock, dates et minimum de personnes.
+            if (trim((string) ($payload['nom_menu'] ?? '')) === '') {
+                return 'Le nom du menu est obligatoire.';
+            }
+
+            if (!InputValidator::hasMaxLength((string) ($payload['nom_menu'] ?? ''), 250)) {
+                return 'Le nom du menu est trop long.';
+            }
+
+            if ((int) ($payload['personnes_minimum'] ?? 0) < 1 || (int) ($payload['personnes_minimum'] ?? 0) > 500) {
+                return 'Le nombre de personnes minimum est invalide.';
+            }
+
+            if ((float) ($payload['prix_par_personne'] ?? -1) < 0 || (float) ($payload['prix_par_personne'] ?? 0) > 10000) {
+                return 'Le prix par personne est invalide.';
+            }
+
+            if ((int) ($payload['stock_disponible'] ?? -1) < 0 || (int) ($payload['stock_disponible'] ?? 0) > 10000) {
+                return 'Le stock disponible est invalide.';
+            }
+
+            foreach (['date_debut_disponibilite', 'date_fin_disponibilite'] as $dateField) {
+                if (!empty($payload[$dateField]) && !InputValidator::isValidDate((string) $payload[$dateField])) {
+                    return 'Une date de disponibilite est invalide.';
+                }
+            }
+
+            if (!empty($payload['date_debut_disponibilite']) && !empty($payload['date_fin_disponibilite'])
+                && new \DateTimeImmutable((string) $payload['date_fin_disponibilite']) < new \DateTimeImmutable((string) $payload['date_debut_disponibilite'])
+            ) {
+                return 'La date de fin de disponibilite doit etre apres la date de debut.';
+            }
+
+            return null;
+        }
+
+        // Regles specifiques aux entrees, plats et desserts.
+        $nameField = match ($type) {
+            'entree' => 'nom_entree',
+            'plat' => 'nom_plat',
+            'dessert' => 'nom_dessert',
+            default => '',
+        };
+
+        if ($nameField === '' || trim((string) ($payload[$nameField] ?? '')) === '') {
+            return 'Le nom de l element est obligatoire.';
+        }
+
+        if (!InputValidator::hasMaxLength((string) ($payload[$nameField] ?? ''), 250)) {
+            return 'Le nom de l element est trop long.';
+        }
+
+        if (!empty($payload['allergenes']) && !InputValidator::hasMaxLength((string) $payload['allergenes'], 250)) {
+            return 'Le champ allergenes est trop long.';
+        }
+
+        if (empty($payload['menu_id']) || (int) $payload['menu_id'] <= 0) {
+            return 'Le menu associe est obligatoire.';
+        }
+
+        return null;
     }
 
     /**

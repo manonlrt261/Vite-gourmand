@@ -16,6 +16,9 @@
     <section class="contact-layout" aria-label="Formulaire de contact">
         {# Formulaire envoye vers la route contact pour enregistrer le message en base. #}
         <form class="contact-form-card" method="post" action="{{ path('contact_index') }}">
+            {# Token CSRF : protege l envoi du message de contact. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('contact_action') }}">
+
             {# En-tete du formulaire : titre et texte d'introduction pour guider le visiteur. #}
             <header class="contact-form-card__header">
                 <h1>Nous sommes à votre écoute</h1>

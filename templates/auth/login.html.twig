@@ -34,6 +34,9 @@
 
         {# Formulaire envoye vers la route de connexion, en conservant les parametres de retour eventuels. #}
         <form class="auth-form" method="post" action="{{ path('login', app.request.query.all) }}">
+            {# Token CSRF : protege la tentative de connexion contre les envois externes. #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('auth_action') }}">
+
             {# Champ email utilise pour identifier l'utilisateur. #}
             <label class="auth-field">
                 <span>Email</span>
@@ -52,7 +55,7 @@
                         data-password-input
                         required
                     >
-                    <button type="button" class="auth-password-toggle" data-password-toggle>Afficher</button>
+                    <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher ou masquer le mot de passe">Afficher</button>
                 </span>
                 {# Lien vers le parcours de mot de passe oublie. #}
                 <a href="{{ path('forgot_password') }}" class="auth-forgot-link">Mot de passe oublié ?</a>
