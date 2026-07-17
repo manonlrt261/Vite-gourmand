@@ -105,7 +105,7 @@ class AuthController extends AbstractController
             $requiredFields = ['prenom', 'nom', 'email', 'password', 'password_confirm', 'telephone', 'adresse_postale', 'code_postal', 'ville'];
             foreach ($requiredFields as $field) {
                 if ($data[$field] === '') {
-                    $this->addFlash('register_error', 'Tous les champs obligatoires doivent Ãªtre renseignÃ©s.');
+                    $this->addFlash('register_error', 'Tous les champs obligatoires doivent être renseignés.');
 
                     return $this->render('auth/register.html.twig', ['formData' => $data]);
                 }
@@ -365,9 +365,9 @@ class AuthController extends AbstractController
         $html = <<<HTML
             <h1>Bienvenue chez Vite & Gourmand</h1>
             <p>Bonjour {$firstName},</p>
-            <p>Votre compte client a bien été crée.</p>
-            <p>Vous pouvez maintenant vous connecter, consulter nos menus, préparer votre panier et suivre vos commandes depuis votre espace client.</p>
-            <p>A très bientôt,<br>L'équipe Vite & Gourmand</p>
+            <p>Votre compte client a bien été créé.</p>
+            <p>Vous pouvez désormais vous connecter, consulter nos menus, préparer votre panier et suivre vos commandes depuis votre espace client.</p>
+            <p>À très bientôt,<br>L'équipe Vite & Gourmand</p>
         HTML;
 
         try {
@@ -395,10 +395,10 @@ class AuthController extends AbstractController
         $html = <<<HTML
             <h1>Réinitialisation de votre mot de passe</h1>
             <p>Bonjour,</p>
-            <p>Vous avez demandé à réinitialiser votre mot de passe Vite & Gourmand.</p>
-            <p>Pour créer un nouveau mot de passe, cliquez sur le lien ci-dessous :</p>
+            <p>Vous avez demandé la réinitialisation de votre mot de passe Vite & Gourmand.</p>
+            <p>Pour définir un nouveau mot de passe, cliquez sur le lien ci-dessous :</p>
             <p><a href="{$safeResetUrl}">Réinitialiser mon mot de passe</a></p>
-            <p>Ce lien est valable pendant 1 heure.</p>
+            <p>Ce lien est valable pendant une heure.</p>
             <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
             <p>À très bientôt,<br>L'équipe Vite & Gourmand</p>
         HTML;
@@ -423,7 +423,7 @@ class AuthController extends AbstractController
         }
 
         return match ($roleLibelle) {
-            'employe', 'employÃ©', 'administrateur' => 'employee_dashboard',
+            'employe', 'employé', 'administrateur' => 'employee_dashboard',
             default => 'customer_account',
         };
     }

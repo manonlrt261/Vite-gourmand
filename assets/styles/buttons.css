@@ -52,7 +52,7 @@
   font-family: var(--font-title);
   font-size: 14px;
   font-weight: 400;
-  color: var(--primary);
+  color: var(--secondary);
   line-height: 1;
   text-align: center;
   text-decoration: none;
@@ -73,7 +73,7 @@
   font-family: var(--font-title);
   font-size: 14px;
   font-weight: 400;
-  color: var(--primary);
+  color: var(--secondary);
   line-height: 1;
   text-align: center;
   text-decoration: none;
@@ -97,7 +97,7 @@
   font-family: var(--font-text);
   font-size: 12px;
   font-weight: 400;
-  color: var(--primary);
+  color: var(--secondary);
   line-height: 1;
 
   text-align: center;
@@ -212,7 +212,7 @@
   font-family: var(--font-title);
   font-size: 14px;
   font-weight: 400;
-  color: var(--primary);
+  color: var(--secondary);
   line-height: normal;
   text-align: center;
   white-space: nowrap;
@@ -225,5 +225,5 @@
 .buttonrefuse:hover,
 .buttonrefuse:focus,
 .buttonrefuse:active {
-  color: var(--primary);
+  color: var(--secondary);
 }

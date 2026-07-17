@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const resetButton = filterPanel.querySelector('[data-filter-reset]');
   const submitButton = filterPanel.querySelector('[data-filter-submit]');
+  const sectionToggles = Array.from(document.querySelectorAll('[data-menu-section-toggle]'));
 
   const originalCards = cards.map((card, index) => ({
     card,
@@ -156,4 +157,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   submitButton.addEventListener('click', applyFilters);
   resetButton.addEventListener('click', resetFilters);
+
+  sectionToggles.forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const section = toggle.closest('[data-menu-section]');
+      const gridId = toggle.getAttribute('aria-controls');
+      const grid = gridId ? document.getElementById(gridId) : section?.querySelector('[data-menu-grid]');
+
+      if (!section || !grid) {
+        return;
+      }
+
+      const isCollapsed = section.classList.toggle('is-collapsed');
+      toggle.setAttribute('aria-expanded', String(!isCollapsed));
+    });
+  });
 });

@@ -85,6 +85,7 @@
   background-color: var(--offwhite);
   border: 0.5px solid var(--primary);
   border-radius: 16px;
+  box-shadow: none;
 }
 
 .menubasedorder-card-large {
@@ -134,6 +135,7 @@
   background-color: var(--offwhite);
   border: 0.5px solid var(--primary);
   border-radius: 16px;
+  box-shadow: none;
 }
 
 .kpiadministrator-value {

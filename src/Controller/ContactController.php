@@ -100,11 +100,11 @@ class ContactController extends AbstractController
                 ->subject('Nouvelle demande de contact - Vite & Gourmand')
                 ->html(
                     '<h1>Nouvelle demande de contact</h1>' .
-                    '<p><strong>Email du visiteur :</strong> ' . $safeVisitorEmail . '</p>' .
+                    '<p><strong>Adresse email du visiteur :</strong> ' . $safeVisitorEmail . '</p>' .
                     '<p><strong>Sujet :</strong> ' . $safeTitle . '</p>' .
                     '<h2>Message</h2>' .
                     '<p>' . $safeMessage . '</p>' .
-                    '<p>Ce message a aussi été enregistré dans la messagerie interne.</p>'
+                    '<p>Ce message a également été enregistré dans la messagerie interne.</p>'
                 ));
         } catch (\Throwable) {
             // Le message reste conserve dans la messagerie meme si le SMTP n'est pas encore configure.

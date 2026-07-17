@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const cartUrl = button.dataset.cartUrl;
+    // Token CSRF fourni par Twig : il prouve que l ajout au panier vient du bouton du site.
+    const cartToken = button.dataset.cartToken || '';
 
     if (!cartUrl || button.disabled) {
       return;
@@ -17,12 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
     button.textContent = 'Ajout...';
 
     try {
+      const formData = new FormData();
+      formData.append('_csrf_token', cartToken);
+
       const response = await fetch(cartUrl, {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
           'Accept': 'application/json',
         },
+        body: formData,
       });
 
       const data = await response.json();

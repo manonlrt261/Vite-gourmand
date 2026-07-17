@@ -6,7 +6,7 @@
   --bgdark: #000000;
   --white: #fff7ed;
   --offwhite: #f9e8d7;
-  --green: #7a8f6a;
+  --green: #4f6844;
 
   /* Variables */
   --color-primary: var(--primary);
@@ -15,6 +15,9 @@
   --color-bgdark: var(--bgdark);
   --color-white: var(--white);
   --color-offwhite: var(--offwhite);
+
+  /* Ombres */
+  --card-shadow: 0 16px 36px rgba(84, 43, 16, 0.14);
 
   /* Polices */
   --font-title: "Cormorant Garamond", serif;

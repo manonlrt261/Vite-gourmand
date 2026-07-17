@@ -4,6 +4,18 @@
   padding: 24px;
 }
 
+/* Ombre commune des cartes reutilisables : menus, plats, commandes et resumes. */
+.editablemenucard,
+.descriptionordercard,
+.descriptionentrycard,
+.descriptiondishcard,
+.descriptiondessertcard,
+.cardsummaryorder,
+.cardvieworder,
+.cardvieworderemployee {
+  box-shadow: var(--card-shadow);
+}
+
 /* Carte menu modifiable */
 .editablemenucard {
   width: 378px;
@@ -995,10 +1007,29 @@
   color: var(--primary);
 }
 
+.ordergestion-status-wrapper {
+  position: relative;
+  display: inline-flex;
+  width: max-content;
+}
+
+.ordergestion-status-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  pointer-events: none;
+  transform: translateY(-65%) rotate(45deg);
+}
+
 .ordergestion-status {
-  min-width: 78px;
+  min-width: 128px;
   padding-left: 10px;
-  padding-right: 10px;
+  padding-right: 28px;
   box-sizing: border-box;
 
   display: inline-flex;
@@ -1012,6 +1043,10 @@
   -webkit-appearance: none;
   box-shadow: none;
   outline: none;
+  font-family: var(--font-text);
+  font-size: 12px;
+  text-align: center;
+  text-align-last: center;
 }
 
 .ordergestion-status.badgeattente,

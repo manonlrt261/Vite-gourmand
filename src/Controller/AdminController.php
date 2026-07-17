@@ -276,7 +276,7 @@ class AdminController extends AbstractController
         if ($existingUserId) {
             return $this->json([
                 'success' => false,
-                'message' => 'Un compte existe dÃ©jÃ  avec cette adresse email.',
+                'message' => 'Un compte existe déjà avec cette adresse email.',
             ], 422);
         }
 
@@ -535,7 +535,7 @@ class AdminController extends AbstractController
     private function getOrdersByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT COALESCE(m.nom_menu, "Menu supprimÃ©") AS nom_menu,
+            'SELECT COALESCE(m.nom_menu, "Menu supprimé") AS nom_menu,
                     COUNT(c.commande_id) AS total_commandes
              FROM commandes c
              LEFT JOIN menus m ON m.menu_id = c.menu_id
@@ -552,7 +552,7 @@ class AdminController extends AbstractController
     private function getRevenueByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT COALESCE(m.nom_menu, "Menu supprimÃ©") AS nom_menu,
+            'SELECT COALESCE(m.nom_menu, "Menu supprimé") AS nom_menu,
                     COALESCE(SUM(c.prix_total), 0) AS chiffre_affaires
              FROM commandes c
              LEFT JOIN menus m ON m.menu_id = c.menu_id
@@ -579,7 +579,7 @@ class AdminController extends AbstractController
              WHERE r.libelle IN (?, ?, ?)
              ORDER BY u.created_at DESC, u.id DESC
              LIMIT 4',
-            ['employe', 'employé', 'employÃ©']
+            ['employe', 'employé', 'employé']
         );
     }
 
@@ -595,11 +595,11 @@ class AdminController extends AbstractController
             // Corrige les anciennes valeurs de poste qui avaient ete enregistrees avec un mauvais encodage.
             $connection->executeStatement(
                 'UPDATE utilisateurs SET poste = ? WHERE poste IN (?, ?)',
-                ['Employé polyvalent', 'EmployÃ© polyvalent', 'EmployÃƒÂ© polyvalent']
+                ['Employé polyvalent', 'Employé polyvalent', 'Employé polyvalent']
             );
             $connection->executeStatement(
                 'UPDATE utilisateurs SET poste = ? WHERE poste IN (?, ?)',
-                ['Chargé de clientèle', 'ChargÃ© de clientÃ¨le', 'ChargÃƒÂ© de clientÃƒÂ¨le']
+                ['Chargé de clientèle', 'Chargé de clientèle', 'Chargé de clientèle']
             );
         } catch (\Throwable) {
         }
@@ -791,7 +791,7 @@ class AdminController extends AbstractController
         }
 
         $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
-        $adminEmail = $_ENV['ADMIN_EMAIL'] ?? $_SERVER['ADMIN_EMAIL'] ?? $from;
+        $adminEmail = 'viteetgourmand33@gmail.com';
         $firstname = trim($employeeData['prenom'] ?? '');
         $lastname = trim($employeeData['nom'] ?? '');
         $professionalEmail = $employeeData['email'] ?? '';
@@ -813,9 +813,9 @@ class AdminController extends AbstractController
                 ->html(
                     '<p>Bonjour ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',</p>'
                     . '<p>Votre compte employé <strong>Vite & Gourmand</strong> a bien été créé.</p>'
-                    . '<p>Votre email professionnel est : <strong>' . htmlspecialchars($professionalEmail, ENT_QUOTES, 'UTF-8') . '</strong></p>'
+                    . '<p>Votre adresse email professionnelle est : <strong>' . htmlspecialchars($professionalEmail, ENT_QUOTES, 'UTF-8') . '</strong></p>'
                     . '<p>Pour obtenir votre mot de passe, merci de vous rapprocher de l’administrateur.</p>'
-                    . '<p>Adresse de contact administrateur : ' . htmlspecialchars($adminEmail, ENT_QUOTES, 'UTF-8') . '</p>'
+                    . '<p>Adresse de contact de l’administrateur : ' . htmlspecialchars($adminEmail, ENT_QUOTES, 'UTF-8') . '</p>'
                     . '<p>À bientôt,<br>L’équipe Vite & Gourmand</p>'
                 ));
         } catch (\Throwable) {
@@ -826,7 +826,7 @@ class AdminController extends AbstractController
     // Recupere l identifiant du role employe.
     private function getEmployeeRoleId(Connection $connection): int
     {
-        $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employé', 'employÃ©']);
+        $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employé', 'employé']);
 
         return $roleId ? (int) $roleId : 2;
     }
@@ -860,12 +860,20 @@ class AdminController extends AbstractController
 
     private static function normalizeMenuTheme(string $theme): string
     {
-        return match (mb_strtolower(trim($theme))) {
+        $label = trim($theme);
+        $normalized = strtr(mb_strtolower($label), [
+            'é' => 'e',
+            'è' => 'e',
+            'ê' => 'e',
+            'à' => 'a',
+        ]);
+
+        return match ($normalized) {
             'classiques', 'classique' => 'Classique',
-            'Ã©vÃ©nementiels', 'evÃ©nementiels', 'Ã©vÃ¨nementiels', 'evÃ¨nementiels', 'evenementiels', 'Ã©vÃ©nements', 'evenements', 'Ã©vÃ©nementiel', 'evÃ©nementiel', 'Ã©vÃ¨nementiel', 'evÃ¨nementiel', 'evenementiel' => 'Ã‰vÃ©nementiel',
+            'evenementiels', 'evenements', 'evenementiel' => 'Événementiel',
             'saisonniers', 'saisonnier' => 'Saisonnier',
-            'rÃ©gimes particuliers', 'regimes particuliers', 'rÃ©gime particulier', 'regime particulier', 'rÃ©gimes', 'regimes' => 'RÃ©gime particulier',
-            default => trim($theme) !== '' ? trim($theme) : 'Non renseignÃ©',
+            'regimes particuliers', 'regime particulier', 'regimes' => 'Régime particulier',
+            default => $label !== '' ? $label : 'Non renseigné',
         };
     }
 
@@ -884,7 +892,7 @@ class AdminController extends AbstractController
              LEFT JOIN roles r ON r.role_id = u.role_id
              WHERE r.libelle IN (?, ?, ?)
              ORDER BY u.created_at DESC, u.id DESC',
-            ['employe', 'employé', 'employÃ©']
+            ['employe', 'employé', 'employé']
         );
     }
 
@@ -902,7 +910,7 @@ class AdminController extends AbstractController
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
              WHERE u.id = ? AND r.libelle IN (?, ?, ?)',
-            [$id, 'employe', 'employé', 'employÃ©']
+            [$id, 'employe', 'employé', 'employé']
         );
     }
 }

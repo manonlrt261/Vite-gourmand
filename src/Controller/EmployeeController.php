@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\MongoStatsService;
 use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -210,7 +211,7 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_orders');
     }
 
-    public function cancelOrder(int $id, Request $request, Connection $connection): Response
+    public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
@@ -260,6 +261,8 @@ class EmployeeController extends AbstractController
         ]);
 
         $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par un employe apres contact client : ' . $reason);
+        // La commande reste dans MySQL pour la tracabilite, mais sort immediatement des statistiques MongoDB.
+        $mongoStatsService->getOrdersByMenuDocuments($connection);
         $this->addFlash('employee_success', 'La commande a ete annulee.');
 
         return $this->redirectToRoute('employee_orders');
@@ -1338,15 +1341,15 @@ class EmployeeController extends AbstractController
         $returnDate = (new \DateTimeImmutable('+7 days'))->format('d/m/Y');
 
         $lines = [
-            '<h1>Rappel de retour de materiel</h1>',
+            '<h1>Rappel concernant le retour du matériel</h1>',
             '<p>Bonjour ' . $firstName . ',</p>',
-            '<p>Votre commande n&deg;' . (int) $order['commande_id'] . ' est maintenant terminee.</p>',
-            '<p>Cette prestation incluait du materiel prete par Vite & Gourmand pour le menu <strong>' . $menuName . '</strong>.</p>',
-            '<p>Nous vous rappelons que le materiel doit etre retourne propre, complet et en bon etat.</p>',
-            '<p><strong>Date de retour conseillee :</strong> au plus tard le ' . $returnDate . '.</p>',
-            '<p>En cas de casse, de perte ou de retard important, des frais supplementaires pourront etre appliques selon les conditions de prestation.</p>',
-            '<p>Si vous avez deja rendu le materiel, vous pouvez ne pas tenir compte de ce message.</p>',
-            '<p>Merci pour votre confiance,<br>L equipe Vite & Gourmand</p>',
+            '<p>Votre commande n&deg;' . (int) $order['commande_id'] . ' est maintenant terminée.</p>',
+            '<p>Cette prestation incluait du matériel prêté par Vite & Gourmand pour le menu <strong>' . $menuName . '</strong>.</p>',
+            '<p>Nous vous rappelons que le matériel doit être retourné propre, complet et en bon état.</p>',
+            '<p><strong>Date de retour conseillée :</strong> au plus tard le ' . $returnDate . '.</p>',
+            '<p>En cas de casse, de perte ou de retard important, des frais supplémentaires pourront être appliqués conformément aux conditions de la prestation.</p>',
+            '<p>Si vous avez déjà rendu le matériel, vous pouvez ne pas tenir compte de ce message.</p>',
+            '<p>Merci pour votre confiance,<br>L’équipe Vite & Gourmand</p>',
         ];
 
         try {
@@ -1354,7 +1357,7 @@ class EmployeeController extends AbstractController
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
-                ->subject('Retour du materiel prete - Vite & Gourmand')
+                ->subject('Retour du matériel prêté - Vite & Gourmand')
                 ->html(implode("\n", $lines)));
 
             $connection->insert('materiel_email_log', [
@@ -1432,16 +1435,16 @@ class EmployeeController extends AbstractController
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
-                ->subject('Votre avis nous interesse - Vite & Gourmand')
+                ->subject('Votre avis nous intéresse - Vite & Gourmand')
                 ->html(sprintf(
                     '<h1>Votre avis compte beaucoup pour nous</h1>
                     <p>%s</p>
                     <p>Votre commande n&deg;%d est maintenant termin&eacute;e.</p>
                     <p>Nous esp&eacute;rons que le menu <strong>%s</strong> a contribu&eacute; &agrave; rendre votre &eacute;v&eacute;nement gourmand et agr&eacute;able.</p>
-                    <p>Vous pouvez laisser un avis depuis votre espace client. Cela aide les futurs clients &agrave; choisir leur menu et nous permet d am&eacute;liorer continuellement notre service.</p>
+                    <p>Vous pouvez laisser un avis depuis votre espace client. Cela aide nos futurs clients &agrave; choisir leur menu et nous permet d&rsquo;am&eacute;liorer continuellement notre service.</p>
                     <p><a href="%s">Laisser mon avis</a></p>
                     <p>Merci pour votre confiance.</p>
-                    <p>L equipe Vite & Gourmand</p>',
+                    <p>L&rsquo;&eacute;quipe Vite & Gourmand</p>',
                     $greeting,
                     (int) $order['commande_id'],
                     $menuName,

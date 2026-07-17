@@ -472,7 +472,7 @@ class CartController extends AbstractController
             $lines[] = '<hr>';
             $lines[] = '<h2>Commande n&deg;' . (int) $order['commande_id'] . '</h2>';
             $lines[] = '<h3>Prestation</h3>';
-            $lines[] = '<p><strong>Date de prestation :</strong> ' . htmlspecialchars((string) $order['date_prestation'], ENT_QUOTES, 'UTF-8') . '</p>';
+            $lines[] = '<p><strong>Date de la prestation :</strong> ' . htmlspecialchars((string) $order['date_prestation'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Heure de livraison :</strong> ' . htmlspecialchars((string) $order['heure_de_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<p><strong>Adresse :</strong> ' . htmlspecialchars((string) $order['adresse_livraison'], ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars((string) $order['code_postal_livraison'], ENT_QUOTES, 'UTF-8') . ' ' . htmlspecialchars((string) $order['ville_livraison'], ENT_QUOTES, 'UTF-8') . '</p>';
             $lines[] = '<h3>Détail des menus</h3>';
@@ -502,7 +502,7 @@ class CartController extends AbstractController
         $lines[] = '<hr>';
         $lines[] = '<p><strong>Total de votre commande :</strong> ' . number_format($totalOrder, 2, ',', ' ') . ' &euro;</p>';
         $lines[] = '<p>Vous pouvez suivre votre commande depuis votre espace client.</p>';
-        $lines[] = '<p>A tres bientot,<br>L equipe Vite & Gourmand</p>';
+        $lines[] = '<p>À très bientôt,<br>L’équipe Vite & Gourmand</p>';
 
         try {
             // L'email reprend les informations visibles sur la page de confirmation de commande.

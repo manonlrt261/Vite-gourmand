@@ -19,10 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewModal = page.querySelector('[data-employee-view-modal]');
   const deleteModal = page.querySelector('[data-employee-delete-modal]');
   const deleteConfirm = page.querySelector('[data-delete-confirm]');
+  // Token CSRF fourni par Twig : il securise les actions AJAX sensibles.
+  const csrfToken = page.dataset.adminCsrfToken || '';
 
   let editedCard = null;
   let deletedCard = null;
   let deleteUrl = '';
+  let lastFocusedElement = null;
 
   const normalize = (value) => value.toString().trim().toLowerCase();
 
@@ -154,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const openEditModal = (button) => {
+    lastFocusedElement = button;
     editedCard = button.closest('[data-employee-card]');
     fillEditForm(button);
 
@@ -164,12 +168,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     editModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
+    // Le premier champ reçoit le focus pour que la modification soit possible sans souris.
+    editForm.querySelector('[data-edit-prenom]')?.focus();
   };
 
   const closeEditModal = () => {
     editModal.hidden = true;
     document.body.classList.remove('employee-modal-is-open');
     editedCard = null;
+    lastFocusedElement?.focus();
+    lastFocusedElement = null;
   };
 
   const fillViewModal = (button) => {
@@ -209,15 +217,19 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const openViewModal = (button) => {
+    lastFocusedElement = button;
     fillViewModal(button);
     preparePasswordPreview(button);
     viewModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
+    viewModal.querySelector('[data-view-modal-close]')?.focus();
   };
 
   const closeViewModal = () => {
     viewModal.hidden = true;
     document.body.classList.remove('employee-modal-is-open');
+    lastFocusedElement?.focus();
+    lastFocusedElement = null;
   };
 
   const updateEmployeeCard = (employee) => {
@@ -321,10 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const openDeleteModal = (button) => {
+    lastFocusedElement = button;
     deletedCard = button.closest('[data-employee-card]');
     deleteUrl = button.dataset.deleteUrl || '';
     deleteModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
+    deleteConfirm?.focus();
   };
 
   const closeDeleteModal = () => {
@@ -332,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteUrl = '';
     deleteModal.hidden = true;
     document.body.classList.remove('employee-modal-is-open');
+    lastFocusedElement?.focus();
+    lastFocusedElement = null;
   };
 
   page.querySelectorAll('[data-employee-delete]').forEach((button) => {
@@ -347,7 +363,13 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteConfirm.disabled = true;
 
     try {
-      await requestJson(deleteUrl, { method: 'POST' });
+      const formData = new FormData();
+      formData.append('_csrf_token', csrfToken);
+
+      await requestJson(deleteUrl, {
+        method: 'POST',
+        body: formData,
+      });
       deletedCard.remove();
       closeDeleteModal();
       applyFilters();

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Service\MongoStatsService;
 use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,7 +26,7 @@ class CustomerController extends AbstractController
             // Le token CSRF evite qu un avis soit envoye depuis une page externe au site.
             if (!$this->isValidCustomerCsrf($request)) {
                 if ($request->isXmlHttpRequest()) {
-                    return $this->json(['success' => false, 'message' => 'Le formulaire a expirÃ©, veuillez rÃ©essayer.'], 400);
+                    return $this->json(['success' => false, 'message' => 'Le formulaire a expiré, veuillez réessayer.'], 400);
                 }
 
                 $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
@@ -200,8 +201,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiÃ©e par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien Ã©tÃ© modifiÃ©e.');
+        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiée par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien été modifiée.');
 
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
@@ -280,14 +281,14 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, $statusId, 'Menu ajoutÃ© par le client depuis le dÃ©tail de commande.');
-        $this->addFlash('order_success', 'Le menu a bien Ã©tÃ© ajoutÃ© Ã  votre commande.');
+        $this->addOrderStatusHistory($connection, $id, $statusId, 'Menu ajouté par le client depuis le détail de commande.');
+        $this->addFlash('order_success', 'Le menu a bien été ajouté à votre commande.');
 
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
 
     // Permet au client d annuler une commande tant qu elle est en attente.
-    public function cancelOrder(int $id, Request $request, Connection $connection): Response
+    public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
 
@@ -343,8 +344,10 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulÃ©e par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien Ã©tÃ© annulÃ©e.');
+        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulée par le client.');
+        // La commande reste dans MySQL pour la tracabilite, mais sort immediatement des statistiques MongoDB.
+        $mongoStatsService->getOrdersByMenuDocuments($connection);
+        $this->addFlash('order_success', 'Votre commande a bien été annulée.');
 
         return $this->redirectToRoute('customer_orders');
     }
@@ -371,9 +374,9 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Les informations personnelles et le mot de passe sont protÃ©gÃ©s par un token CSRF.
+            // Les informations personnelles et le mot de passe sont protégés par un token CSRF.
             if (!$this->isValidCustomerCsrf($request)) {
-                $this->addFlash('profile_error', 'Le formulaire a expirÃ©, veuillez rÃ©essayer.');
+                $this->addFlash('profile_error', 'Le formulaire a expiré, veuillez réessayer.');
 
                 return $this->redirectToRoute('customer_profile');
             }
@@ -388,7 +391,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // VÃ©rifie le token CSRF commun aux formulaires de l'espace client.
+    // Vérifie le token CSRF commun aux formulaires de l'espace client.
     private function isValidCustomerCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('customer_action', (string) $request->request->get('_csrf_token'));
@@ -408,7 +411,7 @@ class CustomerController extends AbstractController
             ];
 
             if ($passwordData['current'] === '' || $passwordData['new'] === '' || $passwordData['confirm'] === '') {
-                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent Ãªtre renseignÃ©s.');
+                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent être renseignés.');
 
                 return;
             }
@@ -426,12 +429,12 @@ class CustomerController extends AbstractController
             }
 
             if (!$this->isStrongPassword($passwordData['new'])) {
-                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquÃ©es.');
+                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquées.');
 
                 return;
             }
 
-            // Le nouveau mot de passe est hachÃ© avant d'Ãªtre enregistrÃ© en base.
+            // Le nouveau mot de passe est haché avant d'être enregistré en base.
             $hashedPassword = password_hash($passwordData['new'], PASSWORD_DEFAULT);
             $updatedRows = $connection->update('utilisateurs', [
                 'mot_de_passe' => $hashedPassword,
@@ -445,20 +448,20 @@ class CustomerController extends AbstractController
             } catch (\Throwable) {
             }
 
-            // On relit la base pour confirmer que le nouveau mot de passe a bien remplacÃ© l'ancien.
+            // On relit la base pour confirmer que le nouveau mot de passe a bien remplacé l'ancien.
             $savedPassword = (string) $connection->fetchOne(
                 'SELECT mot_de_passe FROM utilisateurs WHERE id = ?',
                 [$userId]
             );
 
             if ($updatedRows < 1 || !password_verify($passwordData['new'], $savedPassword)) {
-                $this->addFlash('profile_error', "Le nouveau mot de passe n'a pas pu Ãªtre enregistrÃ©. Veuillez rÃ©essayer.");
+                $this->addFlash('profile_error', "Le nouveau mot de passe n'a pas pu être enregistré. Veuillez réessayer.");
 
                 return;
             }
 
             $this->refreshCustomerSession($request, $connection, $userId);
-            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien Ã©tÃ© enregistrÃ©.');
+            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien été enregistré.');
 
             return;
         }
@@ -475,7 +478,7 @@ class CustomerController extends AbstractController
 
         foreach ($data as $value) {
             if ($value === '') {
-                $this->addFlash('profile_error', 'Tous les champs dâ€™informations personnelles doivent Ãªtre renseignÃ©s.');
+                $this->addFlash('profile_error', "Tous les champs d'informations personnelles doivent être renseignés.");
 
                 return;
             }
@@ -501,7 +504,7 @@ class CustomerController extends AbstractController
         );
 
         if ($existingUser) {
-            $this->addFlash('profile_error', 'Cette adresse email est dÃ©jÃ  utilisÃ©e par un autre compte.');
+            $this->addFlash('profile_error', 'Cette adresse email est déjà utilisée par un autre compte.');
 
             return;
         }
@@ -512,7 +515,7 @@ class CustomerController extends AbstractController
         $connection->update('utilisateurs', $updateData, ['id' => $userId]);
 
         $this->refreshCustomerSession($request, $connection, $userId);
-        $this->addFlash('profile_success', 'Vos informations ont bien Ã©tÃ© mises Ã  jour.');
+        $this->addFlash('profile_success', 'Vos informations ont bien été mises à jour.');
     }
 
     /**
@@ -764,7 +767,7 @@ class CustomerController extends AbstractController
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
-            'EntrÃ©e' => $connection->fetchAssociative(
+            'Entrée' => $connection->fetchAssociative(
                 'SELECT nom_entree AS nom, description, image_url, image_alt
                  FROM entree
                  WHERE menu_id = ?

@@ -33,9 +33,10 @@ CREATE TABLE `avis` (
   `updated_at` datetime NOT NULL,
   `afficher_accueil` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`avis_id`),
+  KEY `fk_avis_commande` (`commande_id`),
   KEY `fk_avis_utilisateur` (`utilisateur_id`),
-  CONSTRAINT `fk_avis_commande` FOREIGN KEY (`avis_id`) REFERENCES `commandes` (`commande_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_avis_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `fk_avis_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_avis_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -52,7 +53,8 @@ CREATE TABLE `avis_email_log` (
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sent_at` datetime NOT NULL,
   PRIMARY KEY (`log_id`),
-  UNIQUE KEY `UNIQ_AVIS_EMAIL_COMMANDE` (`commande_id`)
+  UNIQUE KEY `UNIQ_AVIS_EMAIL_COMMANDE` (`commande_id`),
+  CONSTRAINT `fk_avis_email_log_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -73,7 +75,10 @@ CREATE TABLE `avis_email_queue` (
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`queue_id`),
   UNIQUE KEY `UNIQ_AVIS_EMAIL_COMMANDE` (`commande_id`),
-  KEY `IDX_AVIS_EMAIL_SEND_AFTER` (`send_after`)
+  KEY `IDX_AVIS_EMAIL_SEND_AFTER` (`send_after`),
+  KEY `IDX_AVIS_EMAIL_UTILISATEUR` (`utilisateur_id`),
+  CONSTRAINT `fk_avis_email_queue_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_avis_email_queue_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -95,7 +100,9 @@ CREATE TABLE `commande_menus` (
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`commande_menu_id`),
   KEY `idx_commande_menus_commande` (`commande_id`),
-  KEY `idx_commande_menus_menu` (`menu_id`)
+  KEY `idx_commande_menus_menu` (`menu_id`),
+  CONSTRAINT `fk_commande_menus_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_commande_menus_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -134,7 +141,7 @@ CREATE TABLE `commandes` (
   KEY ` fk_historique_statut` (`statut_id`),
   CONSTRAINT ` fk_historique_statut` FOREIGN KEY (`statut_id`) REFERENCES `statuts_commande` (`statut_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_commandes_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_commandes_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `commandes` (`commande_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `fk_commandes_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -283,7 +290,8 @@ CREATE TABLE `materiel_email_log` (
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sent_at` datetime NOT NULL,
   PRIMARY KEY (`log_id`),
-  UNIQUE KEY `UNIQ_MATERIEL_EMAIL_COMMANDE` (`commande_id`)
+  UNIQUE KEY `UNIQ_MATERIEL_EMAIL_COMMANDE` (`commande_id`),
+  CONSTRAINT `fk_materiel_email_log_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -329,7 +337,8 @@ CREATE TABLE `password_reset_tokens` (
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UNIQ_PASSWORD_RESET_TOKEN` (`token_hash`),
-  KEY `IDX_PASSWORD_RESET_USER` (`utilisateur_id`)
+  KEY `IDX_PASSWORD_RESET_USER` (`utilisateur_id`),
+  CONSTRAINT `fk_password_reset_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

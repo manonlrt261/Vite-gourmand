@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmButton = document.querySelector('[data-delete-confirm]');
   const cancelButtons = document.querySelectorAll('[data-delete-cancel]');
   let pendingDeleteForm = null;
+  let lastFocusedElement = null;
 
   const setStatusButton = (button, active) => {
     button.textContent = active ? 'Actif' : 'Inactif';
@@ -73,10 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openDeleteModal = (form) => {
     pendingDeleteForm = form;
+    lastFocusedElement = document.activeElement;
 
     if (modal) {
       modal.hidden = false;
       document.body.classList.add('employee-modal-is-open');
+      // Le focus arrive sur l'action principale de la fenêtre de confirmation.
       confirmButton?.focus();
     }
   };
@@ -87,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modal) {
       modal.hidden = true;
       document.body.classList.remove('employee-modal-is-open');
+      lastFocusedElement?.focus();
+      lastFocusedElement = null;
     }
   };
 
