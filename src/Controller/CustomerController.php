@@ -24,12 +24,21 @@ class CustomerController extends AbstractController
         if ($request->isMethod('POST')) {
             // Le token CSRF evite qu un avis soit envoye depuis une page externe au site.
             if (!$this->isValidCustomerCsrf($request)) {
+                if ($request->isXmlHttpRequest()) {
+                    return $this->json(['success' => false, 'message' => 'Le formulaire a expirÃ©, veuillez rÃ©essayer.'], 400);
+                }
+
                 $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
 
                 return $this->redirectToRoute('customer_account');
             }
 
-            $this->handleReviewSubmit($request, $connection, $userId);
+            $reviewResult = $this->handleReviewSubmit($request, $connection, $userId);
+
+            // Si le formulaire est envoye par JavaScript, on repond sans recharger la page.
+            if ($request->isXmlHttpRequest()) {
+                return $this->json($reviewResult, $reviewResult['success'] ? 200 : 400);
+            }
 
             return $this->redirectToRoute('customer_account');
         }
@@ -191,8 +200,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiée par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien été modifiée.');
+        $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Commande modifiÃ©e par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien Ã©tÃ© modifiÃ©e.');
 
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
@@ -271,8 +280,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, $statusId, 'Menu ajouté par le client depuis le détail de commande.');
-        $this->addFlash('order_success', 'Le menu a bien été ajouté à votre commande.');
+        $this->addOrderStatusHistory($connection, $id, $statusId, 'Menu ajoutÃ© par le client depuis le dÃ©tail de commande.');
+        $this->addFlash('order_success', 'Le menu a bien Ã©tÃ© ajoutÃ© Ã  votre commande.');
 
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
@@ -334,8 +343,8 @@ class CustomerController extends AbstractController
             'utilisateur_id' => $userId,
         ]);
 
-        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulée par le client.');
-        $this->addFlash('order_success', 'Votre commande a bien été annulée.');
+        $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulÃ©e par le client.');
+        $this->addFlash('order_success', 'Votre commande a bien Ã©tÃ© annulÃ©e.');
 
         return $this->redirectToRoute('customer_orders');
     }
@@ -362,9 +371,9 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Les informations personnelles et le mot de passe sont protégés par un token CSRF.
+            // Les informations personnelles et le mot de passe sont protÃ©gÃ©s par un token CSRF.
             if (!$this->isValidCustomerCsrf($request)) {
-                $this->addFlash('profile_error', 'Le formulaire a expiré, veuillez réessayer.');
+                $this->addFlash('profile_error', 'Le formulaire a expirÃ©, veuillez rÃ©essayer.');
 
                 return $this->redirectToRoute('customer_profile');
             }
@@ -379,7 +388,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Vérifie le token CSRF commun aux formulaires de l'espace client.
+    // VÃ©rifie le token CSRF commun aux formulaires de l'espace client.
     private function isValidCustomerCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('customer_action', (string) $request->request->get('_csrf_token'));
@@ -399,7 +408,7 @@ class CustomerController extends AbstractController
             ];
 
             if ($passwordData['current'] === '' || $passwordData['new'] === '' || $passwordData['confirm'] === '') {
-                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent être renseignés.');
+                $this->addFlash('profile_error', 'Tous les champs du changement de mot de passe doivent Ãªtre renseignÃ©s.');
 
                 return;
             }
@@ -417,12 +426,12 @@ class CustomerController extends AbstractController
             }
 
             if (!$this->isStrongPassword($passwordData['new'])) {
-                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquées.');
+                $this->addFlash('profile_error', 'Le nouveau mot de passe doit respecter les conditions indiquÃ©es.');
 
                 return;
             }
 
-            // Le nouveau mot de passe est haché avant d'être enregistré en base.
+            // Le nouveau mot de passe est hachÃ© avant d'Ãªtre enregistrÃ© en base.
             $hashedPassword = password_hash($passwordData['new'], PASSWORD_DEFAULT);
             $updatedRows = $connection->update('utilisateurs', [
                 'mot_de_passe' => $hashedPassword,
@@ -436,20 +445,20 @@ class CustomerController extends AbstractController
             } catch (\Throwable) {
             }
 
-            // On relit la base pour confirmer que le nouveau mot de passe a bien remplacé l'ancien.
+            // On relit la base pour confirmer que le nouveau mot de passe a bien remplacÃ© l'ancien.
             $savedPassword = (string) $connection->fetchOne(
                 'SELECT mot_de_passe FROM utilisateurs WHERE id = ?',
                 [$userId]
             );
 
             if ($updatedRows < 1 || !password_verify($passwordData['new'], $savedPassword)) {
-                $this->addFlash('profile_error', "Le nouveau mot de passe n'a pas pu être enregistré. Veuillez réessayer.");
+                $this->addFlash('profile_error', "Le nouveau mot de passe n'a pas pu Ãªtre enregistrÃ©. Veuillez rÃ©essayer.");
 
                 return;
             }
 
             $this->refreshCustomerSession($request, $connection, $userId);
-            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien été enregistré.');
+            $this->addFlash('profile_success', 'Votre nouveau mot de passe a bien Ã©tÃ© enregistrÃ©.');
 
             return;
         }
@@ -466,7 +475,7 @@ class CustomerController extends AbstractController
 
         foreach ($data as $value) {
             if ($value === '') {
-                $this->addFlash('profile_error', 'Tous les champs d’informations personnelles doivent être renseignés.');
+                $this->addFlash('profile_error', 'Tous les champs dâ€™informations personnelles doivent Ãªtre renseignÃ©s.');
 
                 return;
             }
@@ -492,7 +501,7 @@ class CustomerController extends AbstractController
         );
 
         if ($existingUser) {
-            $this->addFlash('profile_error', 'Cette adresse email est déjà utilisée par un autre compte.');
+            $this->addFlash('profile_error', 'Cette adresse email est dÃ©jÃ  utilisÃ©e par un autre compte.');
 
             return;
         }
@@ -503,27 +512,32 @@ class CustomerController extends AbstractController
         $connection->update('utilisateurs', $updateData, ['id' => $userId]);
 
         $this->refreshCustomerSession($request, $connection, $userId);
-        $this->addFlash('profile_success', 'Vos informations ont bien été mises à jour.');
+        $this->addFlash('profile_success', 'Vos informations ont bien Ã©tÃ© mises Ã  jour.');
     }
 
+    /**
+     * @return array{success: bool, message: string, commande_id?: int}
+     */
     // Enregistre un avis client pour une commande terminee.
-    private function handleReviewSubmit(Request $request, Connection $connection, int $userId): void
+    private function handleReviewSubmit(Request $request, Connection $connection, int $userId): array
     {
         $commandeId = (int) $request->request->get('commande_id');
         $note = (int) $request->request->get('note');
         $commentaire = trim((string) $request->request->get('commentaire'));
 
         if ($commandeId <= 0 || $note < 1 || $note > 5) {
-            $this->addFlash('review_error', 'Veuillez sélectionner une commande et une note entre 1 et 5.');
+            $message = 'Veuillez sélectionner une commande et une note entre 1 et 5.';
+            $this->addFlash('review_error', $message);
 
-            return;
+            return ['success' => false, 'message' => $message];
         }
 
         // Limite la taille du commentaire pour eviter une saisie trop longue en base.
         if (!InputValidator::hasMaxLength($commentaire, 1500)) {
-            $this->addFlash('review_error', 'Votre commentaire est trop long.');
+            $message = 'Votre commentaire est trop long.';
+            $this->addFlash('review_error', $message);
 
-            return;
+            return ['success' => false, 'message' => $message];
         }
 
         $orderStatusCode = $connection->fetchOne(
@@ -535,15 +549,17 @@ class CustomerController extends AbstractController
         );
 
         if (!$orderStatusCode) {
-            $this->addFlash('review_error', 'La commande sélectionnée est introuvable.');
+            $message = 'La commande sélectionnée est introuvable.';
+            $this->addFlash('review_error', $message);
 
-            return;
+            return ['success' => false, 'message' => $message];
         }
 
         if ((string) $orderStatusCode !== 'terminee') {
-            $this->addFlash('review_error', 'Vous pourrez laisser un avis lorsque la commande sera terminee.');
+            $message = 'Vous pourrez laisser un avis lorsque la commande sera terminée.';
+            $this->addFlash('review_error', $message);
 
-            return;
+            return ['success' => false, 'message' => $message];
         }
 
         $alreadyReviewed = (bool) $connection->fetchOne(
@@ -552,9 +568,10 @@ class CustomerController extends AbstractController
         );
 
         if ($alreadyReviewed) {
-            $this->addFlash('review_error', 'Vous avez déjà laissé un avis pour cette commande.');
+            $message = 'Vous avez déjà laissé un avis pour cette commande.';
+            $this->addFlash('review_error', $message);
 
-            return;
+            return ['success' => false, 'message' => $message];
         }
 
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
@@ -569,7 +586,10 @@ class CustomerController extends AbstractController
             'updated_at' => $now,
         ]);
 
-        $this->addFlash('review_success', 'Votre avis a bien été envoyé.');
+        $message = 'Votre avis a bien été envoyé.';
+        $this->addFlash('review_success', $message);
+
+        return ['success' => true, 'message' => $message, 'commande_id' => $commandeId];
     }
 
     /**
@@ -744,7 +764,7 @@ class CustomerController extends AbstractController
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
-            'Entrée' => $connection->fetchAssociative(
+            'EntrÃ©e' => $connection->fetchAssociative(
                 'SELECT nom_entree AS nom, description, image_url, image_alt
                  FROM entree
                  WHERE menu_id = ?
@@ -960,3 +980,4 @@ class CustomerController extends AbstractController
         return null;
     }
 }
+

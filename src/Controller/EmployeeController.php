@@ -1742,7 +1742,7 @@ class EmployeeController extends AbstractController
     {
         return $connection->fetchAllAssociative(
             'SELECT menu_id AS id, nom_menu AS title, theme, description, personnes_minimum,
-                    prix_par_personne, stock_disponible, actif
+                    prix_par_personne, stock_disponible, materiel_disponible, actif
              FROM menus
              ORDER BY menu_id ASC'
         );
@@ -1821,6 +1821,7 @@ class EmployeeController extends AbstractController
             'personnes_minimum' => max(1, (int) $request->request->get('personnes_minimum')),
             'prix_par_personne' => max(0, (float) str_replace(',', '.', (string) $request->request->get('prix_par_personne'))),
             'stock_disponible' => max(0, (int) $request->request->get('stock_disponible')),
+            'materiel_disponible' => $request->request->getBoolean('materiel_disponible') ? 1 : 0,
             'actif' => $request->request->getBoolean('actif') ? 1 : 0,
             'image_url' => trim((string) $request->request->get('image_url')),
             'image_alt' => trim((string) $request->request->get('image_alt')),

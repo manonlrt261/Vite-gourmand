@@ -85,6 +85,12 @@
                     <span>Stock disponible</span>
                     <input type="number" name="stock_disponible" min="0" value="{{ item.stock_disponible|default(0) }}" required>
                 </label>
+
+                {# Case enregistree en base : 1 si le menu propose un pret de materiel, 0 sinon. #}
+                <label class="employee-form-checkbox">
+                    <input type="checkbox" name="materiel_disponible" value="1" {{ item.materiel_disponible|default(0) == 1 ? 'checked' : '' }}>
+                    <span>Pr&ecirc;t de mat&eacute;riel</span>
+                </label>
             {% else %}
                 {# Champs specifiques aux entrees, plats et desserts. #}
                 <label>

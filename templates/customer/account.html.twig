@@ -54,14 +54,24 @@
                 {# Grille des trois dernieres commandes. #}
                 <div class="customer-order-grid">
                     {% for order in latestOrders %}
-                        {# Preparation du statut et de la classe visuelle du badge. #}
+                        {# Le libelle est reconstruit depuis le code pour eviter les anciens accents casses venus de la base. #}
                         {% set statusCode = order.statut_code|default('en_attente') %}
                         {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
+                        {% set statusLabels = {
+                            en_attente: 'En attente',
+                            acceptee: 'Acceptée',
+                            en_preparation: 'En préparation',
+                            en_livraison: 'En cours de livraison',
+                            livree: 'Livrée',
+                            en_attente_retour_materiel: 'En attente du retour de matériel',
+                            terminee: 'Terminée',
+                            annulee: 'Annulée'
+                        } %}
 
                         {# Carte resumee d'une commande. #}
                         <article class="cardvieworder">
                             <h3 class="cardvieworder-title">N° {{ order.commande_id }}</h3>
-                            <span class="{{ statusClass }} cardvieworder-status">{{ order.statut_libelle|default('En attente') }}</span>
+                            <span class="{{ statusClass }} cardvieworder-status">{{ statusLabels[statusCode]|default(order.statut_libelle|default('En attente')) }}</span>
                             <p class="cardvieworder-date">
                                 Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
                             </p>
@@ -70,7 +80,7 @@
                                 <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
                                 {# Le bouton modifier n'apparait que si la commande est encore en attente. #}
                                 {% if statusCode == 'en_attente' %}
-                                    <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n&deg;{{ order.commande_id }}">Modifier</a>
+                                    <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n°{{ order.commande_id }}">Modifier</a>
                                 {% endif %}
                             </div>
                         </article>
@@ -94,10 +104,11 @@
         <h2>Donnez<br>votre avis</h2>
 
         {# Formulaire d'avis envoye depuis l'espace client. #}
-        <form class="customer-review-card" method="post" action="{{ path('customer_account') }}">
+        <form class="customer-review-card" method="post" action="{{ path('customer_account') }}" data-customer-account-review-form>
             {# Token CSRF : verifie que l avis est envoye depuis le formulaire du site. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
             <h3>Comment évalueriez-vous votre expérience ?</h3>
+            <div data-customer-account-review-message></div>
 
             {# Message de succes apres l'envoi d'un avis. #}
             {% for message in app.flashes('review_success') %}
@@ -155,4 +166,9 @@
         <a href="{{ path('logout') }}" class="buttonprimary">Se déconnecter</a>
     </div>
 </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/scripts/customer-account.js') }}" defer></script>
 {% endblock %}

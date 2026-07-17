@@ -2,7 +2,7 @@
 --
 -- Host: localhost    Database: vite_et_gourmand
 -- ------------------------------------------------------
--- Server version	8.4.3
+-- Server version	8.0.46
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -31,12 +31,72 @@ CREATE TABLE `avis` (
   `statut` varchar(50) NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
+  `afficher_accueil` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`avis_id`),
   KEY `fk_avis_utilisateur` (`utilisateur_id`),
-  KEY `fk_avis_commande` (`commande_id`),
-  CONSTRAINT `fk_avis_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_avis_commande` FOREIGN KEY (`avis_id`) REFERENCES `commandes` (`commande_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_avis_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `avis_email_log`
+--
+
+DROP TABLE IF EXISTS `avis_email_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `avis_email_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
+  `commande_id` int NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sent_at` datetime NOT NULL,
+  PRIMARY KEY (`log_id`),
+  UNIQUE KEY `UNIQ_AVIS_EMAIL_COMMANDE` (`commande_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `avis_email_queue`
+--
+
+DROP TABLE IF EXISTS `avis_email_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `avis_email_queue` (
+  `queue_id` int NOT NULL AUTO_INCREMENT,
+  `commande_id` int NOT NULL,
+  `utilisateur_id` int NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `send_after` datetime NOT NULL,
+  `sent_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`queue_id`),
+  UNIQUE KEY `UNIQ_AVIS_EMAIL_COMMANDE` (`commande_id`),
+  KEY `IDX_AVIS_EMAIL_SEND_AFTER` (`send_after`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `commande_menus`
+--
+
+DROP TABLE IF EXISTS `commande_menus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `commande_menus` (
+  `commande_menu_id` int NOT NULL AUTO_INCREMENT,
+  `commande_id` int NOT NULL,
+  `menu_id` int NOT NULL,
+  `nombre_personnes` int NOT NULL,
+  `prix_par_personne` decimal(10,2) NOT NULL,
+  `prix_menu` decimal(10,2) NOT NULL,
+  `reduction` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`commande_menu_id`),
+  KEY `idx_commande_menus_commande` (`commande_id`),
+  KEY `idx_commande_menus_menu` (`menu_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -65,14 +125,17 @@ CREATE TABLE `commandes` (
   `updated_at` datetime NOT NULL,
   `date_prestation` date NOT NULL,
   `statut_id` int NOT NULL,
+  `contact_methode_client` varchar(100) DEFAULT NULL,
+  `contact_client_at` datetime DEFAULT NULL,
+  `contact_message_client` text,
   PRIMARY KEY (`commande_id`),
   KEY `fk_commandes_utilisateur` (`utilisateur_id`),
   KEY `fk_commandes_menu` (`menu_id`),
   KEY ` fk_historique_statut` (`statut_id`),
   CONSTRAINT ` fk_historique_statut` FOREIGN KEY (`statut_id`) REFERENCES `statuts_commande` (`statut_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_commandes_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_commandes_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_commandes_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `commandes` (`commande_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -91,10 +154,16 @@ CREATE TABLE `contact` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `utilisateur_id` int DEFAULT NULL,
+  `archived_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `reponse` text,
+  `responded_at` datetime DEFAULT NULL,
+  `responded_by` int DEFAULT NULL,
+  `respondent_id` int DEFAULT NULL,
   PRIMARY KEY (`contact_id`),
   KEY `fk_contacts_utilisateur` (`utilisateur_id`),
   CONSTRAINT `fk_contacts_utilisateur` FOREIGN KEY (`utilisateur_id`) REFERENCES `utilisateurs` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -113,10 +182,11 @@ CREATE TABLE `dessert` (
   `allergenes` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `image_url` varchar(255) NOT NULL,
   `image_alt` varchar(255) NOT NULL,
+  `actif` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`dessert_id`),
   KEY `fk_dessert_menu` (`menu_id`),
   CONSTRAINT `fk_dessert_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -135,10 +205,29 @@ CREATE TABLE `entree` (
   `allergenes` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `image_url` varchar(255) NOT NULL,
   `image_alt` varchar(255) NOT NULL,
+  `actif` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`entree_id`),
   KEY `fk_entree_menu` (`menu_id`),
   CONSTRAINT `fk_entree_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `fermetures_exceptionnelles`
+--
+
+DROP TABLE IF EXISTS `fermetures_exceptionnelles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `fermetures_exceptionnelles` (
+  `fermeture_id` int NOT NULL AUTO_INCREMENT,
+  `date_fermeture` date NOT NULL,
+  `date_fin_fermeture` date DEFAULT NULL,
+  `motif` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`fermeture_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -159,7 +248,43 @@ CREATE TABLE `historique_statuts_commande` (
   KEY `fk_historique_statuts_commande_statu` (`statut_id`),
   CONSTRAINT `fk_historique_commande` FOREIGN KEY (`commande_id`) REFERENCES `commandes` (`commande_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_historique_statuts_commande_statu` FOREIGN KEY (`statut_id`) REFERENCES `statuts_commande` (`statut_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `horaires_ouverture`
+--
+
+DROP TABLE IF EXISTS `horaires_ouverture`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `horaires_ouverture` (
+  `jour_code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `jour_label` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `est_ouvert` tinyint(1) NOT NULL DEFAULT '1',
+  `heure_ouverture` time DEFAULT NULL,
+  `heure_fermeture` time DEFAULT NULL,
+  `ordre` int NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`jour_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `materiel_email_log`
+--
+
+DROP TABLE IF EXISTS `materiel_email_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `materiel_email_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
+  `commande_id` int NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sent_at` datetime NOT NULL,
+  PRIMARY KEY (`log_id`),
+  UNIQUE KEY `UNIQ_MATERIEL_EMAIL_COMMANDE` (`commande_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -180,11 +305,32 @@ CREATE TABLE `menus` (
   `personnes_minimum` int NOT NULL,
   `prix_par_personne` decimal(10,2) NOT NULL,
   `stock_disponible` int NOT NULL,
+  `materiel_disponible` tinyint(1) NOT NULL DEFAULT '0',
   `actif` tinyint(1) NOT NULL DEFAULT '1',
   `image_url` varchar(255) NOT NULL,
   `image_alt` varchar(255) NOT NULL,
   PRIMARY KEY (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `password_reset_tokens`
+--
+
+DROP TABLE IF EXISTS `password_reset_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `password_reset_tokens` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `utilisateur_id` int NOT NULL,
+  `token_hash` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UNIQ_PASSWORD_RESET_TOKEN` (`token_hash`),
+  KEY `IDX_PASSWORD_RESET_USER` (`utilisateur_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -203,10 +349,11 @@ CREATE TABLE `plat` (
   `allergenes` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `image_url` varchar(255) NOT NULL,
   `image_alt` varchar(255) NOT NULL,
+  `actif` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`plat_id`),
   KEY `fk_plat_menu` (`menu_id`),
   CONSTRAINT `fk_plat_menu` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -259,45 +406,21 @@ CREATE TABLE `utilisateurs` (
   `adresse_postale` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `ville` varchar(250) NOT NULL,
   `code_postal` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `date_naissance` date DEFAULT NULL,
-  `lieu_naissance` varchar(150) DEFAULT NULL,
   `role_id` int NOT NULL,
   `actif` tinyint(1) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
   `poste` varchar(100) NOT NULL DEFAULT 'Employé polyvalent',
+  `date_naissance` date DEFAULT NULL,
+  `lieu_naissance` varchar(150) DEFAULT NULL,
+  `email_personnel` varchar(255) DEFAULT NULL,
+  `mot_de_passe_initial` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   KEY `fk_utilisateurs_role` (`role_id`),
   CONSTRAINT `fk_utilisateurs_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Triggers to keep only one administrator account
---
-
-DELIMITER ;;
-CREATE TRIGGER `trg_utilisateurs_single_admin_insert`
-BEFORE INSERT ON `utilisateurs`
-FOR EACH ROW
-BEGIN
-  IF NEW.`role_id` = (SELECT `role_id` FROM `roles` WHERE `libelle` = 'administrateur' LIMIT 1)
-     AND (SELECT COUNT(*) FROM `utilisateurs` WHERE `role_id` = NEW.`role_id`) > 0 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un seul compte administrateur est autorise';
-  END IF;
-END;;
-
-CREATE TRIGGER `trg_utilisateurs_single_admin_update`
-BEFORE UPDATE ON `utilisateurs`
-FOR EACH ROW
-BEGIN
-  IF NEW.`role_id` = (SELECT `role_id` FROM `roles` WHERE `libelle` = 'administrateur' LIMIT 1)
-     AND (SELECT COUNT(*) FROM `utilisateurs` WHERE `role_id` = NEW.`role_id` AND `id` <> NEW.`id`) > 0 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Un seul compte administrateur est autorise';
-  END IF;
-END;;
-DELIMITER ;
 
 --
 -- Dumping routines for database 'vite_et_gourmand'
@@ -312,4 +435,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-13 12:26:28
+-- Dump completed on 2026-07-17  9:26:59

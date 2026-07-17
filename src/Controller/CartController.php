@@ -231,7 +231,7 @@ class CartController extends AbstractController
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $today = (new \DateTimeImmutable())->format('Y-m-d');
         $orderIds = [];
-        // Le client ne peut demander du materiel que si au moins un menu du panier le propose dans ses conditions.
+        // Le client ne peut demander du materiel que si au moins un menu du panier le propose en base.
         $materialRequested = $request->request->getBoolean('pret_materiel');
         $hasMaterialMenu = false;
         foreach ($summary['items'] as $item) {
@@ -653,7 +653,7 @@ class CartController extends AbstractController
             return $history !== [] ? $history : [[
                 'date_changement' => $order['date_commande'] ?? null,
                 'commentaire' => $order['motif_annulation'] ?? null,
-                'statut_libelle' => $order['statut_libelle'] ?? 'Annulee',
+                'statut_libelle' => $order['statut_libelle'] ?? 'Annulée',
                 'statut_code' => 'annulee',
             ]];
         }
@@ -710,7 +710,7 @@ class CartController extends AbstractController
         $menuIds = array_keys($cartItems);
         $menus = $connection->fetchAllAssociative(
             'SELECT menu_id, nom_menu, description, personnes_minimum,
-                    prix_par_personne, stock_disponible, image_url, image_alt
+                    prix_par_personne, stock_disponible, image_url, image_alt, conditions, materiel_disponible
              FROM menus
              WHERE menu_id IN (?) AND actif = 1',
             [$menuIds],
@@ -732,6 +732,7 @@ class CartController extends AbstractController
         $normalizedCartItems = [];
         $prixMenu = 0;
         $reduction = 0;
+        $canRequestMaterial = false;
 
         foreach ($menuIds as $menuId) {
             if (!isset($menusById[$menuId])) {
@@ -749,6 +750,8 @@ class CartController extends AbstractController
             $prixMenu += $ligneTotal;
             $reduction += $ligneReduction;
             $normalizedCartItems[$menuId] = ['nombre_personnes' => $nombrePersonnes];
+            $proposeMateriel = $this->menuProvidesMaterial($menu);
+            $canRequestMaterial = $canRequestMaterial || $proposeMateriel;
 
             $cartItemsDetailed[] = [
                 'menu' => $menu,
@@ -757,6 +760,7 @@ class CartController extends AbstractController
                 'prixLigne' => $ligneTotal,
                 'reductionLigne' => $ligneReduction,
                 'prixLigneApresReduction' => $ligneTotal - $ligneReduction,
+                'proposeMateriel' => $proposeMateriel,
             ];
         }
 
@@ -792,6 +796,7 @@ class CartController extends AbstractController
             'prixTotal' => $prixTotal,
             'isConnected' => $isConnected,
             'customer' => $customer,
+            'canRequestMaterial' => $canRequestMaterial,
         ]);
     }
 
@@ -919,7 +924,7 @@ class CartController extends AbstractController
 
         $menuIds = array_keys($cartItems);
         $menus = $connection->fetchAllAssociative(
-            'SELECT menu_id, nom_menu, personnes_minimum, prix_par_personne, conditions
+            'SELECT menu_id, nom_menu, personnes_minimum, prix_par_personne, conditions, materiel_disponible
              FROM menus
              WHERE menu_id IN (?) AND actif = 1',
             [$menuIds],
@@ -953,6 +958,7 @@ class CartController extends AbstractController
                 'nombrePersonnes' => $quantity,
                 'prixLigne' => $lineTotal,
                 'reductionLigne' => $lineDiscount,
+                'proposeMateriel' => $this->menuProvidesMaterial($menu),
             ];
         }
 
@@ -969,6 +975,12 @@ class CartController extends AbstractController
             'prixLivraison' => $prixLivraison,
             'prixTotal' => $prixMenu - $reduction + $prixLivraison,
         ];
+    }
+
+    // Verifie la colonne materiel_disponible du menu pour savoir si le client peut demander un pret de materiel.
+    private function menuProvidesMaterial(array $menu): bool
+    {
+        return (int) ($menu['materiel_disponible'] ?? 0) === 1;
     }
 
     /**

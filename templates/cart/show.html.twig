@@ -251,7 +251,7 @@
             </section>
         </aside>
 
-        {# Option affichee seulement si au moins un menu du panier propose du materiel dans ses conditions. #}
+        {# Option affichee seulement si au moins un menu du panier a materiel_disponible a 1 en base. #}
         {% if canRequestMaterial|default(false) %}
             <section class="cart-card cart-material-card">
                 <h2>Mat&eacute;riel</h2>
