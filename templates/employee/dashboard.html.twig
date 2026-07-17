@@ -1,42 +1,42 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour le tableau de bord employe. #}
+{# Tableau de bord employé : raccourcis de gestion, commandes récentes et avis à modérer. #}
 {% block title %}Mon espace employe - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de l'espace employe. #}
+    {# Bandeau principal réutilisable avec le titre de l'espace employé. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Mon espace employé',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Plat raffine Vite et Gourmand'
     } %}
 
-    {# Contenu principal du tableau de bord employe. #}
+    {# Contenu principal du tableau de bord employé. #}
     <main class="employee-dashboard-page" data-employee-dashboard>
-        {# Cartes de raccourcis vers les grandes zones de gestion. #}
+        {# Accès directs aux principales fonctions opérationnelles. #}
         <section class="employee-action-grid" aria-label="Actions principales">
-            {# Acces a la gestion des commandes clients. #}
+            {# Accès à la gestion des commandes clients. #}
             <article class="employee-action-card">
                 <h2>Les commandes</h2>
                 <p>Consultez et gérez<br>toutes vos commandes</p>
                 <a href="{{ path('employee_orders') }}" class="buttonprimary employee-card-button">Accéder</a>
             </article>
 
-            {# Acces a la gestion des menus, plats et stocks. #}
+            {# Accès à la gestion des menus, plats et stocks. #}
             <article class="employee-action-card">
                 <h2>Menus &amp; plats</h2>
                 <p>Modifiez les menus,<br>les plats et les stocks</p>
                 <a href="{{ path('employee_menus') }}" class="buttonprimary employee-card-button">Accéder</a>
             </article>
 
-            {# Acces a la gestion des horaires et fermetures. #}
+            {# Accès à la gestion des horaires et fermetures. #}
             <article class="employee-action-card">
                 <h2>Horaires</h2>
                 <p>Consultez et gérez<br>les horaires</p>
                 <a href="{{ path('employee_hours') }}" class="buttonprimary employee-card-button">Accéder</a>
             </article>
 
-            {# Acces a la moderation des avis clients. #}
+            {# Accès à la modération des avis clients. #}
             <article class="employee-action-card">
                 <h2>Avis clients</h2>
                 <p>Consultez et répondez<br>aux avis clients</p>
@@ -44,24 +44,24 @@
             </article>
         </section>
 
-        {# Zone principale : commandes recentes a gauche et avis en attente a droite. #}
+        {# Zone principale : commandes récentes à gauche et avis en attente à droite. #}
         <section class="employee-dashboard-content">
             <div class="employee-orders-zone">
-                {# En-tete de la section commandes avec lien vers la page complete. #}
+                {# En-tête de la section des commandes avec un lien vers la page complète. #}
                 <div class="employee-section-heading">
                     <h2>Commandes</h2>
                     <a href="{{ path('employee_orders') }}">Voir toutes les commandes →</a>
                 </div>
 
-                {# Filtres de commandes geres par JavaScript sans rechargement de page. #}
+                {# Filtres appliqués côté navigateur aux cartes déjà rendues. #}
                 <form class="employee-order-filters" data-employee-order-filters>
-                    {# Recherche par numero de commande. #}
+                    {# Recherche par numéro de commande. #}
                     <label>
                         <span>Rechercher une commande</span>
                         <input type="text" name="orders" placeholder="Ex : 1, 2, 3" autocomplete="off">
                     </label>
 
-                    {# Filtre par statut de commande, alimente par la base. #}
+                    {# Filtre par statut de commande, alimenté par la base. #}
                     <label>
                         <span>Statut</span>
                         <select name="status">
@@ -73,7 +73,7 @@
                         </select>
                     </label>
 
-                    {# Filtre par periode. #}
+                    {# Filtre par période. #}
                     <label>
                         <span>Période</span>
                         <select name="period">
@@ -87,24 +87,24 @@
                         </select>
                     </label>
 
-                    {# Boutons pour appliquer ou reinitialiser les filtres. #}
+                    {# Boutons pour appliquer ou réinitialiser les filtres. #}
                     <div class="employee-filter-actions">
                         <button type="submit" class="buttonprimary employee-filter-submit" aria-label="Appliquer les filtres des commandes">Valider</button>
                         <button type="reset" class="buttonwhite employee-filter-reset">Réinitialiser</button>
                     </div>
                 </form>
 
-                {# Liste des commandes affichees sur le tableau de bord. #}
+                {# Liste des commandes affichées sur le tableau de bord. #}
                 <div class="employee-orders-list" data-employee-orders-list>
                     {# Message si aucune commande n'existe encore. #}
                     {% if orders is empty %}
                         <p class="employee-empty">Aucune commande pour le moment.</p>
                     {% else %}
-                        {# Boucle sur les commandes recentes. #}
+                        {# Boucle sur les commandes récentes. #}
                         {% for order in orders %}
-                            {# Classe du badge calculee a partir du statut. #}
+                            {# Regroupe les statuts terminaux et intermédiaires sous les styles disponibles. #}
                             {% set statusClass = order.statut_code == 'terminee' or order.statut_code == 'livree' ? 'badgeterminee' : (order.statut_code == 'en_attente' ? 'badgeattente' : 'badgevalidee') %}
-                            {# Carte resumee d'une commande, avec donnees utiles aux filtres JavaScript. #}
+                            {# Carte résumée d'une commande, avec les données utiles aux filtres JavaScript. #}
                             <article
                                 class="cardvieworderemployee employee-order-card"
                                 data-order-card
@@ -124,9 +124,9 @@
                                     </p>
                                 </div>
 
-                                {# Le statut garde le style d'un badge, mais devient un menu deroulant pour choisir directement le statut voulu. #}
+                                {# Le sélecteur conserve l'apparence d'un badge tout en autorisant un changement direct de statut. #}
                                 <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-dashboard-order-status-form>
-                                    {# Token CSRF : protege le changement de statut d'une commande. #}
+                                    {# Le jeton CSRF sécurise le changement de statut de la commande. #}
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                     <select
                                         name="status"
@@ -146,14 +146,14 @@
                             </article>
                         {% endfor %}
                     {% endif %}
-                    {# Message affiche quand les filtres ne trouvent aucun resultat. #}
+                    {# Message affiché quand les filtres ne trouvent aucun résultat. #}
                     <p class="employee-empty" data-employee-orders-empty hidden>Aucune commande ne correspond à votre recherche.</p>
                 </div>
             </div>
 
-            {# Colonne laterale affichant les derniers avis en attente de moderation. #}
+            {# Colonne latérale affichant les derniers avis en attente de modération. #}
             <aside class="employee-reviews-zone">
-                {# En-tete des avis avec lien vers la page complete de moderation. #}
+                {# En-tête des avis avec un lien vers la page complète de modération. #}
                 <div class="employee-section-heading employee-section-heading--reviews">
                     <h2>Avis en attente</h2>
                     <a href="{{ path('employee_reviews') }}">Voir tous les avis →</a>
@@ -178,7 +178,7 @@
                                 <div class="latestreview-actions">
                                     {# Formulaire pour refuser l'avis. #}
                                     <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-dashboard-review-action>
-                                        {# Token CSRF : protege le refus d un avis. #}
+                                        {# Le jeton CSRF sécurise le refus de l'avis. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="refuse">
                                         <button type="submit" class="buttonrefuse latestreview-refuse" aria-label="Refuser l'avis n&deg;{{ review.avis_id }}">Refuser</button>
@@ -186,7 +186,7 @@
 
                                     {# Formulaire pour accepter l'avis. #}
                                     <form method="post" action="{{ path('employee_review_status', { id: review.avis_id }) }}" data-dashboard-review-action>
-                                        {# Token CSRF : protege l acceptation d un avis. #}
+                                        {# Le jeton CSRF sécurise la validation de l'avis. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         <input type="hidden" name="action" value="accept">
                                         <button type="submit" class="buttonaccept latestreview-accept" aria-label="Valider l'avis n&deg;{{ review.avis_id }}">Valider</button>
@@ -199,7 +199,7 @@
             </aside>
         </section>
 
-        {# Bouton de deconnexion de l'employe. #}
+        {# Bouton de déconnexion de l'employé. #}
         <div class="employee-dashboard-logout">
             <a href="{{ path('logout') }}" class="buttonprimary">Déconnexion</a>
         </div>
@@ -208,6 +208,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script des filtres de commandes du tableau de bord employe. #}
+    {# Gère les filtres et les actions asynchrones du tableau de bord employé. #}
     <script src="{{ asset('assets/scripts/employee-dashboard.js') }}" defer></script>
 {% endblock %}

@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{# Macro qui affiche le formulaire actif/inactif d'un element. #}
+{# Génère le contrôle d'activation commun aux différents types d'éléments culinaires. #}
 {% macro status_form(item, type) %}
-    {# Etat courant de l'element. #}
+    {# État courant de l'élément. #}
     {% set isActive = item.actif|default(1) == 1 %}
 
-    {# Formulaire de bascule actif/inactif utilise dans les tableaux. #}
+    {# Formulaire de bascule actif/inactif utilisé dans les tableaux. #}
     <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}">
-        {# Token CSRF : protege l activation ou la desactivation de l element. #}
+        {# Le jeton CSRF sécurise le changement d'état de l'élément. #}
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
         <button
             type="submit"
@@ -20,15 +20,15 @@
     </form>
 {% endmacro %}
 
-{# Macro qui affiche les actions modifier et supprimer. #}
+{# Génère les actions communes de modification et de suppression. #}
 {% macro actions(item, type) %}
     <div class="employee-table-actions">
         {# Lien vers le formulaire de modification. #}
         <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit" aria-label="Modifier {{ item.title }}">Modifier</a>
 
-        {# Formulaire de suppression, intercepte par JavaScript pour afficher une confirmation. #}
+        {# Formulaire de suppression, intercepté par JavaScript pour afficher une confirmation. #}
         <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
-            {# Token CSRF : protege la suppression logique de l element. #}
+            {# Le jeton CSRF sécurise la suppression logique de l'élément. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
             <button type="submit" class="buttondelete" aria-label="Supprimer {{ item.title }}">Supprimer</button>
         </form>
@@ -38,23 +38,23 @@
 {# Import des macros du fichier courant. #}
 {% import _self as ui %}
 
-{# Titre affiche dans l'onglet du navigateur. #}
+{# Titre affiché dans l'onglet du navigateur. #}
 {% block title %}Liste des menus et plats - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {# Bandeau principal réutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Liste des menus et plats',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Plat Vite et Gourmand'
     } %}
 
-    {# Contenu principal de la liste complete des elements culinaires. #}
+    {# Contenu principal de la liste complète des éléments culinaires. #}
     <main class="employee-management-page employee-list-page">
-        {# Lien de retour vers la page de gestion resumee. #}
+        {# Lien de retour vers la page de gestion résumée. #}
         <a href="{{ path('employee_menus') }}" class="cart-back-link">&larr; Retour aux menus et plats</a>
 
-        {# Section complete des menus. #}
+        {# Section complète des menus. #}
         <section class="employee-list-section" id="menus">
             <div class="employee-list-heading">
                 <div>
@@ -66,7 +66,7 @@
             </div>
 
             <div class="employee-table-wrap">
-                {# Tableau listant tous les menus. #}
+                {# Contrairement à la page d'aperçu, ce tableau ne limite pas le nombre de menus. #}
                 <table class="employee-management-table">
                     <thead>
                         <tr>
@@ -91,7 +91,7 @@
                                 <td>{{ ui.actions(menu, 'menu') }}</td>
                             </tr>
                         {% else %}
-                            {# Message affiche si aucun menu n'existe. #}
+                            {# Message affiché si aucun menu n'existe. #}
                             <tr>
                                 <td colspan="6">Aucun menu &agrave; afficher.</td>
                             </tr>
@@ -101,7 +101,7 @@
             </div>
         </section>
 
-        {# Section complete des entrees. #}
+        {# Section complète des entrées. #}
         <section class="employee-list-section" id="entrees">
             <div class="employee-list-heading">
                 <div>
@@ -112,11 +112,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'entree' }) }}" class="buttonprimary employee-add-button">Ajouter une entr&eacute;e</a>
             </div>
 
-            {# Tableau reutilisable pour les entrees. #}
+            {# Tableau réutilisable pour les entrées. #}
             {% include 'employee/_meal_table.html.twig' with { items: entrees, type: 'entree', empty: 'Aucune entr&eacute;e &agrave; afficher.' } %}
         </section>
 
-        {# Section complete des plats. #}
+        {# Section complète des plats. #}
         <section class="employee-list-section" id="plats">
             <div class="employee-list-heading">
                 <div>
@@ -127,11 +127,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'plat' }) }}" class="buttonprimary employee-add-button">Ajouter un plat</a>
             </div>
 
-            {# Tableau reutilisable pour les plats. #}
+            {# Tableau réutilisable pour les plats. #}
             {% include 'employee/_meal_table.html.twig' with { items: plats, type: 'plat', empty: 'Aucun plat &agrave; afficher.' } %}
         </section>
 
-        {# Section complete des desserts. #}
+        {# Section complète des desserts. #}
         <section class="employee-list-section" id="desserts">
             <div class="employee-list-heading">
                 <div>
@@ -142,11 +142,11 @@
                 <a href="{{ path('employee_meal_create', { type: 'dessert' }) }}" class="buttonprimary employee-add-button">Ajouter un dessert</a>
             </div>
 
-            {# Tableau reutilisable pour les desserts. #}
+            {# Tableau réutilisable pour les desserts. #}
             {% include 'employee/_meal_table.html.twig' with { items: desserts, type: 'dessert', empty: 'Aucun dessert &agrave; afficher.' } %}
         </section>
 
-        {# Encadre informatif sur l'impact des modifications. #}
+        {# Encadré informatif sur l'impact des modifications. #}
         <aside class="employee-info-box">
             <span class="employee-info-box__icon" aria-hidden="true">i</span>
             <div>
@@ -156,12 +156,12 @@
         </aside>
     </main>
 
-    {# Modale de confirmation avant suppression d'un element. #}
+    {# Modale unique réutilisée pour confirmer la suppression de n'importe quel élément. #}
     <div class="employee-delete-modal" data-delete-modal hidden>
         {# Overlay permettant de fermer la modale. #}
         <div class="employee-delete-modal__overlay" data-delete-cancel></div>
 
-        {# Boite de dialogue de suppression. #}
+        {# Boîte de dialogue de suppression. #}
         <section class="employee-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
             <h2 id="delete-modal-title">Attention</h2>
             <p>Voulez-vous vraiment supprimer cet &eacute;l&eacute;ment ? Il ne sera plus visible sur le site.</p>
@@ -176,6 +176,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui gere les changements actif/inactif et les suppressions confirmees. #}
+    {# Gère les changements d'état et soumet la suppression après confirmation. #}
     <script src="{{ asset('assets/scripts/employee-management.js') }}" defer></script>
 {% endblock %}

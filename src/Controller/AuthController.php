@@ -10,10 +10,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
-// Controleur de la connexion, de l inscription et de la reinitialisation du mot de passe.
+// Contrôleur de l'authentification, de l'inscription et de la réinitialisation du mot de passe.
 class AuthController extends AbstractController
 {
-    // Connecte un utilisateur et le redirige selon son role.
+    // Authentifie un utilisateur actif, initialise sa session et le redirige selon son rôle.
     public function login(Request $request, Connection $connection): Response
     {
         if ($request->isMethod('POST')) {
@@ -70,7 +70,7 @@ class AuthController extends AbstractController
         return $this->render('auth/login.html.twig');
     }
 
-    // Deconnecte l utilisateur en vidant sa session.
+    // Déconnecte l'utilisateur en vidant sa session.
     public function logout(Request $request): Response
     {
         $request->getSession()->remove('utilisateur_id');
@@ -79,11 +79,11 @@ class AuthController extends AbstractController
         return $this->redirectToRoute('home_show');
     }
 
-    // Cree un compte client avec controle de l email et du mot de passe.
+    // Crée un compte client avec contrôle de l'e-mail et du mot de passe.
     public function register(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
-            // Token CSRF : protege la creation de compte contre les envois non voulus.
+            // Jeton CSRF : protège la création de compte contre les envois non voulus.
             if (!$this->isValidAuthCsrf($request)) {
                 $this->addFlash('register_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -117,21 +117,21 @@ class AuthController extends AbstractController
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
 
-            // Verifie le telephone cote serveur, meme si le formulaire HTML a deja des contraintes.
+            // Vérifie le téléphone côté serveur, même si le formulaire HTML a déjà des contraintes.
             if (!InputValidator::isValidPhone($data['telephone'])) {
                 $this->addFlash('register_error', 'Veuillez renseigner un numero de telephone valide.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
 
-            // Verifie que le code postal est bien au format francais attendu.
+            // Vérifie que le code postal est bien au format français attendu.
             if (!InputValidator::isValidPostalCode($data['code_postal'])) {
                 $this->addFlash('register_error', 'Veuillez renseigner un code postal valide a 5 chiffres.');
 
                 return $this->render('auth/register.html.twig', ['formData' => $data]);
             }
 
-            // Limite la taille des donnees envoyees avant insertion dans la table utilisateurs.
+            // Limite la taille des données envoyées avant insertion dans la table des utilisateurs.
             if (!$this->hasValidRegistrationLengths($data)) {
                 $this->addFlash('register_error', 'Certaines informations sont trop longues.');
 
@@ -206,11 +206,11 @@ class AuthController extends AbstractController
         ]);
     }
 
-    // Genere et envoie un lien de reinitialisation de mot de passe par email.
+    // Génère un jeton temporaire et envoie le lien de réinitialisation sans révéler si le compte existe.
     public function forgotPassword(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
-            // Token CSRF : protege la demande de reinitialisation de mot de passe.
+            // Jeton CSRF : protège la demande de réinitialisation du mot de passe.
             if (!$this->isValidAuthCsrf($request)) {
                 $this->addFlash('forgot_error', 'Le formulaire a expiré, veuillez reessayer.');
 
@@ -258,7 +258,7 @@ class AuthController extends AbstractController
         return $this->render('auth/forgot_password.html.twig');
     }
 
-    // Permet de definir un nouveau mot de passe avec un token valide.
+    // Valide le jeton non expiré, remplace le mot de passe puis rend le lien inutilisable.
     public function resetPassword(string $token, Request $request, Connection $connection): Response
     {
         $this->ensurePasswordResetTableExists($connection);
@@ -280,7 +280,7 @@ class AuthController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Token CSRF : protege l enregistrement du nouveau mot de passe.
+            // Jeton CSRF : protège l'enregistrement du nouveau mot de passe.
             if (!$this->isValidAuthCsrf($request)) {
                 $this->addFlash('reset_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -310,8 +310,8 @@ class AuthController extends AbstractController
             ]);
 
             try {
-                // Le lien de reinitialisation definit un nouveau mot de passe personnel.
-                // Le mot de passe initial cree par l'administrateur ne doit donc plus etre visible.
+                // Le lien de réinitialisation définit un nouveau mot de passe personnel.
+                // Le mot de passe initial créé par l'administrateur ne doit donc plus être visible.
                 $connection->update('utilisateurs', ['mot_de_passe_initial' => null], [
                     'id' => (int) $resetRequest['utilisateur_id'],
                 ]);
@@ -334,13 +334,13 @@ class AuthController extends AbstractController
         ]);
     }
 
-    // Verifie le token CSRF commun aux formulaires d authentification.
+    // Vérifie le jeton CSRF commun aux formulaires d'authentification.
     private function isValidAuthCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('auth_action', (string) $request->request->get('_csrf_token'));
     }
 
-    // Verifie que le mot de passe saisi correspond au mot de passe stocke.
+    // Vérifie que le mot de passe saisi correspond au mot de passe stocké.
     private function isPasswordValid(string $password, string $storedPassword): bool
     {
         if ($storedPassword === '') {
@@ -350,7 +350,7 @@ class AuthController extends AbstractController
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
     }
 
-    // Email : envoie un message de bienvenue au client apres la création de son compte.
+    // E-mail : envoie un message de bienvenue au client après la création de son compte.
     private function sendWelcomeEmail(MailerInterface $mailer, array $userData): void
     {
         $to = (string) ($userData['email'] ?? '');
@@ -371,18 +371,18 @@ class AuthController extends AbstractController
         HTML;
 
         try {
-            // Le SMTP configure dans .env.local est utilise automatiquement par Symfony Mailer.
+            // Le SMTP configuré dans .env.local est utilisé automatiquement par Symfony Mailer.
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
                 ->subject('Bienvenue chez Vite & Gourmand')
                 ->html($html));
         } catch (\Throwable) {
-            // L'inscription doit rester valide meme si l'envoi d'email n'est pas configure en local.
+            // L'inscription doit rester valide même si l'envoi d'e-mail n'est pas configuré en local.
         }
     }
 
-    // Email 2 : envoie au client le lien sécurisé permettant de définir un nouveau mot de passe.
+    // E-mail 2 : envoie au client le lien sécurisé permettant de définir un nouveau mot de passe.
     private function sendPasswordResetEmail(MailerInterface $mailer, string $to, string $resetUrl): void
     {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -404,18 +404,18 @@ class AuthController extends AbstractController
         HTML;
 
         try {
-            // Le lien contient un token unique et expire apres la duree definie lors de la demande.
+            // Le lien contient un jeton unique et expire après la durée définie lors de la demande.
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
                 ->subject('Réinitialisation de votre mot de passe - Vite & Gourmand')
                 ->html($html));
         } catch (\Throwable) {
-            // La demande reste valide meme si le SMTP local n'est pas encore configure.
+            // La demande reste valide même si le SMTP local n'est pas encore configuré.
         }
     }
 
-    // Determine la page de redirection selon le role de l utilisateur.
+    // Détermine la page de redirection selon le rôle de l'utilisateur.
     private function getDefaultRouteForRole(string $roleLibelle): string
     {
         if ($roleLibelle === 'administrateur') {
@@ -428,7 +428,7 @@ class AuthController extends AbstractController
         };
     }
 
-    // Controle les regles de securite du mot de passe.
+    // Contrôle les règles de sécurité du mot de passe.
     private function isStrongPassword(string $password): bool
     {
         return strlen($password) >= 10
@@ -441,7 +441,7 @@ class AuthController extends AbstractController
     /**
      * @param array<string, string> $data
      */
-    // Regroupe les limites de longueur du formulaire d inscription.
+    // Regroupe les limites de longueur du formulaire d'inscription.
     private function hasValidRegistrationLengths(array $data): bool
     {
         return InputValidator::hasMaxLength($data['prenom'] ?? '', 100)
@@ -453,7 +453,7 @@ class AuthController extends AbstractController
             && InputValidator::hasMaxLength($data['code_postal'] ?? '', 10);
     }
 
-    // Cree la table de reinitialisation si elle n existe pas encore.
+    // Crée la table de réinitialisation si elle n'existe pas encore.
     private function ensurePasswordResetTableExists(Connection $connection): void
     {
         $connection->executeStatement(

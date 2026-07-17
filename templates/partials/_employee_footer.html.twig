@@ -1,18 +1,16 @@
-{# Utilisateur connecte recupere pour adapter le lien "Mon espace". #}
+{# Prépare la destination de « Mon espace » à partir du rôle conservé en session. #}
 {% set footerUser = app.session.get('utilisateur') %}
-{# Role de l'utilisateur utilise dans le footer interne. #}
 {% set footerRole = footerUser.role_libelle|default('') %}
 {% set footerRoleId = footerUser.role_id|default(0) %}
-{# Route du tableau de bord selon que l'utilisateur est administrateur ou employe. #}
+{# L’identifiant sert de solution de repli si le libellé du rôle est absent. #}
 {% set footerDashboardRoute = footerRole == 'administrateur' or footerRoleId == 3 ? 'admin_dashboard' : 'employee_dashboard' %}
 
-{# Footer specifique aux espaces employe et administrateur. #}
+{# Pied de page commun aux espaces employé et administrateur. #}
 <footer class="footer-desktop footer-employee">
-    {# Colonne de liens vers les pages de gestion internes. #}
     <div class="footer-hours footer-employee-management">
         <p class="footer-title">Gestion :</p>
 
-        {# Navigation vers les principaux outils de gestion. #}
+        {# Regroupe les outils opérationnels partagés par les deux rôles internes. #}
         <nav class="footer-text footer-employee-links" aria-label="Navigation gestion">
             <a href="{{ path('employee_orders') }}">Des commandes</a>
             <a href="{{ path('employee_menus') }}">Des menus et des plats</a>
@@ -22,22 +20,20 @@
         </nav>
     </div>
 
-    {# Bloc central avec le nom du site et les liens legaux. #}
+    {# Identité du site et accès aux informations contractuelles. #}
     <div class="footer-brand">
         <p class="footer-name">Vite & Gourmand</p>
 
-        {# Liens legaux affiches aussi dans l'espace interne. #}
         <nav class="footer-legal" aria-label="Liens légaux">
             <a href="#">Mentions légales</a>
             <a href="#">CGV</a>
         </nav>
     </div>
 
-    {# Navigation generale du footer interne. #}
+    {# Navigation transversale et sortie de la session interne. #}
     <nav class="footer-nav" aria-label="Navigation">
         <a href="{{ path('home_show') }}">Accueil</a>
         <a href="{{ path('menu_index') }}">Menus</a>
-        {# Retour vers le bon espace selon le role connecte. #}
         <a href="{{ path(footerDashboardRoute) }}">Mon espace</a>
         <a href="{{ path('logout') }}">Déconnexion</a>
     </nav>

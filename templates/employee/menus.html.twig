@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{# Macro reutilisable pour afficher une carte modifiable de menu, entree, plat ou dessert. #}
+{# Génère une carte de gestion homogène pour un menu, une entrée, un plat ou un dessert. #}
 {% macro editable_card(item, type, priceLabel) %}
-    {# Etat actif/inactif de l'element affiche. #}
+    {# État actif/inactif de l'élément affiché. #}
     {% set isActive = item.actif|default(1) == 1 %}
 
-    {# Carte de gestion avec data-* pour les actions JavaScript. #}
+    {# Les attributs data-* permettent au script de cibler la carte et son élément métier. #}
     <article class="editablemenucard employee-editable-card" data-management-card data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
-        {# Image de l'element, avec image par defaut si aucun chemin n'est renseigne. #}
+        {# Image de l'élément, avec une image par défaut si aucun chemin n'est renseigné. #}
         <img
             src="{{ item.image_url|default('') ? asset(item.image_url) : asset('assets/bigtittle.png') }}"
             alt="{{ item.image_alt|default(item.title) }}"
@@ -19,9 +19,9 @@
             <div class="editablemenucard-header">
                 <h3 class="editablemenucard-title">{{ item.title }}</h3>
 
-                {# Formulaire qui permet d'activer ou desactiver l'element sans changer de page. #}
+                {# Formulaire qui permet d'activer ou désactiver l'élément sans changer de page. #}
                 <form method="post" action="{{ path('employee_item_toggle', { type: type, id: item.id }) }}" class="employee-card-status-form" data-toggle-active-form data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
-                    {# Token CSRF : protege l activation ou la desactivation de l element. #}
+                    {# Le jeton CSRF sécurise le changement d'état de l'élément. #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                     <button
                         type="submit"
@@ -34,10 +34,10 @@
                 </form>
             </div>
 
-            {# Description de l'element, avec texte de secours si elle est vide. #}
+            {# Description de l'élément, avec un texte de secours si elle est vide. #}
             <p class="editablemenucard-description">{{ item.description|default('Aucune description renseign&eacute;e.') }}</p>
 
-            {# Bas de carte : prix ou menu associe, puis actions modifier/supprimer. #}
+            {# Bas de carte : prix ou menu associé, puis actions de modification et de suppression. #}
             <div class="editablemenucard-footer">
                 <p class="editablemenucard-price">
                     {% if type == 'menu' %}
@@ -47,13 +47,13 @@
                     {% endif %}
                 </p>
 
-                {# Actions de gestion de l'element. #}
+                {# Actions de gestion de l'élément. #}
                 <div class="editablemenucard-actions">
                     <a href="{{ path('employee_item_edit', { type: type, id: item.id }) }}" class="buttonedit" aria-label="Modifier {{ item.title }}">Modifier</a>
 
-                    {# Suppression protegee par une modale de confirmation. #}
+                    {# Suppression protégée par une modale de confirmation. #}
                     <form method="post" action="{{ path('employee_item_delete', { type: type, id: item.id }) }}" data-confirm-delete>
-                        {# Token CSRF : protege la suppression logique de l element. #}
+                        {# Le jeton CSRF sécurise la suppression logique de l'élément. #}
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                         <button type="submit" class="buttondelete" aria-label="Supprimer {{ item.title }}">Supprimer</button>
                     </form>
@@ -66,11 +66,11 @@
 {# Import de la macro du fichier courant pour l'utiliser plus bas. #}
 {% import _self as ui %}
 
-{# Titre affiche dans l'onglet du navigateur. #}
+{# Titre affiché dans l'onglet du navigateur. #}
 {% block title %}Les menus et les plats - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {# Bandeau principal réutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Les menus et les plats',
         image: asset('assets/bigtittle.png'),
@@ -79,10 +79,10 @@
 
     {# Contenu principal de la gestion menus/plats. #}
     <main class="employee-management-page">
-        {# Lien de retour vers l'espace employe ou administrateur selon le role. #}
+        {# Lien de retour vers l'espace employé ou administrateur selon le rôle. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
-        {# Section des menus populaires ou principaux. #}
+        {# Aperçu limité des menus principaux, avec accès à la liste complète. #}
         <section class="employee-manage-section">
             <div class="employee-manage-heading">
                 <div>
@@ -95,7 +95,7 @@
             </div>
 
             <div class="employee-editable-grid">
-                {# Boucle sur les menus a afficher dans l'aperçu. #}
+                {# Boucle sur les menus à afficher dans l'aperçu. #}
                 {% for menu in menus %}
                     {{ ui.editable_card(menu, 'menu', '') }}
                 {% else %}
@@ -105,7 +105,7 @@
             </div>
         </section>
 
-        {# Section des entrees. #}
+        {# Section des entrées. #}
         <section class="employee-manage-section">
             <div class="employee-manage-heading">
                 <div>
@@ -118,11 +118,11 @@
             </div>
 
             <div class="employee-editable-grid">
-                {# Boucle sur les entrees affichees. #}
+                {# Boucle sur les entrées affichées. #}
                 {% for entree in entrees %}
                     {{ ui.editable_card(entree, 'entree', entree.nom_menu ? 'Menu : ' ~ entree.nom_menu : 'Entr&eacute;e ind&eacute;pendante') }}
                 {% else %}
-                    {# Message si aucune entree n'est disponible. #}
+                    {# Message si aucune entrée n'est disponible. #}
                     <p class="employee-empty">Aucune entr&eacute;e &agrave; afficher.</p>
                 {% endfor %}
             </div>
@@ -141,7 +141,7 @@
             </div>
 
             <div class="employee-editable-grid">
-                {# Boucle sur les plats affiches. #}
+                {# Boucle sur les plats affichés. #}
                 {% for plat in plats %}
                     {{ ui.editable_card(plat, 'plat', plat.nom_menu ? 'Menu : ' ~ plat.nom_menu : 'Plat ind&eacute;pendant') }}
                 {% else %}
@@ -164,7 +164,7 @@
             </div>
 
             <div class="employee-editable-grid">
-                {# Boucle sur les desserts affiches. #}
+                {# Boucle sur les desserts affichés. #}
                 {% for dessert in desserts %}
                     {{ ui.editable_card(dessert, 'dessert', dessert.nom_menu ? 'Menu : ' ~ dessert.nom_menu : 'Dessert ind&eacute;pendant') }}
                 {% else %}
@@ -174,7 +174,7 @@
             </div>
         </section>
 
-        {# Encadre informatif sur l'impact des modifications. #}
+        {# Encadré informatif sur l'impact des modifications. #}
         <aside class="employee-info-box">
             <span class="employee-info-box__icon" aria-hidden="true">i</span>
             <div>
@@ -184,12 +184,12 @@
         </aside>
     </main>
 
-    {# Modale de confirmation avant suppression d'un element. #}
+    {# Modale partagée par toutes les cartes pour confirmer une suppression. #}
     <div class="employee-delete-modal" data-delete-modal hidden>
         {# Overlay permettant de fermer la modale. #}
         <div class="employee-delete-modal__overlay" data-delete-cancel></div>
 
-        {# Boite de dialogue de confirmation. #}
+        {# Boîte de dialogue de confirmation. #}
         <section class="employee-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
             <h2 id="delete-modal-title">Attention</h2>
             <p>Voulez-vous vraiment supprimer cet &eacute;l&eacute;ment ? Il ne sera plus visible sur le site.</p>
@@ -204,6 +204,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui gere les changements actif/inactif et la modale de suppression. #}
+    {# Gère les changements d'état et la confirmation des suppressions. #}
     <script src="{{ asset('assets/scripts/employee-management.js') }}" defer></script>
 {% endblock %}

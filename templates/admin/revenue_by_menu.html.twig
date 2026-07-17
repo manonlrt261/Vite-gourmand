@@ -1,19 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiché dans l'onglet du navigateur pour la page de chiffre d'affaires. #}
+{# Analyse du chiffre d'affaires par menu avec filtres et graphiques côté navigateur. #}
 {% block title %}Chiffre d'affaires par menu - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: "Chiffre d'affaires par menu",
         image: asset('assets/bigtittle.png'),
         image_alt: "Chiffre d'affaires par menu Vite et Gourmand"
     } %}
 
-    {# Contenu principal. L'attribut data permet au script JavaScript de reconnaître cette page. #}
+    {# L'attribut racine permet au script de s'initialiser uniquement sur cette page. #}
     <main class="admin-orders-menu-page" data-revenue-menu-page>
-        {# Lien de retour vers l'espace administrateur. #}
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
         {# Partie haute : filtres de recherche à gauche et indicateurs clés à droite. #}
@@ -22,13 +20,11 @@
             <form class="admin-orders-menu-filters" data-revenue-menu-filters>
                 <h1>Filtres</h1>
 
-                {# Date de début de la période utilisée pour calculer le chiffre d'affaires. #}
                 <label>
                     <span>Date de d&eacute;but</span>
                     <input type="date" name="start_date" data-revenue-menu-start>
                 </label>
 
-                {# Date de fin de la période utilisée pour calculer le chiffre d'affaires. #}
                 <label>
                     <span>Date de fin</span>
                     <input type="date" name="end_date" data-revenue-menu-end>
@@ -39,7 +35,6 @@
                     <span>Th&egrave;me</span>
                     <select name="theme" data-revenue-menu-theme>
                         <option value="">Tous les th&egrave;mes</option>
-                        {# Liste des thèmes disponibles, envoyée par le contrôleur. #}
                         {% for theme in themes %}
                             <option value="{{ theme }}">{{ theme }}</option>
                         {% endfor %}
@@ -50,7 +45,6 @@
                 <div class="admin-orders-menu-field">
                     <span>Menus</span>
                     <div class="admin-orders-menu-checkboxes" data-revenue-menu-select>
-                        {# Chaque menu actif ou suivi statistiquement devient une case à cocher. #}
                         {% for menu in menus %}
                             <label>
                                 <input type="checkbox" name="menus[]" value="{{ menu.menu_id }}">
@@ -60,7 +54,6 @@
                     </div>
                 </div>
 
-                {# Actions des filtres : appliquer la sélection ou revenir aux données de départ. #}
                 <div class="admin-orders-menu-filter-actions">
                     <button type="button" class="buttonprimary" data-revenue-menu-apply>Appliquer les filtres</button>
                     <button type="button" class="buttonoffwhite" data-revenue-menu-reset>R&eacute;initialiser</button>
@@ -69,19 +62,16 @@
 
             {# Indicateurs résumés affichés au chargement de la page. #}
             <div class="admin-orders-menu-stats">
-                {# Chiffre d'affaires total depuis le début de l'année. #}
                 <article>
                     <strong data-revenue-menu-total>{{ initialStats.revenue|number_format(2, ',', ' ') }} &euro;</strong>
                     <span>CA total en {{ initialStats.year }}</span>
                 </article>
 
-                {# Nombre de menus actuellement disponibles sur le site. #}
                 <article>
                     <strong>{{ initialStats.active_menus_count }}</strong>
                     <span>Menus disponibles</span>
                 </article>
 
-                {# Nombre de thèmes représentés dans les menus. #}
                 <article class="admin-orders-menu-stats-wide">
                     <strong>{{ initialStats.themes_count }}</strong>
                     <span>Th&egrave;mes</span>
@@ -142,9 +132,9 @@
         </section>
     </main>
 
-    {# Données MongoDB préparées par Symfony et utilisées par le script de visualisation. #}
+    {# Charge utile JSON rendue côté serveur, lue puis filtrée par le script de la page. #}
     <script type="application/json" id="revenue-menu-documents">{{ documentsJson|raw }}</script>
-    {# Statistiques initiales utilisées avant l'application des filtres. #}
+    {# Valeurs de référence utilisées avant toute application de filtre. #}
     <script type="application/json" id="revenue-menu-default-stats">{{ initialStats|json_encode|raw }}</script>
 {% endblock %}
 

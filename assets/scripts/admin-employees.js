@@ -1,3 +1,4 @@
+// Pilote la liste des employés : filtres, changement de statut et modales de consultation, modification ou suppression.
 document.addEventListener('DOMContentLoaded', () => {
   const page = document.querySelector('[data-admin-employees-page]');
 
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewModal = page.querySelector('[data-employee-view-modal]');
   const deleteModal = page.querySelector('[data-employee-delete-modal]');
   const deleteConfirm = page.querySelector('[data-delete-confirm]');
-  // Token CSRF fourni par Twig : il securise les actions AJAX sensibles.
+  // Le jeton CSRF fourni par Twig protège la suppression envoyée en AJAX.
   const csrfToken = page.dataset.adminCsrfToken || '';
 
   let editedCard = null;
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const normalize = (value) => value.toString().trim().toLowerCase();
 
-  // Affiche les dates de la fiche employe au format francais JJ/MM/AAAA.
+  // Convertit une date ISO en JJ/MM/AAAA sans modifier une valeur au format inattendu.
   const formatFrenchDate = (value) => {
     if (!value) {
       return '';
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const requestJson = async (url, options = {}) => {
+    // Centralise les en-têtes AJAX et transforme les erreurs HTTP en exceptions affichables.
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const applyFilters = () => {
+    // Une carte reste visible uniquement si elle satisfait simultanément la recherche, le statut et le poste.
     const search = normalize(searchInput?.value || '');
     const status = statusSelect?.value || '';
     const job = jobSelect?.value || '';
@@ -141,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const fillEditForm = (button) => {
+    // Les données embarquées sur le bouton évitent une requête supplémentaire à l'ouverture de la modale.
     editForm.action = button.dataset.updateUrl || '';
     editForm.querySelector('[data-edit-id]').value = button.dataset.id || '';
     editForm.querySelector('[data-edit-prenom]').value = button.dataset.prenom || '';
@@ -168,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     editModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
-    // Le premier champ reçoit le focus pour que la modification soit possible sans souris.
+    // Le premier champ reçoit le point de focalisation pour permettre la modification sans souris.
     editForm.querySelector('[data-edit-prenom]')?.focus();
   };
 
@@ -195,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const preparePasswordPreview = (button) => {
-    // Le mot de passe initial n'est affichable que s'il correspond encore au mot de passe cree par l'administrateur.
+    // Le mot de passe initial n'est révélable que si le serveur fournit encore sa valeur d'origine.
     const maskedPassword = '••••••••••';
     const initialPassword = (button.dataset.initialPassword || '').trim();
     const unavailableValues = ['non visible', '***', maskedPassword, 'null', 'undefined'];
@@ -233,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateEmployeeCard = (employee) => {
+    // Répercute la réponse du serveur dans la carte et dans les attributs utilisés lors des prochaines ouvertures.
     if (!editedCard) {
       return;
     }
@@ -355,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   deleteConfirm?.addEventListener('click', async () => {
+    // La carte n'est retirée du DOM qu'après confirmation de la suppression par le serveur.
     if (!deleteUrl || !deletedCard) {
       closeDeleteModal();
       return;
@@ -410,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   [searchInput, statusSelect, jobSelect].forEach((field) => {
     field?.addEventListener('keydown', (event) => {
-      // La touche Entree applique les filtres comme le bouton principal.
+      // La touche Entrée applique les filtres comme le bouton principal.
       if (event.key === 'Enter') {
         event.preventDefault();
         applyFilters();

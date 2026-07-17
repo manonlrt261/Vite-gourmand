@@ -1,4 +1,4 @@
-/*Carte filtres espace administrateur*/
+/* Filtres réutilisables des espaces administrateur, employé et catalogue. */
 .filterbadge {
   width: 320px;
   padding: 24px;
@@ -110,7 +110,7 @@
   height: 23px;
 }
 
-/*Filtre prix*/
+/* Filtre par prix. */
 .pricefilter {
   width: 160px;
 }
@@ -137,7 +137,7 @@
   outline: none;
 }
 
-/*Filtre disponibilités*/
+/* Filtre par disponibilité. */
 .availabilityfilter {
   width: 160px;
   height: 40px;
@@ -169,7 +169,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre catégories*/
+/* Filtre par catégorie. */
 .categoryfilter {
   width: 160px;
 }
@@ -234,7 +234,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre régimes particuliers*/
+/* Filtre par régime alimentaire particulier. */
 .specialregimefilter {
   width: 160px;
 }
@@ -299,7 +299,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre nombre de personnes minimum*/
+/* Filtre par nombre minimal de personnes. */
 .minimumpersonfilter {
   width: 160px;
 }
@@ -364,7 +364,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre par popularité*/
+/* Filtre par popularité. */
 .popularityfilter {
   width: 160px;
 }
@@ -394,7 +394,7 @@
   outline: none;
 }
 
-/*Filtre par statut de la commande*/
+/* Filtre par statut de commande. */
 .statutfilter {
   width: 160px;
 }
@@ -459,7 +459,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre par période de temps*/
+/* Filtre par période. */
 .periodfilter {
   width: 160px;
 }
@@ -486,7 +486,7 @@
   outline: none;
 }
 
-/*Filtre par notes*/
+/* Filtre par note. */
 .scorefilter {
   width: 160px;
 }
@@ -551,7 +551,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre par menu*/
+/* Filtre par menu. */
 .menufilter {
   width: 160px;
 }
@@ -616,7 +616,7 @@
   accent-color: var(--primary);
 }
 
-/*Filtre par date de livraison*/
+/* Filtre par date de livraison. */
 .deliverydatefilter {
   width: 160px;
 }
@@ -641,7 +641,7 @@
   outline: none;
 }
 
-/*Filtre par lieu de livraison*/
+/* Filtre par code postal de livraison. */
 .postalcodefilter {
   width: 160px;
 }

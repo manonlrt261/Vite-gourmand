@@ -1,3 +1,4 @@
+// Met à jour la messagerie employé sans rechargement complet : onglets, actions et confirmation de suppression.
 document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelector('[data-message-tabs]');
   const list = document.querySelector('[data-message-list]');
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const showFeedback = (message, isError = false) => {
+    // Remplace le message précédent et applique le style correspondant au résultat de l'action.
     if (!feedback) {
       return;
     }
@@ -38,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const loadTab = async (url, pushHistory = true) => {
+    // Extrait uniquement les onglets et la liste depuis la réponse HTML, puis synchronise l'historique.
     const response = await fetch(url, {
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
@@ -64,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const submitAction = async (form) => {
+    // L'attribut est lu directement pour éviter toute collision avec un éventuel champ nommé « action ».
     const response = await fetch(form.getAttribute('action'), {
       method: form.method || 'POST',
       headers: {
@@ -111,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('submit', async (event) => {
+    // La délégation reste fonctionnelle après le remplacement AJAX de la liste des messages.
     const form = event.target.matches('[data-message-action]') ? event.target : null;
     if (!form) {
       return;
@@ -175,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.addEventListener('popstate', () => {
+    // Recharge le contenu correspondant lorsque l'utilisateur navigue avec les commandes « Précédent » ou « Suivant ».
     loadTab(window.location.href, false).catch((error) => {
       showFeedback(error.message, true);
     });

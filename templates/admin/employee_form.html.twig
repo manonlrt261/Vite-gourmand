@@ -1,22 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiché dans l'onglet du navigateur pour la page d'ajout d'un employé. #}
+{# Création d'un compte employé et collecte de ses informations administratives. #}
 {% block title %}Ajouter un employé - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Ajouter un employé',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Ajouter un employé Vite et Gourmand'
     } %}
 
-    {# Contenu principal du formulaire de création d'un employé. #}
     <main class="admin-employee-form-page">
-        {# Lien de retour vers la liste des employés. #}
         <a href="{{ path('admin_employees') }}" class="cart-back-link">&larr; Retour à la gestion des employés</a>
 
-        {# Introduction de la page : elle explique à quoi sert le formulaire. #}
         <section class="admin-employees-heading">
             <div>
                 <h1>Ajouter un employé</h1>
@@ -24,7 +20,7 @@
             </div>
         </section>
 
-        {# Bloc d'erreurs affiché si une information obligatoire est manquante ou invalide. #}
+        {# Les erreurs de validation serveur sont regroupées avant le formulaire. #}
         {% if errors is not empty %}
             <div class="contact-alert">
                 {% for error in errors %}
@@ -33,9 +29,9 @@
             </div>
         {% endif %}
 
-        {# Formulaire envoyé au serveur pour créer le compte employé dans la base de données. #}
+        {# Le contrôleur réinjecte les valeurs saisies dans employee lorsque la validation échoue. #}
         <form method="post" class="admin-employee-create-form">
-            {# Token CSRF : protège la création d'un compte employé. #}
+            {# Jeton commun aux opérations administratives sur les comptes employés. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
 
             {# Identité de l'employé. #}
@@ -76,13 +72,13 @@
                 <input type="text" name="ville" value="{{ employee.ville|default('') }}" placeholder="Votre ville" required>
             </label>
 
-            {# L'email professionnel sert à la connexion de l'employé. #}
+            {# L'adresse professionnelle sert d'identifiant de connexion. #}
             <label>
                 <span>Email professionnel *</span>
                 <input type="email" name="email" value="{{ employee.email|default('') }}" placeholder="votre.email@vite-gourmand.fr" required>
             </label>
 
-            {# L'email personnel sert uniquement à envoyer la confirmation de création du compte. #}
+            {# L'adresse personnelle reçoit la notification de création du compte. #}
             <label>
                 <span>Email personnel *</span>
                 <input type="email" name="email_personnel" value="{{ employee.email_personnel|default('') }}" placeholder="votre.email@exemple.fr" required>
@@ -98,14 +94,14 @@
                 <span>Poste *</span>
                 <select name="poste" required>
                     <option value="">Choisir un poste</option>
-                    {# Si le formulaire est réaffiché après une erreur, le poste déjà choisi reste sélectionné. #}
+                    {# Restaure le poste sélectionné après une erreur de validation. #}
                     {% for job in jobs %}
                         <option value="{{ job }}" {{ (employee.poste|default('')) == job ? 'selected' }}>{{ job }}</option>
                     {% endfor %}
                 </select>
             </label>
 
-            {# Mot de passe créé par l'administrateur pour le compte employé. #}
+            {# Les attributs data-password-* relient les deux champs au contrôle d'affichage du mot de passe. #}
             <label>
                 <span>Création de mot de passe *</span>
                 <span class="auth-password-control">
@@ -138,7 +134,6 @@
                 </ul>
             </div>
 
-            {# Actions finales : créer l'employé ou revenir à la liste sans enregistrer. #}
             <div class="admin-employee-create-form__actions">
                 <button type="submit" class="buttonprimary">Créer l'employé</button>
                 <a href="{{ path('admin_employees') }}" class="buttonoffwhite">Annuler</a>

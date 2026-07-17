@@ -1,19 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiché dans l'onglet du navigateur pour la page de statistiques des commandes. #}
+{# Analyse des commandes par menu avec filtres et graphiques calculés dans le navigateur. #}
 {% block title %}Commandes par menu - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal réutilisable avec le titre de la page et l'image de fond. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Commandes par menu',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Commandes par menu Vite et Gourmand'
     } %}
 
-    {# Contenu principal. L'attribut data permet au script JavaScript de retrouver la page. #}
+    {# L'attribut racine permet au script de s'initialiser uniquement sur cette page. #}
     <main class="admin-orders-menu-page" data-orders-menu-page>
-        {# Lien de retour vers l'espace administrateur. #}
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
         {# Partie haute : filtres à gauche et indicateurs rapides à droite. #}
@@ -22,13 +20,11 @@
             <form class="admin-orders-menu-filters" data-orders-menu-filters>
                 <h1>Filtres</h1>
 
-                {# Date de début de la période analysée. #}
                 <label>
                     <span>Date de d&eacute;but</span>
                     <input type="date" name="start_date" data-orders-menu-start>
                 </label>
 
-                {# Date de fin de la période analysée. #}
                 <label>
                     <span>Date de fin</span>
                     <input type="date" name="end_date" data-orders-menu-end>
@@ -39,7 +35,6 @@
                     <span>Th&egrave;me</span>
                     <select name="theme" data-orders-menu-theme>
                         <option value="">Tous les th&egrave;mes</option>
-                        {# Chaque option correspond à un thème récupéré depuis la base de données. #}
                         {% for theme in themes %}
                             <option value="{{ theme }}">{{ theme }}</option>
                         {% endfor %}
@@ -50,7 +45,6 @@
                 <div class="admin-orders-menu-field">
                     <span>Menus</span>
                     <div class="admin-orders-menu-checkboxes" data-orders-menu-select>
-                        {# Liste des menus existants, chacun représenté par une case à cocher. #}
                         {% for menu in menus %}
                             <label>
                                 <input type="checkbox" name="menus[]" value="{{ menu.menu_id }}">
@@ -60,7 +54,6 @@
                     </div>
                 </div>
 
-                {# Boutons pour appliquer les filtres ou revenir à l'affichage initial. #}
                 <div class="admin-orders-menu-filter-actions">
                     <button type="button" class="buttonprimary" data-orders-menu-apply>Appliquer les filtres</button>
                     <button type="button" class="buttonoffwhite" data-orders-menu-reset>R&eacute;initialiser</button>
@@ -69,19 +62,16 @@
 
             {# Indicateurs résumés affichés dès l'arrivée sur la page. #}
             <div class="admin-orders-menu-stats">
-                {# Nombre de commandes passées sur l'année courante. #}
                 <article>
                     <strong data-orders-menu-total>{{ initialStats.orders_count }}</strong>
                     <span>Commandes en {{ initialStats.year }}</span>
                 </article>
 
-                {# Nombre de menus actifs disponibles sur le site. #}
                 <article>
                     <strong data-orders-menu-active>{{ initialStats.active_menus_count }}</strong>
                     <span>Menus disponibles</span>
                 </article>
 
-                {# Nombre de thèmes utilisés par les menus. #}
                 <article class="admin-orders-menu-stats-wide">
                     <strong>{{ initialStats.themes_count }}</strong>
                     <span>Th&egrave;mes</span>
@@ -142,9 +132,9 @@
         </section>
     </main>
 
-    {# Données MongoDB préparées par Symfony et transmises au script JavaScript. #}
+    {# Charge utile JSON rendue côté serveur, lue puis filtrée par le script de la page. #}
     <script type="application/json" id="orders-menu-documents">{{ documentsJson|raw }}</script>
-    {# Statistiques initiales utilisées au chargement de la page. #}
+    {# Valeurs de référence utilisées avant toute application de filtre. #}
     <script type="application/json" id="orders-menu-default-stats">{{ initialStats|json_encode|raw }}</script>
 {% endblock %}
 

@@ -1,61 +1,55 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page d'inscription. #}
+{# Page de création d’un compte client et de ses coordonnées par défaut. #}
 {% block title %}Inscription - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Inscription',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
-{# Contenu principal de la page d'inscription. #}
 <main class="register-page">
-    {# Lien de retour vers la page d'accueil du site. #}
     <a href="{{ path('home_show') }}" class="cart-back-link">&larr; Retour &agrave; l'accueil</a>
 
-    {# Introduction de la page, reliee au titre par aria-labelledby pour l'accessibilite. #}
+    {# Le titre identifié décrit cette section aux technologies d’assistance. #}
     <section class="register-intro" aria-labelledby="register-title">
         <h1 id="register-title">Créer votre compte pour accéder à vos futures commandes</h1>
         <span aria-hidden="true"></span>
         <p>Bienvenue chez Vite &amp; Gourmand !</p>
     </section>
 
-    {# Carte contenant le formulaire de creation de compte. #}
     <section class="register-card">
-        {# Messages d'erreur affiches si l'inscription est refusee. #}
+        {# Le contrôleur regroupe ici les erreurs de validation et les conflits d’adresse électronique. #}
         {% for message in app.flashes('register_error') %}
             <div class="auth-alert auth-alert--error">{{ message }}</div>
         {% endfor %}
 
-        {# Formulaire envoye au serveur pour creer un nouvel utilisateur. #}
+        {# Les paramètres de requête préservent l’éventuelle page cible après la création du compte. #}
         <form class="register-form" method="post" action="{{ path('register', app.request.query.all) }}">
-            {# Token CSRF : protege la creation de compte. #}
+            {# Le même identifiant CSRF protège l’ensemble des actions publiques d’authentification. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('auth_action') }}">
 
-            {# Grille de champs : elle organise les informations personnelles et l'adresse. #}
             <div class="register-grid">
-                {# Prenom du client, conserve dans formData si le formulaire revient avec une erreur. #}
+                {# Les valeurs non sensibles sont restaurées après un refus du formulaire ; les mots de passe ne le sont jamais. #}
                 <label class="register-field register-field--full">
                     <span>Prénom *</span>
                     <input type="text" name="prenom" value="{{ formData.prenom|default('') }}" placeholder="Votre prénom" autocomplete="given-name" required>
                 </label>
 
-                {# Nom du client. #}
                 <label class="register-field register-field--full">
                     <span>Nom *</span>
                     <input type="text" name="nom" value="{{ formData.nom|default('') }}" placeholder="Votre nom" autocomplete="family-name" required>
                 </label>
 
-                {# Email de connexion du client. Il doit etre unique en base de donnees. #}
+                {# L’adresse électronique sert d’identifiant de connexion et son unicité est contrôlée côté serveur. #}
                 <label class="register-field register-field--full">
                     <span>Email *</span>
                     <input type="email" name="email" value="{{ formData.email|default('') }}" placeholder="votre.email@exemple.fr" autocomplete="email" required>
                 </label>
 
-                {# Mot de passe du compte avec bouton afficher/masquer. #}
+                {# Les attributs data-* relient les champs au script commun d’affichage et de masquage des mots de passe. #}
                 <label class="register-field register-field--full">
                     <span>Mot de passe *</span>
                     <span class="auth-password-control">
@@ -64,7 +58,7 @@
                     </span>
                 </label>
 
-                {# Rappel visuel des regles de securite imposees au mot de passe. #}
+                {# Ces règles sont informatives ici ; le contrôleur les vérifie avant toute création de compte. #}
                 <div class="register-password-info register-field--full">
                     <p>Le mot de passe doit contenir au minimum :</p>
                     <ul>
@@ -76,7 +70,6 @@
                     </ul>
                 </div>
 
-                {# Confirmation du mot de passe pour eviter les erreurs de saisie. #}
                 <label class="register-field register-field--full">
                     <span>Confirmation du mot de passe *</span>
                     <span class="auth-password-control">
@@ -85,39 +78,32 @@
                     </span>
                 </label>
 
-                {# Telephone du client, utile pour le suivi de commande. #}
                 <label class="register-field register-field--full">
                     <span>Numéro de téléphone *</span>
                     <input type="tel" name="telephone" value="{{ formData.telephone|default('') }}" placeholder="Votre numéro de téléphone" autocomplete="tel" required>
                 </label>
 
-                {# Adresse postale par defaut du client. #}
                 <label class="register-field register-field--full">
                     <span>Adresse postale *</span>
                     <input type="text" name="adresse_postale" value="{{ formData.adresse_postale|default('') }}" placeholder="Votre adresse postale" autocomplete="street-address" required>
                 </label>
 
-                {# Code postal de l'adresse client. #}
                 <label class="register-field register-field--full">
                     <span>Code postal *</span>
                     <input type="text" name="code_postal" value="{{ formData.code_postal|default('') }}" placeholder="Votre code postal" autocomplete="postal-code" required>
                 </label>
 
-                {# Ville de l'adresse client. #}
                 <label class="register-field register-field--full">
                     <span>Ville *</span>
                     <input type="text" name="ville" value="{{ formData.ville|default('') }}" placeholder="Votre ville" autocomplete="address-level2" required>
                 </label>
             </div>
 
-            {# Mention indiquant que les champs avec une etoile sont obligatoires. #}
             <p class="register-note">Les champs comprenant un * sont obligatoires.</p>
 
-            {# Actions de fin de formulaire : inscription ou retour vers la connexion. #}
             <div class="register-actions">
                 <button type="submit" class="buttonprimary">Inscrivez-vous</button>
 
-                {# Separateur visuel entre l'inscription et le lien de connexion. #}
                 <div class="register-separator">
                     <span></span>
                     <p>ou</p>

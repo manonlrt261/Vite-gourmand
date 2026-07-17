@@ -6,10 +6,10 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
-// Controleur des menus visibles par les visiteurs et les clients.
+// Contrôleur du catalogue public et du détail des menus actifs.
 class MenuController extends AbstractController
 {
-    // Recupere les menus actifs, les regroupe par theme et affiche la page liste des menus.
+    // Récupère les menus actifs, calcule leur popularité et les regroupe par thème pour l'affichage.
     public function index(Connection $connection): Response
     {
         $menus = $connection->fetchAllAssociative(
@@ -34,6 +34,7 @@ class MenuController extends AbstractController
         foreach ($menus as $menu) {
             $menu['theme'] = $this->normalizeTheme((string) $menu['theme']);
 
+            // Associe les variantes de thèmes enregistrées en base aux sections attendues par la vue.
             $section = match ($menu['theme']) {
                 'Classique' => 'Menus intemporels',
                 'Evenementiel' => 'Menus evenementiels',
@@ -51,7 +52,7 @@ class MenuController extends AbstractController
         ]);
     }
 
-    // Affiche le detail d un menu avec son entree, son plat et son dessert.
+    // Affiche un menu actif et le premier élément trouvé pour chaque étape du repas.
     public function show(int $id, Connection $connection): Response
     {
         $menu = $connection->fetchAssociative(
@@ -102,7 +103,7 @@ class MenuController extends AbstractController
         ]);
     }
 
-    // Normalise le theme d un menu pour le ranger dans la bonne categorie d affichage.
+    // Normalise les variantes historiques d'un thème pour garantir un classement cohérent.
     private function normalizeTheme(string $theme): string
     {
         return match ($theme) {

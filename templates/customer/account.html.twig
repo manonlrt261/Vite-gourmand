@@ -1,30 +1,25 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour l'espace client. #}
+{# Tableau de bord du client connecté : raccourci vers le profil, commandes récentes et dépôt d’avis. #}
 {% block title %}Mon espace client - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page. #}
+{# Bandeau commun aux pages publiques et à l’espace client. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Mon espace client',
     image_alt: 'Espace client Vite et Gourmand'
 } %}
 
-{# Contenu principal de l'espace client. #}
 <main class="customer-page">
-    {# Tableau de bord client : profil, dernieres commandes et formulaire d'avis. #}
     <section class="customer-dashboard">
-        {# Zone de bienvenue avec acces rapide au profil. #}
+        {# Accueil personnalisé et accès direct aux informations personnelles. #}
         <div class="customer-welcome">
-            {# Message personnalise avec le prenom du client si disponible. #}
             <div class="customer-welcome__text">
                 <h2>Bienvenue{% if customer.prenom is defined and customer.prenom %} {{ customer.prenom }}{% endif %} !</h2>
                 <p>Retrouvez ici vos commandes et gérez vos informations personnelles.</p>
             </div>
 
-            {# Carte de raccourci vers la page Mes informations. #}
             <div class="customer-profile-card">
-                {# Icone decorative representant le profil client. #}
                 <span class="customer-profile-card__icon" aria-hidden="true">
                     <svg viewBox="0 0 16 16" focusable="false">
                         <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
@@ -39,7 +34,7 @@
             </div>
         </div>
 
-        {# Apercu des dernieres commandes passees par le client. #}
+        {# Aperçu des commandes récentes fourni par le contrôleur. #}
         <div class="customer-orders">
             <hr class="customer-orders-separator">
 
@@ -47,14 +42,12 @@
                 <h2>Mes commandes</h2>
             </div>
 
-            {# Message affiche si le client n'a encore jamais commande. #}
             {% if latestOrders is empty %}
                 <p class="customer-empty">Vous n'avez pas encore passé de commande.</p>
             {% else %}
-                {# Grille des trois dernieres commandes. #}
                 <div class="customer-order-grid">
                     {% for order in latestOrders %}
-                        {# Le libelle est reconstruit depuis le code pour eviter les anciens accents casses venus de la base. #}
+                        {# Le code pilote la couleur du badge ; le libellé local corrige les anciennes valeurs mal encodées. #}
                         {% set statusCode = order.statut_code|default('en_attente') %}
                         {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
                         {% set statusLabels = {
@@ -68,7 +61,6 @@
                             annulee: 'Annulée'
                         } %}
 
-                        {# Carte resumee d'une commande. #}
                         <article class="cardvieworder">
                             <h3 class="cardvieworder-title">N° {{ order.commande_id }}</h3>
                             <span class="{{ statusClass }} cardvieworder-status">{{ statusLabels[statusCode]|default(order.statut_libelle|default('En attente')) }}</span>
@@ -76,9 +68,8 @@
                                 Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
                             </p>
                             <div class="cardvieworder-actions">
-                                {# Lien vers la page detail de cette commande. #}
                                 <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
-                                {# Le bouton modifier n'apparait que si la commande est encore en attente. #}
+                                {# Une commande reste modifiable uniquement avant son acceptation par l’équipe. #}
                                 {% if statusCode == 'en_attente' %}
                                     <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonedit cardvieworder-edit" aria-label="Modifier la commande n°{{ order.commande_id }}">Modifier</a>
                                 {% endif %}
@@ -90,7 +81,6 @@
                 <p class="customer-history-info">Vous pouvez consulter vos commandes passées dans l'historique.</p>
             {% endif %}
 
-            {# Lien vers la page complete de toutes les commandes. #}
             <div class="customer-orders-link">
                 <a href="{{ path('customer_orders') }}">Voir toutes mes commandes</a>
             </div>
@@ -99,37 +89,33 @@
 
     <hr class="customer-separator">
 
-    {# Section permettant au client de deposer un avis sur une commande eligible. #}
+    {# Dépôt d’un avis limité aux commandes éligibles et encore dépourvues d’avis. #}
     <section class="customer-review-section">
         <h2>Donnez<br>votre avis</h2>
 
-        {# Formulaire d'avis envoye depuis l'espace client. #}
         <form class="customer-review-card" method="post" action="{{ path('customer_account') }}" data-customer-account-review-form>
-            {# Token CSRF : verifie que l avis est envoye depuis le formulaire du site. #}
+            {# Protège l’envoi de l’avis contre les soumissions provenant d’autres sites. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
             <h3>Comment évalueriez-vous votre expérience ?</h3>
             <div data-customer-account-review-message></div>
 
-            {# Message de succes apres l'envoi d'un avis. #}
+            {# Retours du contrôleur après la tentative d’enregistrement de l’avis. #}
             {% for message in app.flashes('review_success') %}
                 <p class="customer-alert customer-alert--success">{{ message }}</p>
             {% endfor %}
 
-            {# Message d'erreur si l'avis ne peut pas etre enregistre. #}
             {% for message in app.flashes('review_error') %}
                 <p class="customer-alert customer-alert--error">{{ message }}</p>
             {% endfor %}
 
-            {# Si aucune commande eligible n'existe, le formulaire complet n'est pas affiche. #}
+            {# Sans commande éligible, les champs sont masqués pour empêcher une soumission incohérente. #}
             {% if reviewOrders is empty %}
                 <p class="customer-empty">Vous pourrez laisser un avis une fois votre commande réceptionnée.</p>
             {% else %}
-                {# Choix obligatoire de la commande concernee par l'avis. #}
                 <label class="customer-review-field">
                     <span>Commande concernée</span>
                     <select name="commande_id" required>
                         <option value="">Choisir une commande</option>
-                        {# Liste des commandes pour lesquelles aucun avis n'a encore ete donne. #}
                         {% for order in reviewOrders %}
                             <option value="{{ order.commande_id }}">
                                 Commande n°{{ order.commande_id }}{% if order.nom_menu %} - {{ order.nom_menu }}{% endif %}
@@ -138,7 +124,7 @@
                     </select>
                 </label>
 
-                {# Note obligatoire de 1 a 5 etoiles. #}
+                {# L’ordre décroissant permet au CSS d’afficher et de surligner les étoiles de droite à gauche. #}
                 <fieldset class="customer-rating">
                     <legend>Votre note</legend>
                     <div class="customer-rating-stars">
@@ -149,19 +135,16 @@
                     </div>
                 </fieldset>
 
-                {# Commentaire facultatif associe a l'avis. #}
                 <label class="customer-review-field">
                     <span>Votre commentaire (facultatif)</span>
                     <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
                 </label>
 
-                {# Bouton d'envoi de l'avis. #}
                 <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
             {% endif %}
         </form>
     </section>
 
-    {# Bouton de deconnexion du client. #}
     <div class="customer-logout">
         <a href="{{ path('logout') }}" class="buttonprimary">Se déconnecter</a>
     </div>

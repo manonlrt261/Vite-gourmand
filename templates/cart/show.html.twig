@@ -1,15 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page panier. #}
+{# Vue du panier renseigné : coordonnées, livraison, articles et validation. #}
 {% block title %}Panier - Vite & Gourmand{% endblock %}
 
 {% block javascripts %}
-    {# Script qui gere les mises a jour du panier sans rechargement complet de la page. #}
+    {# Synchronise les quantités et le récapitulatif sans rechargement complet de la page. #}
     <script src="{{ asset('assets/scripts/cart.js') }}" defer></script>
 {% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
+{# Bandeau commun aux pages du panier. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Panier',
     image: asset('assets/bigtittle.png'),
@@ -18,31 +18,31 @@
 
 {# Contenu principal du panier. #}
 <main class="cart-page">
-    {# Lien permettant au client de revenir a la page des menus. #}
+    {# Lien permettant au client de revenir à la page des menus. #}
     <a href="{{ path('menu_index') }}" class="cart-back-link">&larr; Retour aux menus</a>
 
-    {# Message affiche si le client n'est pas connecte : il doit se connecter ou creer un compte. #}
+    {# La commande reste consultable hors connexion, mais ses champs et sa validation sont désactivés. #}
     {% if not isConnected %}
         <section class="cart-login-notice">
             <p>Vous devez vous connecter ou cr&eacute;er un compte pour valider votre panier.</p>
             <div>
-                {# Le parametre target permet de revenir au panier apres connexion. #}
+                {# La cible ramène le client au panier après l’authentification ou l’inscription. #}
                 <a href="{{ path('login', { target: app.request.pathInfo }) }}" class="buttonprimary">Connexion</a>
                 <a href="{{ path('register', { target: app.request.pathInfo }) }}" class="buttonwhite">Inscription</a>
             </div>
         </section>
     {% endif %}
 
-    {# Messages d'erreur lies au panier ou a la validation de commande. #}
+    {# Messages d’erreur liés au panier ou à la validation de la commande. #}
     {% for message in app.flashes('cart_error') %}
         <section class="cart-login-notice cart-login-notice--error">
             <p>{{ message }}</p>
         </section>
     {% endfor %}
 
-    {# Formulaire principal du panier : il sert a mettre a jour les quantites et a commander. #}
+    {# Formulaire principal du panier : il sert à mettre à jour les quantités et à commander. #}
     <form class="cart-layout" method="post" action="{{ path('cart_update') }}" data-cart-form>
-        {# Token CSRF : protege la mise a jour du panier et la validation de commande. #}
+        {# Un même jeton CSRF protège la mise à jour du panier et sa validation. #}
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
 
         {# Colonne gauche : informations client et adresse de livraison. #}
@@ -52,7 +52,7 @@
                 <h2>Vos informations</h2>
                 <div class="cart-card__line"></div>
 
-                {# Nom et prenom pre-remplis si le client est connecte. #}
+                {# Les coordonnées connues sont préremplies pour le client connecté. #}
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Nom *</span>
@@ -65,7 +65,7 @@
                     </label>
                 </div>
 
-                {# Coordonnees de contact du client. #}
+                {# Coordonnées de contact du client. #}
                 <div class="cart-fields">
                     <label class="cart-field">
                         <span>Email *</span>
@@ -79,7 +79,7 @@
                 </div>
             </section>
 
-            {# Bloc de l'adresse et des informations de livraison. #}
+                {# Bloc de l’adresse et des informations de livraison. #}
             <section class="cart-card">
                 <h2>Adresse de livraison</h2>
                 <div class="cart-card__line"></div>
@@ -105,7 +105,7 @@
                     </label>
                 </div>
 
-                {# Date de prestation et heure souhaitee pour la livraison. #}
+                {# Date de prestation et heure souhaitée pour la livraison. #}
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Date de livraison</span>
@@ -118,7 +118,7 @@
                     </label>
                 </div>
 
-                {# Information sur les frais de livraison selon la zone. #}
+                {# Règle tarifaire informative ; le montant effectif est calculé côté serveur. #}
                 <div class="cart-delivery-info">
                     <span>i</span>
                     <p>
@@ -129,30 +129,30 @@
             </section>
         </div>
 
-        {# Colonne droite : contenu du panier et recapitulatif financier. #}
+            {# Colonne droite : contenu du panier et récapitulatif financier. #}
         <aside class="cart-right-column">
-            {# Liste des menus ajoutes au panier. #}
+            {# Liste des menus ajoutés au panier. #}
             <section class="cart-card cart-order-card">
                 <h2>Votre commande</h2>
                 <div class="cart-card__line"></div>
 
                 <div class="cart-order-list">
-                    {# Boucle sur chaque menu present dans le panier. #}
+                    {# Boucle sur chaque menu présent dans le panier. #}
                     {% for item in cartItems %}
-                        {# Variable de confort pour acceder plus facilement au menu de la ligne. #}
+                        {# Alias local du menu associé à la ligne de panier. #}
                         {% set menu = item.menu %}
-                        {# Carte d'un menu du panier, identifiee par son id pour le JavaScript. #}
+                        {# L’identifiant exposé au script permet de synchroniser cette ligne avec son récapitulatif. #}
                         <article class="cart-order-card__content" data-cart-item="{{ menu.menu_id }}">
                             {# Image du menu si elle existe en base. #}
                             {% if menu.image_url %}
                                 <img src="{{ asset(menu.image_url) }}" alt="{{ menu.image_alt ?: menu.nom_menu }}">
                             {% endif %}
 
-                            {# Details du menu : nom, prix par personne et nombre de personnes. #}
+                            {# Détails du menu : nom, prix par personne et nombre de personnes. #}
                             <div class="cart-order-card__details">
                                 <h3>{{ menu.nom_menu }}</h3>
                                 <small>{{ menu.prix_par_personne|number_format(2, ',', ' ') }} &euro; / pers</small>
-                                {# Champ modifiable pour choisir le nombre de personnes, avec minimum impose. #}
+                                {# Le minimum métier propre au menu est aussi transmis au contrôle natif du navigateur. #}
                                 <label class="cart-quantity-field">
                                     <span>Nombre de personnes</span>
                                     <input
@@ -169,7 +169,7 @@
                                 <p data-cart-order-quantity="{{ menu.menu_id }}">Minimum {{ item.nombrePersonnesMinimum }} personnes</p>
                             </div>
 
-                            {# Actions possibles sur la ligne : mettre a jour ou supprimer le menu. #}
+                            {# La mise à jour soumet le formulaire principal ; la suppression cible un formulaire dédié plus bas. #}
                             <div class="cart-item-actions">
                                 <button
                                     type="submit"
@@ -197,7 +197,7 @@
                 </div>
             </section>
 
-            {# Recapitulatif du prix total du panier. #}
+            {# Récapitulatif du prix total du panier. #}
             <section
                 class="cart-card cart-recap-card"
                 data-cart-recap
@@ -207,7 +207,7 @@
                 <h2>R&eacute;capitulatif</h2>
                 <div class="cart-card__line"></div>
 
-                {# Details financiers pour chaque menu du panier. #}
+                {# Les attributs data-* servent de points d’ancrage aux recalculs réalisés par cart.js. #}
                 {% for item in cartItems %}
                     <div class="cart-recap-line" data-cart-line="{{ item.menu.menu_id }}">
                         <span>
@@ -222,20 +222,20 @@
                         <strong data-cart-line-total>{{ item.prixLigne|number_format(2, ',', ' ') }} &euro;</strong>
                     </div>
 
-                    {# Ligne de reduction affichee seulement si une reduction existe pour ce menu. #}
+                    {# La ligne reste dans le DOM pour pouvoir être affichée si une modification déclenche la réduction. #}
                     <div class="cart-recap-line cart-recap-line--discount" data-cart-discount-line="{{ item.menu.menu_id }}" {% if item.reductionLigne <= 0 %}hidden{% endif %}>
                         <span>R&eacute;duction 10 % {{ item.menu.nom_menu }}</span>
                         <strong data-cart-line-discount>-{{ item.reductionLigne|number_format(2, ',', ' ') }} &euro;</strong>
                     </div>
                 {% endfor %}
 
-                {# Total de toutes les reductions du panier. #}
+                {# Total de toutes les réductions du panier. #}
                 <div class="cart-recap-line">
                     <span>Total r&eacute;ductions</span>
                     <strong data-cart-total-discount>-{{ reduction|number_format(2, ',', ' ') }} &euro;</strong>
                 </div>
 
-                {# Frais de livraison, affiches comme offerts si leur montant est a zero. #}
+                {# Frais de livraison, affichés comme offerts si leur montant est à zéro. #}
                 <div class="cart-recap-line">
                     <span>Livraison</span>
                     <strong data-cart-delivery>{{ prixLivraison == 0 ? 'Offerte' : prixLivraison|number_format(2, ',', ' ') ~ ' &euro;' }}</strong>
@@ -243,7 +243,7 @@
 
                 <div class="cart-card__line"></div>
 
-                {# Total final TTC a payer par le client. #}
+                {# Total final TTC à payer par le client. #}
                 <div class="cart-recap-line cart-recap-line--total">
                     <span>Total TTC</span>
                     <strong data-cart-total>{{ prixTotal|number_format(2, ',', ' ') }} &euro;</strong>
@@ -251,7 +251,7 @@
             </section>
         </aside>
 
-        {# Option affichee seulement si au moins un menu du panier a materiel_disponible a 1 en base. #}
+        {# L’option n’est proposée que si au moins un menu du panier autorise le prêt de matériel. #}
         {% if canRequestMaterial|default(false) %}
             <section class="cart-card cart-material-card">
                 <h2>Mat&eacute;riel</h2>
@@ -266,7 +266,7 @@
 
         {# Zone de validation finale du panier. #}
         <section class="cart-validation">
-            {# Bouton Commander : il envoie le formulaire vers la route de validation de commande. #}
+            {# formaction distingue la validation définitive de la simple mise à jour des quantités. #}
             <button
                 type="submit"
                 class="buttonprimary"
@@ -275,16 +275,16 @@
             >
                 Commander
             </button>
-            {# Message affiche par JavaScript apres une mise a jour reussie du panier. #}
+            {# Message affiché par JavaScript après une mise à jour réussie du panier. #}
             <p class="cart-update-message" data-cart-update-message hidden>Panier mis &agrave; jour.</p>
             <p>Apr&egrave;s validation, vous recevrez un email de confirmation.</p>
         </section>
     </form>
 
-    {# Formulaires separes de suppression : chaque bouton supprimer cible son propre formulaire. #}
+    {# Chaque suppression utilise une route et un formulaire dédiés au menu concerné. #}
     {% for item in cartItems %}
         <form id="cart-remove-{{ item.menu.menu_id }}" method="post" action="{{ path('cart_remove', { id: item.menu.menu_id }) }}">
-            {# Token CSRF : protege la suppression d un menu du panier. #}
+            {# Le jeton CSRF protège également les suppressions déclenchées hors du formulaire principal. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
         </form>
     {% endfor %}

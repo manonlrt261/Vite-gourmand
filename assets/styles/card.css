@@ -1,10 +1,10 @@
-/* Mise en page de test du composant */
+/* Cartes réutilisables des menus, commandes, plats et avis. */
 .card-preview {
   display: flex;
   padding: 24px;
 }
 
-/* Ombre commune des cartes reutilisables : menus, plats, commandes et resumes. */
+/* Ombre commune des cartes réutilisables : menus, plats, commandes et récapitulatifs. */
 .editablemenucard,
 .descriptionordercard,
 .descriptionentrycard,
@@ -16,7 +16,7 @@
   box-shadow: var(--card-shadow);
 }
 
-/* Carte menu modifiable */
+/* Carte de menu modifiable depuis l’espace employé. */
 .editablemenucard {
   width: 378px;
   height: 323px;
@@ -99,7 +99,7 @@
   align-items: center;
 }
 
-/*Carte menu apperçue par le visiteurs*/
+/* Carte de menu présentée aux visiteurs. */
 .menucard-preview {
   display: flex;
   padding: 24px;
@@ -195,7 +195,7 @@
   color: var(--primary);
 }
 
-/* Description de la commande vue par le client*/
+/* Résumé d’une commande consultée par le client. */
 .descriptionordercard-preview {
   padding: 24px;
 }
@@ -271,7 +271,7 @@
   }
 }
 
-/* Description de l'entrée commandée vue par le client*/
+/* Détail d’une entrée commandée, consulté par le client. */
 .descriptionentrycard-preview {
   padding: 24px;
 }
@@ -357,7 +357,7 @@
   }
 }
 
-/* Description du plat commandé vue par le clien*/
+/* Détail d’un plat commandé, consulté par le client. */
 .descriptiondishcard-preview {
   padding: 24px;
 }
@@ -419,7 +419,7 @@
   line-height: 1;
 }
 
-/* Description du dessert commandé vue par le client*/
+/* Détail d’un dessert commandé, consulté par le client. */
 .descriptiondessertcard-preview {
   padding: 24px;
 }
@@ -481,7 +481,7 @@
   line-height: 1;
 }
 
-/*Recapitulatif de la commande vue par le client lorsqu'il passe la commande*/
+/* Récapitulatif affiché au client pendant la validation de sa commande. */
 .cardsummaryorder-preview {
   padding: 24px;
 }
@@ -580,7 +580,7 @@
   }
 }
 
-/*Apperçu de la commande sur la page Mon compte*/
+/* Aperçu d’une commande sur la page « Mon compte ». */
 .cardvieworder-preview {
   padding: 24px;
 }
@@ -650,7 +650,7 @@
   display: none;
 }
 
-/* Aperçu de la commande par un employé*/
+/* Aperçu d’une commande dans l’espace employé. */
 .cardvieworderemployee-preview {
   padding: 24px;
 }
@@ -755,7 +755,7 @@
   outline: none;
 }
 
-/* Accepter ou refuser l'avis */
+/* Actions de modération permettant d’accepter ou de refuser un avis. */
 .customerreview-preview {
   padding: 24px;
 }
@@ -858,7 +858,7 @@
   }
 }
 
-/*Apperçu du dernier avis laissé sur le tableau de bord employé*/
+/* Aperçu du dernier avis affiché sur le tableau de bord employé. */
 .latestreview-preview {
   padding: 24px;
 }
@@ -923,7 +923,7 @@
   height: 23px;
 }
 
-/*Gestion des commandes par l'employé*/
+/* Carte de gestion d’une commande par un employé. */
 .ordergestion-preview {
   padding: 24px;
 }

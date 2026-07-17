@@ -1,15 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{# Indique si le formulaire concerne un menu complet. #}
+{# Prépare les variantes du formulaire selon le type d'élément et le mode création/modification. #}
 {% set isMenu = type == 'menu' %}
-{# Determine le nom du champ a lire pour une entree, un plat ou un dessert. #}
+{# Les éléments hors menu utilisent un nom de propriété dépendant de leur type. #}
 {% set nameField = type == 'entree' ? 'nom_entree' : (type == 'plat' ? 'nom_plat' : 'nom_dessert') %}
 
 {# Titre dynamique de la page selon l'action : ajout ou modification. #}
 {% block title %}{{ pageTitle }} - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre fourni par le controleur. #}
+    {# Bandeau principal réutilisable avec le titre fourni par le contrôleur. #}
     {% include 'components/_big_title.html.twig' with {
         title: pageTitle,
         image: asset('assets/bigtittle.png'),
@@ -18,14 +18,14 @@
 
     {# Contenu principal du formulaire de gestion. #}
     <main class="employee-management-page employee-form-page">
-        {# Lien de retour vers la liste complete des menus et plats. #}
+        {# Lien de retour vers la liste complète des menus et plats. #}
         <a href="{{ path('employee_items_all') }}" class="cart-back-link">&larr; Retour aux menus et plats</a>
 
-        {# Formulaire d'ajout ou modification d'un menu, entree, plat ou dessert. #}
+        {# Formulaire d'ajout ou de modification d'un menu, d'une entrée, d'un plat ou d'un dessert. #}
         <form method="post" class="employee-edit-form">
-            {# Token CSRF : protege la creation ou la modification d un menu, plat, entree ou dessert. #}
+            {# Le jeton CSRF sécurise la création ou la modification de l'élément. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
-            {# Champs specifiques aux menus complets. #}
+            {# Champs spécifiques aux menus complets. #}
             {% if isMenu %}
                 {# Nom public du menu. #}
                 <label>
@@ -33,7 +33,7 @@
                     <input type="text" name="nom_menu" value="{{ item.nom_menu|default('') }}" required>
                 </label>
 
-                {# Theme du menu, limite aux valeurs autorisees. #}
+                {# Thème du menu, limité aux valeurs autorisées. #}
                 <label>
                     <span>Th&egrave;me</span>
                     <select name="theme" required data-menu-theme-source>
@@ -45,19 +45,19 @@
                     </select>
                 </label>
 
-                {# Description affichee sur la page menus et detail menu. #}
+                {# Description affichée sur les pages des menus et de détail du menu. #}
                 <label class="employee-form-field--full">
                     <span>Description</span>
                     <textarea name="description" required>{{ item.description|default('') }}</textarea>
                 </label>
 
-                {# Conditions particulieres du menu. #}
+                {# Conditions particulières du menu. #}
                 <label class="employee-form-field--full">
                     <span>Conditions</span>
                     <textarea name="conditions" required>{{ item.conditions|default('') }}</textarea>
                 </label>
 
-                {# Dates optionnelles de disponibilite du menu. #}
+                {# Dates optionnelles de disponibilité du menu. #}
                 <label>
                     <span>Date de d&eacute;but de disponibilit&eacute;</span>
                     <input type="date" name="date_debut_disponibilite" value="{{ item.date_debut_disponibilite|default('') }}">
@@ -69,7 +69,7 @@
                     <input type="date" name="date_fin_disponibilite" value="{{ item.date_fin_disponibilite|default('') }}">
                 </label>
 
-                {# Prix par personne utilise dans le panier et les commandes. #}
+                {# Prix par personne utilisé dans le panier et les commandes. #}
                 <label>
                     <span>Nombre de personnes minimum</span>
                     <input type="number" name="personnes_minimum" min="1" value="{{ item.personnes_minimum|default(1) }}" required>
@@ -86,19 +86,19 @@
                     <input type="number" name="stock_disponible" min="0" value="{{ item.stock_disponible|default(0) }}" required>
                 </label>
 
-                {# Case enregistree en base : 1 si le menu propose un pret de materiel, 0 sinon. #}
+                {# La case vaut 1 en base si le menu comprend un prêt de matériel, sinon 0. #}
                 <label class="employee-form-checkbox">
                     <input type="checkbox" name="materiel_disponible" value="1" {{ item.materiel_disponible|default(0) == 1 ? 'checked' : '' }}>
                     <span>Pr&ecirc;t de mat&eacute;riel</span>
                 </label>
             {% else %}
-                {# Champs specifiques aux entrees, plats et desserts. #}
+                {# Champs spécifiques aux entrées, plats et desserts. #}
                 <label>
                     <span>Nom</span>
                     <input type="text" name="nom" value="{{ attribute(item, nameField)|default('') }}" required>
                 </label>
 
-                {# Menu auquel rattacher l'element, ou independant si aucun menu n'est choisi. #}
+                {# L'absence de sélection conserve l'élément comme offre indépendante. #}
                 <label>
                     <span>Menu associ&eacute;</span>
                     <select name="menu_id">
@@ -112,7 +112,7 @@
                     </select>
                 </label>
 
-                {# Theme de l'element. #}
+                {# Thème de l'élément. #}
                 <label>
                     <span>Th&egrave;me</span>
                     <select name="theme" required>
@@ -124,39 +124,39 @@
                     </select>
                 </label>
 
-                {# Allergènes affiches au client. #}
+                {# Allergènes affichés au client. #}
                 <label>
                     <span>Allerg&egrave;nes</span>
                     <input type="text" name="allergenes" value="{{ item.allergenes|default('') }}" required>
                 </label>
 
-                {# Description de l'entree, du plat ou du dessert. #}
+                {# Description de l'entrée, du plat ou du dessert. #}
                 <label class="employee-form-field--full">
                     <span>Description</span>
                     <textarea name="description" required>{{ item.description|default('') }}</textarea>
                 </label>
             {% endif %}
 
-            {# Chemin de l'image affichee sur le site. Ce champ reste facultatif en creation. #}
+            {# Chemin de l'image affichée sur le site. Ce champ reste facultatif en création. #}
             <label>
                 <span>Chemin de l'image</span>
                 <input type="text" name="image_url" value="{{ item.image_url|default('') }}">
             </label>
 
-            {# Texte alternatif de l'image pour l'accessibilite. Ce champ reste facultatif en creation. #}
+            {# Texte alternatif de l'image pour l'accessibilité. Ce champ reste facultatif en création. #}
             <label>
                 <span>Texte alternatif de l'image</span>
                 <input type="text" name="image_alt" value="{{ item.image_alt|default('') }}">
             </label>
 
-            {# Case qui determine si l'element est visible sur le site public. #}
+            {# Case qui détermine si l'élément est visible sur le site public. #}
             <label class="employee-form-checkbox">
                 <input type="checkbox" name="actif" value="1" {{ item.actif|default(1) == 1 ? 'checked' : '' }}>
                 <span>Visible sur le site</span>
             </label>
 
             {% if isMenu and isCreate %}
-                {# Zone optionnelle : elle permet de preparer directement l'entree, le plat et le dessert du menu en cours de creation. #}
+                {# En création, cette zone prépare les éléments enfants avant que l'identifiant du menu existe. #}
                 <div class="employee-linked-meals employee-form-field--full" data-linked-meals>
                     <p class="employee-linked-meals__title">Ajouter les elements du menu</p>
                     <div class="employee-linked-meals__actions">
@@ -173,7 +173,7 @@
                 } %}
 
                 {% for linkedType, linkedTitle in linkedMealLabels %}
-                    {# Fenetre modale ouverte depuis les boutons + Entree, + Plat et + Dessert. #}
+                    {# Fenêtre modale ouverte depuis les boutons « + Entrée », « + Plat » et « + Dessert ». #}
                     <div class="employee-linked-meal-modal" data-linked-meal-modal="{{ linkedType }}" hidden>
                         <div class="employee-linked-meal-modal__overlay" data-linked-meal-close></div>
                         <section class="employee-linked-meal-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="linked-meal-title-{{ linkedType }}">
@@ -182,7 +182,7 @@
                                 <button type="button" aria-label="Fermer la fen&ecirc;tre" data-linked-meal-close>&times;</button>
                             </header>
 
-                            {# Ces champs seront enregistres avec le menu apres recuperation de son nouvel identifiant. #}
+                            {# Ces champs sont enregistrés après le menu afin de leur associer son nouvel identifiant. #}
                             <div class="employee-linked-meal-modal__grid">
                                 <label>
                                     <span>Nom</span>
@@ -246,7 +246,7 @@
 {% block javascripts %}
     {{ parent() }}
     {% if isMenu and isCreate %}
-        {# Script qui ouvre et ferme les fenetres + Entree, + Plat et + Dessert. #}
+        {# Gère les fenêtres de saisie rapide des entrées, plats et desserts. #}
         <script src="{{ asset('assets/scripts/employee-menu-form.js') }}" defer></script>
     {% endif %}
 {% endblock %}

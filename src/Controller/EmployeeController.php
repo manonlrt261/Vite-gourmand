@@ -13,8 +13,10 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+// Contrôleur de l'espace employé : commandes, catalogue, horaires, avis et messagerie client.
 class EmployeeController extends AbstractController
 {
+    // Affiche les commandes prioritaires et les avis en attente sur le tableau de bord.
     public function dashboard(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -28,6 +30,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Liste les commandes à traiter après avoir finalisé automatiquement les livraisons échues.
     public function orders(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -44,13 +47,14 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Fait progresser une commande dans le cycle autorisé et déclenche les notifications associées.
     public function advanceOrderStatus(int $id, Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->json(['success' => false], 403);
         }
 
-        // Changer un statut de commande modifie la base : le token CSRF est obligatoire.
+        // Changer un statut de commande modifie la base : le jeton CSRF est obligatoire.
         if (!$this->isValidEmployeeCsrf($request)) {
             return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
         }
@@ -69,8 +73,8 @@ class EmployeeController extends AbstractController
             return $this->json(['success' => false], 404);
         }
 
-        // Le statut vient maintenant du menu deroulant : on refuse l'annulation ici,
-        // car elle doit passer par le formulaire dedie avec motif et contact client.
+        // Le statut vient maintenant du menu déroulant : on refuse l'annulation ici,
+        // car elle doit passer par le formulaire dédié avec motif et contact client.
         $requestedCode = (string) $request->request->get('status', '');
         $allowedCodes = [
             'en_attente',
@@ -130,13 +134,14 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Met à jour une commande modifiable après contrôle du contact préalable avec le client.
     public function updateOrder(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : la modification employe d une commande est une action sensible.
+        // Jeton CSRF : la modification d'une commande par un employé est une action sensible.
         if (!$this->isValidEmployeeCsrf($request)) {
             $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -211,13 +216,14 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_orders');
     }
 
+    // Annule une commande, conserve sa traçabilité SQL et actualise les statistiques MongoDB.
     public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : l annulation d une commande doit venir du formulaire employe.
+        // Jeton CSRF : l'annulation d'une commande doit venir du formulaire employé.
         if (!$this->isValidEmployeeCsrf($request)) {
             $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -261,13 +267,14 @@ class EmployeeController extends AbstractController
         ]);
 
         $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par un employe apres contact client : ' . $reason);
-        // La commande reste dans MySQL pour la tracabilite, mais sort immediatement des statistiques MongoDB.
+        // La commande reste dans MySQL pour la traçabilité, mais sort immédiatement des statistiques MongoDB.
         $mongoStatsService->getOrdersByMenuDocuments($connection);
         $this->addFlash('employee_success', 'La commande a ete annulee.');
 
         return $this->redirectToRoute('employee_orders');
     }
 
+    // Affiche une sélection des menus et éléments de repas les plus populaires.
     public function menus(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -282,6 +289,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Affiche l'ensemble du catalogue administrable, y compris les éléments inactifs.
     public function allMenusAndMeals(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -296,6 +304,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Valide et crée un menu ainsi que les éventuels éléments de repas saisis dans les modales.
     public function createMenu(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -303,7 +312,7 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Protection CSRF du formulaire de creation d un menu.
+            // Protection CSRF du formulaire de création d'un menu.
             if (!$this->isValidEmployeeCsrf($request)) {
                 $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -311,7 +320,7 @@ class EmployeeController extends AbstractController
             }
 
             $payload = $this->getMenuPayload($request);
-            // Controle le menu avant insertion : theme, dates, prix, stock et longueurs.
+            // Contrôle le menu avant insertion : thème, dates, prix, stock et longueurs.
             $error = $this->validateItemPayload('menu', $payload);
 
             if ($error !== null) {
@@ -330,8 +339,8 @@ class EmployeeController extends AbstractController
             $connection->insert('menus', $payload);
             $menuId = (int) $connection->lastInsertId();
 
-            // Si une entree, un plat ou un dessert ont ete renseignes dans les modales,
-            // ils sont crees juste apres le menu avec le nouvel identifiant du menu.
+            // Si une entrée, un plat ou un dessert ont été renseignés dans les fenêtres modales,
+            // ils sont créés juste après le menu avec le nouvel identifiant du menu.
             $this->createLinkedMealItemsForMenu($request, $connection, $menuId);
 
             return $this->redirectToRoute('employee_items_all');
@@ -340,6 +349,7 @@ class EmployeeController extends AbstractController
         return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', null, true, $connection));
     }
 
+    // Crée une entrée, un plat ou un dessert et l'associe à un menu existant.
     public function createMealItem(string $type, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -352,7 +362,7 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Protection CSRF du formulaire de creation d une entree, d un plat ou d un dessert.
+            // Protection CSRF du formulaire de création d'une entrée, d'un plat ou d'un dessert.
             if (!$this->isValidEmployeeCsrf($request)) {
                 $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -360,7 +370,7 @@ class EmployeeController extends AbstractController
             }
 
             $payload = $this->getMealPayload($request);
-            // Controle l entree, le plat ou le dessert avant insertion en base.
+            // Contrôle l'entrée, le plat ou le dessert avant son insertion en base.
             $error = $this->validateItemPayload($type, $payload);
 
             if ($error !== null) {
@@ -378,6 +388,7 @@ class EmployeeController extends AbstractController
         return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, null, true, $connection));
     }
 
+    // Modifie un menu ou un élément de repas en appliquant les mêmes règles que lors de sa création.
     public function editItem(string $type, int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -399,7 +410,7 @@ class EmployeeController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Protection CSRF du formulaire de modification d un menu ou d un element de repas.
+            // Protection CSRF du formulaire de modification d'un menu ou d'un élément de repas.
             if (!$this->isValidEmployeeCsrf($request)) {
                 $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -407,7 +418,7 @@ class EmployeeController extends AbstractController
             }
 
             $payload = $type === 'menu' ? $this->getMenuPayload($request) : $this->getMealPayload($request);
-            // Applique les memes regles de securite lors de la modification d un element.
+            // Applique les mêmes règles de sécurité lors de la modification d'un élément.
             $error = $this->validateItemPayload($type, $payload);
 
             if ($error !== null) {
@@ -431,13 +442,14 @@ class EmployeeController extends AbstractController
         return $this->render('employee/item_form.html.twig', $this->getFormViewData($type, $item, false, $connection));
     }
 
+    // Active ou désactive un élément et propage le statut d'un menu à ses composants.
     public function toggleItem(string $type, int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Protection CSRF : empeche l activation/desactivation d un element par une requete externe.
+        // Protection CSRF : empêche l'activation ou la désactivation d'un élément par une requête externe.
         if (!$this->isValidEmployeeCsrf($request)) {
             return $request->isXmlHttpRequest()
                 ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
@@ -497,13 +509,14 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_menus');
     }
 
+    // Supprime l'élément demandé après validation du type et du jeton CSRF.
     public function deleteItem(string $type, int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Protection CSRF : une suppression doit venir de la fenetre de confirmation du site.
+        // Protection CSRF : une suppression doit venir de la fenêtre de confirmation du site.
         if (!$this->isValidEmployeeCsrf($request)) {
             return $request->isXmlHttpRequest()
                 ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
@@ -524,6 +537,7 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_menus');
     }
 
+    // Affiche et traite les horaires hebdomadaires et les fermetures exceptionnelles.
     public function hours(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -559,6 +573,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Supprime une période de fermeture exceptionnelle.
     public function deleteClosure(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -566,7 +581,7 @@ class EmployeeController extends AbstractController
         }
 
         $this->ensureScheduleTables($connection);
-        // Protection CSRF avant suppression d une fermeture exceptionnelle.
+        // Protection CSRF avant la suppression d'une fermeture exceptionnelle.
         if (!$this->isValidEmployeeCsrf($request)) {
             $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -578,6 +593,7 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_hours');
     }
 
+    // Affiche les avis en attente de modération.
     public function reviews(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -593,6 +609,7 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Affiche tous les avis et leurs compteurs par statut.
     public function allReviews(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -607,13 +624,14 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Accepte, refuse ou remet en attente un avis, puis limite les avis visibles en accueil.
     public function updateReviewStatus(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Protection CSRF des actions d acceptation, refus ou remise en attente d un avis.
+        // Protection CSRF des actions d'acceptation, de refus ou de remise en attente d'un avis.
         if (!$this->isValidEmployeeCsrf($request)) {
             return $request->isXmlHttpRequest()
                 ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
@@ -680,6 +698,7 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_dashboard');
     }
 
+    // Affiche la messagerie filtrée ainsi que les commandes nécessitant un retour de matériel.
     public function messages(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
@@ -697,13 +716,14 @@ class EmployeeController extends AbstractController
         ]);
     }
 
+    // Envoie manuellement au client un rappel de retour du matériel prêté.
     public function sendMaterialReturnEmail(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : protege l envoi manuel d un email de retour materiel.
+        // Jeton CSRF : protège l'envoi manuel d'un e-mail de retour du matériel.
         if (!$this->isValidEmployeeCsrf($request)) {
             $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -770,13 +790,14 @@ class EmployeeController extends AbstractController
         return $this->redirectToRoute('employee_messages');
     }
 
+    // Enregistre la réponse à un message de contact et tente de l'envoyer par e-mail.
     public function replyContactMessage(int $id, Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : protege la reponse envoyee au client depuis la messagerie.
+        // Jeton CSRF : protège la réponse envoyée au client depuis la messagerie.
         if (!$this->isValidEmployeeCsrf($request)) {
             $this->addFlash('message_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -827,7 +848,7 @@ class EmployeeController extends AbstractController
                     nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'))
                 )));
         } catch (\Throwable) {
-            // La reponse reste enregistree dans la messagerie meme si l email ne part pas.
+            // La réponse reste enregistrée dans la messagerie même si l'e-mail ne part pas.
         }
 
         $this->addFlash('message_success', 'La réponse a été enregistrée et envoyée au client.');
@@ -851,7 +872,7 @@ class EmployeeController extends AbstractController
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : protege la restauration d un message supprime.
+        // Jeton CSRF : protège la restauration d'un message supprimé.
         if (!$this->isValidEmployeeCsrf($request)) {
             $errorMessage = 'Le formulaire a expiré, veuillez réessayer.';
 
@@ -914,13 +935,14 @@ class EmployeeController extends AbstractController
         return $this->changeContactMessageStatus($id, $request, $connection, 'supprime', 'Le message a bien été supprimé.');
     }
 
+    // Centralise les transitions de classement des messages et leurs contrôles d'accès.
     private function changeContactMessageStatus(int $id, Request $request, Connection $connection, string $status, string $successMessage): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
         }
 
-        // Token CSRF : protege les actions de classement ou suppression des messages.
+        // Jeton CSRF : protège les actions de classement ou de suppression des messages.
         if (!$this->isValidEmployeeCsrf($request)) {
             $errorMessage = 'Le formulaire a expiré, veuillez réessayer.';
 
@@ -1044,7 +1066,7 @@ class EmployeeController extends AbstractController
             return 'La date et l heure du contact client sont obligatoires.';
         }
 
-        // Le contact client doit deja avoir eu lieu : une date future n'est pas acceptee.
+        // Le contact client doit déjà avoir eu lieu : une date future n'est pas acceptée.
         $contactAt = new \DateTimeImmutable($date . ' ' . $time);
         if ($contactAt > new \DateTimeImmutable()) {
             return 'La date de contact client ne peut pas etre dans le futur.';
@@ -1094,7 +1116,7 @@ class EmployeeController extends AbstractController
 
         foreach ($columns as $definition) {
             try {
-                // Ces colonnes permettent de suivre les reponses, archives et suppressions de la messagerie.
+                // Ces colonnes permettent de suivre les réponses, archives et suppressions de la messagerie.
                 $connection->executeStatement('ALTER TABLE contact ADD COLUMN ' . $definition);
             } catch (\Throwable) {
             }
@@ -1148,6 +1170,7 @@ class EmployeeController extends AbstractController
         );
     }
 
+    // Vérifie que la session correspond à un employé actif encore présent en base.
     private function canAccessEmployeeSpace(Request $request, Connection $connection): bool
     {
         $user = $request->getSession()->get('utilisateur');
@@ -1163,7 +1186,7 @@ class EmployeeController extends AbstractController
         return $isActive && (in_array($role, ['employe', 'employé', 'administrateur'], true) || in_array($roleId, [2, 3], true));
     }
 
-    // Verifie le token CSRF commun aux formulaires sensibles de l espace employe.
+    // Vérifie le jeton CSRF commun aux formulaires sensibles de l'espace employé.
     private function isValidEmployeeCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('employee_action', (string) $request->request->get('_csrf_token'));
@@ -1232,6 +1255,7 @@ class EmployeeController extends AbstractController
         );
     }
 
+    // Ajoute les statuts de commande attendus lorsque la base utilisée est antérieure à leur création.
     private function ensureOrderStatuses(Connection $connection): void
     {
         $statuses = [
@@ -1266,6 +1290,7 @@ class EmployeeController extends AbstractController
         }
     }
 
+    // Termine les commandes livrées dont la prestation est passée et envoie les notifications finales.
     private function completeDeliveredOrders(Connection $connection, MailerInterface $mailer): void
     {
         $termineeId = (int) $connection->fetchOne('SELECT statut_id FROM statuts_commande WHERE code = ? LIMIT 1', ['terminee']);
@@ -1299,7 +1324,7 @@ class EmployeeController extends AbstractController
         }
     }
 
-    // Email 5 : rappelle au client de rendre le materiel prete quand une commande avec materiel est terminee.
+    // E-mail 5 : rappelle au client de rendre le matériel prêté lorsqu'une commande avec matériel est terminée.
     private function sendMaterialReturnReminderEmail(Connection $connection, MailerInterface $mailer, int $orderId): void
     {
         $this->ensureMaterialReturnEmailLogTable($connection);
@@ -1353,7 +1378,7 @@ class EmployeeController extends AbstractController
         ];
 
         try {
-            // La table materiel_email_log evite d'envoyer plusieurs rappels pour la meme commande.
+            // La table materiel_email_log évite d'envoyer plusieurs rappels pour la même commande.
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
@@ -1366,7 +1391,7 @@ class EmployeeController extends AbstractController
                 'sent_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ]);
         } catch (\Throwable) {
-            // Le changement de statut ne doit pas etre bloque si l email ne peut pas partir.
+            // Le changement de statut ne doit pas être bloqué si l'e-mail ne peut pas partir.
         }
     }
 
@@ -1387,7 +1412,7 @@ class EmployeeController extends AbstractController
         }
     }
 
-    // Email 6 : invite le client a laisser un avis des que sa commande passe au statut terminee.
+    // E-mail 6 : invite le client à laisser un avis dès que sa commande passe au statut « terminée ».
     private function sendReviewRequestEmail(Connection $connection, MailerInterface $mailer, int $orderId): void
     {
         $this->ensureReviewEmailLogTable($connection);
@@ -1431,7 +1456,7 @@ class EmployeeController extends AbstractController
         $reviewUrl = $this->generateUrl('customer_account', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
         try {
-            // La table avis_email_log evite d'envoyer deux fois l'invitation pour la meme commande.
+            // La table avis_email_log évite d'envoyer deux fois l'invitation pour la même commande.
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
@@ -1457,7 +1482,7 @@ class EmployeeController extends AbstractController
                 'sent_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ]);
         } catch (\Throwable) {
-            // Le changement de statut ne doit pas etre bloque si l email ne peut pas partir.
+            // Le changement de statut ne doit pas être bloqué si l'e-mail ne peut pas partir.
         }
     }
 
@@ -1478,6 +1503,7 @@ class EmployeeController extends AbstractController
         }
     }
 
+    // Conserve chaque changement de statut dans l'historique de la commande.
     private function addOrderStatusHistory(Connection $connection, int $orderId, int $statusId, string $comment): void
     {
         try {
@@ -1597,6 +1623,7 @@ class EmployeeController extends AbstractController
         );
     }
 
+    // Garantit l'existence des tables d'horaires et initialise les jours absents.
     private function ensureScheduleTables(Connection $connection): void
     {
         $connection->executeStatement(
@@ -1622,7 +1649,7 @@ class EmployeeController extends AbstractController
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
         );
 
-        // Ajoute la date de fin aux anciennes bases deja creees, sans supprimer les fermetures existantes.
+        // Ajoute la date de fin aux anciennes bases déjà créées, sans supprimer les fermetures existantes.
         $closureColumns = array_change_key_case($connection->createSchemaManager()->listTableColumns('fermetures_exceptionnelles'), CASE_LOWER);
         if (!isset($closureColumns['date_fin_fermeture'])) {
             $connection->executeStatement(
@@ -1679,6 +1706,7 @@ class EmployeeController extends AbstractController
         );
     }
 
+    // Met à jour chaque journée valide sans écraser les lignes dont les horaires sont incohérents.
     private function saveWeeklyHours(Request $request, Connection $connection): void
     {
         $days = $request->request->all('hours');
@@ -1688,7 +1716,7 @@ class EmployeeController extends AbstractController
             $start = $isOpen ? $this->nullableValue($day['heure_ouverture'] ?? null) : null;
             $end = $isOpen ? $this->nullableValue($day['heure_fermeture'] ?? null) : null;
 
-            // Ignore une ligne horaire invalide au lieu d enregistrer une heure incorrecte.
+            // Ignore une ligne horaire invalide au lieu d'enregistrer une heure incorrecte.
             if ($isOpen && (!is_string($start) || !is_string($end) || !InputValidator::isValidTime($start) || !InputValidator::isValidTime($end))) {
                 continue;
             }
@@ -1708,12 +1736,12 @@ class EmployeeController extends AbstractController
     {
         $date = $this->nullableValue($request->request->get('date_fermeture'));
         $endDate = $this->nullableValue($request->request->get('date_fin_fermeture'));
-        // Une fermeture exceptionnelle doit avoir une vraie date de debut, aujourd hui ou dans le futur.
+        // Une fermeture exceptionnelle doit avoir une véritable date de début, aujourd'hui ou dans le futur.
         if (!is_string($date) || !InputValidator::isFutureOrTodayDate($date)) {
             return;
         }
 
-        // La date de fin est facultative : vide = fermeture sur une seule journee.
+        // La date de fin est facultative : une valeur vide correspond à une fermeture d'une seule journée.
         if ($endDate !== null && (!is_string($endDate) || !InputValidator::isValidDate($endDate))) {
             return;
         }
@@ -1723,7 +1751,7 @@ class EmployeeController extends AbstractController
         }
 
         $motif = trim((string) $request->request->get('motif', 'Fermeture exceptionnelle'));
-        // Le motif est limite pour rester compatible avec la colonne SQL.
+        // Le motif est limité pour rester compatible avec la colonne SQL.
         if (!InputValidator::hasMaxLength($motif, 255)) {
             return;
         }
@@ -1847,7 +1875,7 @@ class EmployeeController extends AbstractController
         ] + $this->getMealNamePayload($request);
     }
 
-    // Verifie les elements saisis dans les modales avant de creer le menu.
+    // Vérifie les éléments saisis dans les fenêtres modales avant de créer le menu.
     private function validateLinkedMealItemsForMenu(Request $request): ?string
     {
         $linkedItems = $request->request->all('linked_items');
@@ -1871,7 +1899,7 @@ class EmployeeController extends AbstractController
         return null;
     }
 
-    // Cree les elements de repas renseignes depuis les modales de creation d un menu.
+    // Crée les éléments de repas renseignés dans les fenêtres modales de création d'un menu.
     private function createLinkedMealItemsForMenu(Request $request, Connection $connection, int $menuId): void
     {
         $linkedItems = $request->request->all('linked_items');
@@ -1899,7 +1927,7 @@ class EmployeeController extends AbstractController
      * @param array<string, mixed> $source
      * @return array<string, mixed>
      */
-    // Transforme les champs d une modale en donnees compatibles avec les tables entree, plat ou dessert.
+    // Transforme les champs d'une fenêtre modale en données compatibles avec les tables entrée, plat ou dessert.
     private function getLinkedMealPayload(string $type, array $source, int $menuId): array
     {
         $nameField = match ($type) {
@@ -1924,15 +1952,15 @@ class EmployeeController extends AbstractController
     /**
      * @param array<string, mixed> $payload
      */
-    // Valide les donnees envoyees par les formulaires de menus, entrees, plats et desserts.
+    // Valide les données envoyées par les formulaires des menus, entrées, plats et desserts.
     private function validateItemPayload(string $type, array $payload): ?string
     {
-        // Regle commune : le theme doit venir de la liste autorisee.
+        // Règle commune : le thème doit venir de la liste autorisée.
         if (!InputValidator::isAllowedMenuTheme((string) ($payload['theme'] ?? ''))) {
             return 'Le theme selectionne est invalide.';
         }
 
-        // Regle commune : les textes et chemins d images ne doivent pas depasser la taille prevue.
+        // Règle commune : les textes et chemins d'images ne doivent pas dépasser la taille prévue.
         if (!InputValidator::hasMaxLength((string) ($payload['theme'] ?? ''), 250)
             || !InputValidator::hasMaxLength((string) ($payload['description'] ?? ''), 800)
             || !InputValidator::hasMaxLength((string) ($payload['image_url'] ?? ''), 255)
@@ -1942,7 +1970,7 @@ class EmployeeController extends AbstractController
         }
 
         if ($type === 'menu') {
-            // Regles specifiques aux menus : nom, prix, stock, dates et minimum de personnes.
+            // Règles spécifiques aux menus : nom, prix, stock, dates et minimum de personnes.
             if (trim((string) ($payload['nom_menu'] ?? '')) === '') {
                 return 'Le nom du menu est obligatoire.';
             }
@@ -1978,7 +2006,7 @@ class EmployeeController extends AbstractController
             return null;
         }
 
-        // Regles specifiques aux entrees, plats et desserts.
+        // Règles spécifiques aux entrées, plats et desserts.
         $nameField = match ($type) {
             'entree' => 'nom_entree',
             'plat' => 'nom_plat',
@@ -2020,6 +2048,7 @@ class EmployeeController extends AbstractController
         };
     }
 
+    // Convertit une chaîne vide en valeur SQL nulle tout en conservant les autres types.
     private function nullableValue(mixed $value): mixed
     {
         $value = is_string($value) ? trim($value) : $value;
@@ -2076,6 +2105,7 @@ class EmployeeController extends AbstractController
     /**
      * @return array{table: string, id: string, name: string}|null
      */
+    // Retourne la configuration SQL autorisée pour éviter d'utiliser directement un type dans les requêtes.
     private function getItemConfig(string $type): ?array
     {
         return match ($type) {
@@ -2101,6 +2131,7 @@ class EmployeeController extends AbstractController
     /**
      * @param array{table: string, id: string, name: string} $config
      */
+    // Empêche l'activation d'un composant lorsque son menu parent est inactif.
     private function canActivateMealItem(Connection $connection, array $config, int $id): bool
     {
         $menuStatus = $connection->fetchOne(
@@ -2118,6 +2149,7 @@ class EmployeeController extends AbstractController
         return (int) $menuStatus === 1;
     }
 
+    // Synchronise les entrées, plats et desserts avec le nouveau statut du menu parent.
     private function syncMealItemsWithMenuStatus(Connection $connection, int $menuId, int $status): void
     {
         foreach (['entree', 'plat', 'dessert'] as $table) {
@@ -2128,6 +2160,7 @@ class EmployeeController extends AbstractController
     /**
      * @param array<string, mixed> $payload
      */
+    // Force un composant actif à devenir inactif si son menu parent ne peut pas être publié.
     private function resolveMealItemStatus(Connection $connection, array $payload): int
     {
         if ((int) ($payload['actif'] ?? 0) !== 1 || empty($payload['menu_id'])) {

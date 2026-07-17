@@ -1,4 +1,4 @@
-/* Mise en page de test des composants */
+/* Badges d’état et de catégorie, avec conteneur facultatif pour leur présentation groupée. */
 .badge-preview {
   display: flex;
   gap: 16px;
@@ -6,7 +6,7 @@
   align-items: center;
 }
 
-/*Badge acitf*/
+/* État actif : variante interactive mise en avant par la couleur principale. */
 .badgeactif {
   padding: 3px 7px;
   background-color: var(--primary);
@@ -29,7 +29,7 @@
   cursor: pointer;
 }
 
-/*Badge inacitf*/
+/* État inactif : variante interactive atténuée par la couleur secondaire. */
 .badgeinactif {
   padding: 3px 7px;
   background-color: var(--secondary);
@@ -52,7 +52,7 @@
   cursor: pointer;
 }
 
-/* Badge terminée */
+/* État d’une commande terminée. */
 .badgeterminee {
   padding: 3px 7px;
   background-color: var(--primary);
@@ -70,7 +70,7 @@
   white-space: nowrap;
 }
 
-/* Badge validée */
+/* État d’une commande validée. */
 .badgevalidee {
   padding: 3px 7px;
   background-color: var(--offwhite);
@@ -90,7 +90,7 @@
 }
 
 
-/* Badge en attente */
+/* État d’une commande en attente. */
 .badgeattente {
   padding: 3px 7px;
   background-color: var(--white);
@@ -109,7 +109,7 @@
   white-space: nowrap;
 }
 
-/*Badge catégorie classique*/
+/* Catégorie de menu classique. */
 .classiccategory {
   padding: 4px 10px;
   box-sizing: border-box;
@@ -129,7 +129,7 @@
   white-space: nowrap;
 }
 
-/*Badge catégorie événementiels*/
+/* Catégorie de menu événementiel. */
 .eventcategory {
   padding: 4px 10px;
   box-sizing: border-box;
@@ -150,7 +150,7 @@
   white-space: nowrap;
 }
 
-/*Badge catégorie saisonniers*/
+/* Catégorie de menu saisonnier. */
 .seasonalcategory {
   padding: 4px 10px;
   box-sizing: border-box;
@@ -170,7 +170,7 @@
   white-space: nowrap;
 }
 
-/*Badge régime spécifiques*/
+/* Catégorie destinée aux régimes alimentaires spécifiques. */
 .specialregimecategory {
   padding: 4px 10px;
   box-sizing: border-box;

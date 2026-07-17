@@ -1,8 +1,11 @@
+// Complète la ville depuis un code postal grâce à l'API géographique de l'État et gère les codes multicommunes.
 document.addEventListener('DOMContentLoaded', () => {
   const postalInputs = Array.from(document.querySelectorAll('input[name="code_postal"], input[name="code_postal_livraison"]'));
   const cityCache = new Map();
+  // Le cache évite de solliciter plusieurs fois le service pour un même code postal.
 
   const findCityInput = (postalInput) => {
+    // Associe séparément les champs d'adresse principale et d'adresse de livraison dans leur formulaire.
     const form = postalInput.closest('form') || document;
     const cityName = postalInput.name === 'code_postal_livraison' ? 'ville_livraison' : 'ville';
 
@@ -12,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cleanPostalCode = (value) => value.replace(/\D/g, '').slice(0, 5);
 
   const fetchCities = async (postalCode) => {
+    // Déduplique les noms renvoyés par l'API et les trie selon l'ordre alphabétique français.
     if (cityCache.has(postalCode)) {
       return cityCache.get(postalCode);
     }
@@ -37,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const getOrCreateCitySelect = (cityInput) => {
+    // Réutilise la liste existante pour éviter de créer plusieurs contrôles lors des changements de code postal.
     let select = cityInput.parentElement.querySelector('[data-city-select]');
 
     if (select) {
@@ -60,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const hideCitySelect = (cityInput) => {
+    // Restaure le caractère obligatoire initial du champ texte lorsqu'il redevient visible.
     const select = cityInput.parentElement.querySelector('[data-city-select]');
 
     if (!select) {
@@ -74,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const showCityChoices = (cityInput, cities) => {
+    // Remplace temporairement le champ libre par une liste lorsque plusieurs communes partagent le code postal.
     const select = getOrCreateCitySelect(cityInput);
     select.innerHTML = '<option value="">Choisissez votre ville</option>';
 
@@ -92,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateCityFromPostalCode = async (postalInput, cityInput) => {
+    // Remplit directement une commune unique ou propose un choix lorsque plusieurs résultats existent.
     const postalCode = cleanPostalCode(postalInput.value);
     postalInput.value = postalCode;
 
@@ -115,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showCityChoices(cityInput, cities);
       }
     } catch (error) {
+      // En cas d'indisponibilité de l'API, le champ libre reste utilisable sans bloquer le formulaire.
       hideCitySelect(cityInput);
     }
   };

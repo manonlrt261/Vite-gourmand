@@ -1,34 +1,32 @@
-{# Footer principal affiche pour les visiteurs et les clients. #}
+{# Pied de page public affiché aux visiteurs et aux clients. #}
 <footer class="footer-desktop">
-    {# Bloc des horaires, alimente par la fonction qui recupere les horaires de l'entreprise. #}
+    {# Les horaires sont fournis sous forme de lignes par l’extension Twig métier. #}
     <div class="footer-hours">
         <p class="footer-title">Horaires :</p>
 
         <p class="footer-text">
-            {# Chaque ligne d'horaire est affichee avec un retour a la ligne entre les elements. #}
+            {# Évite d’ajouter un saut de ligne superflu après le dernier horaire. #}
             {% for line in business_hours_lines() %}
                 {{ line }}{% if not loop.last %}<br>{% endif %}
             {% endfor %}
         </p>
     </div>
 
-    {# Bloc central avec le nom du site et les liens legaux. #}
+    {# Identité du site et accès aux informations contractuelles. #}
     <div class="footer-brand">
         <p class="footer-name">Vite & Gourmand</p>
 
-        {# Liens legaux prevus pour les mentions legales et CGV. #}
         <nav class="footer-legal" aria-label="Liens legaux">
             <a href="#">Mentions legales</a>
             <a href="#">CGV</a>
         </nav>
     </div>
 
-    {# Navigation secondaire disponible en bas de page. #}
+    {# Navigation secondaire adaptée à l’état de la session client. #}
     <nav class="footer-nav" aria-label="Navigation footer">
         <a href="{{ path('home_show') }}">Accueil</a>
         <a href="{{ path('menu_index') }}">Menus</a>
         <a href="{{ path('contact_index') }}">Contact</a>
-        {# Adapte les liens selon que le client est connecte ou non. #}
         {% if app.session.get('utilisateur_id') %}
             <a href="{{ path('customer_account') }}">Mon compte</a>
             <a href="{{ path('logout') }}">Déconnexion</a>

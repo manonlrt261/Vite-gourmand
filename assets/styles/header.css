@@ -1,3 +1,4 @@
+/* En-têtes public et employé, menus superposés et adaptations aux petits écrans. */
 html,
 body {
   margin: 0;
@@ -104,6 +105,7 @@ body {
 }
 
 .public-menu-overlay {
+  /* Le panneau mobile couvre la page et reste au-dessus du contenu courant. */
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -190,6 +192,7 @@ body {
 }
 
 body.public-menu-is-open {
+  /* Empêche le défilement de l’arrière-plan tant que le menu public est ouvert. */
   overflow: hidden;
 }
 
@@ -309,6 +312,7 @@ body.public-menu-is-open {
 }
 
 body.employee-menu-is-open {
+  /* Empêche le défilement de l’arrière-plan tant que le menu employé est ouvert. */
   overflow: hidden;
 }
 

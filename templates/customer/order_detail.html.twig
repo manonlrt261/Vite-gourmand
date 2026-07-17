@@ -1,16 +1,16 @@
 ﻿{% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page detail de commande. #}
+{# Détail d’une commande du client : contenu, suivi, modification conditionnelle et dépôt d’avis. #}
 {% block title %}Détails des commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page. #}
+{# Bandeau commun aux pages publiques et à l’espace client. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Détails des commandes',
     image_alt: 'Détail de commande Vite et Gourmand'
 } %}
 
-{# Calculs utiles pour afficher le recapitulatif financier de la commande. #}
+{# Agrège les lignes de menu pour reconstituer le sous-total et la réduction globale affichés plus bas. #}
 {% set firstOrderMenu = orderMenus|first %}
 {% set subtotal = 0 %}
 {% set discount = 0 %}
@@ -18,18 +18,15 @@
     {% set subtotal = subtotal + (orderMenu.prix_par_personne * orderMenu.nombre_personnes) %}
     {% set discount = discount + orderMenu.reduction %}
 {% endfor %}
-{# Indique si le client a deja laisse un avis pour cette commande. #}
 {% set hasReview = order.avis_count|default(0) > 0 %}
-{# Preparation du statut et de la classe CSS du badge. #}
+{# Le statut pilote la couleur du badge et l’accès aux formulaires de modification ou d’avis. #}
 {% set statusCode = order.statut_code|default('en_attente') %}
 {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
 
-{# Contenu principal du detail de commande. #}
 <main class="customer-page order-detail-page">
-    {# Lien de retour vers la liste des commandes du client. #}
     <a href="{{ path('customer_orders') }}" class="cart-back-link">← Retour vers mes commandes</a>
 
-    {# Messages de succes ou d'erreur lies aux avis et aux actions sur la commande. #}
+    {# Retours du contrôleur après un avis ou une modification de la commande. #}
     {% for message in app.flashes('review_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
@@ -46,16 +43,14 @@
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
-    {# Carte de synthese : image du menu, informations principales et statut. #}
+    {# Synthèse de la commande ; le premier menu fournit l’illustration principale. #}
     <section class="order-detail-summary-card">
-        {# Image du menu commande, ou emplacement vide si aucune image n'est disponible. #}
         {% if firstOrderMenu.menu_image_url|default(null) %}
             <img src="{{ asset(firstOrderMenu.menu_image_url) }}" alt="{{ firstOrderMenu.menu_image_alt ?: firstOrderMenu.nom_menu }}" class="order-detail-summary-card__image">
         {% else %}
             <div class="order-detail-summary-card__image order-detail-summary-card__image--empty"></div>
         {% endif %}
 
-        {# Informations principales de la commande. #}
         <div class="order-detail-summary-card__content">
             <h2>Commande n°{{ order.commande_id }}</h2>
             <p>Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
@@ -66,11 +61,10 @@
             <p>{{ order.prix_total|number_format(2, ',', ' ') }} €</p>
         </div>
 
-        {# Badge affichant le statut actuel de la commande. #}
         <span class="{{ statusClass }} order-detail-status">{{ order.statut_libelle|default('En attente') }}</span>
     </section>
 
-    {# Bloc de modification affiche uniquement si la commande est encore en attente. #}
+    {# Les changements restent possibles uniquement avant l’acceptation de la commande par l’équipe. #}
     {% if statusCode == 'en_attente' %}
         <section class="customer-order-edit-card">
             <div class="customer-order-edit-card__intro">
@@ -78,9 +72,9 @@
                 <p>Vous pouvez modifier cette commande tant qu'elle n'a pas encore &eacute;t&eacute; accept&eacute;e par l'&eacute;quipe.</p>
             </div>
 
-            {# Formulaire de modification des informations de livraison et du nombre de personnes. #}
+            {# Met à jour la prestation, l’adresse et le nombre de personnes de la commande. #}
             <form method="post" action="{{ path('customer_order_update', { id: order.commande_id }) }}" class="customer-order-edit-form">
-                {# Token CSRF : protege la modification des informations de livraison. #}
+                {# Protège la modification contre les soumissions provenant d’autres sites. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <div class="customer-order-edit-grid">
                     <label>
@@ -118,9 +112,9 @@
 
             <hr>
 
-            {# Formulaire permettant d'ajouter un autre menu a la commande. #}
+            {# Ajoute une nouvelle ligne de menu à la commande existante. #}
             <form method="post" action="{{ path('customer_order_add_menu', { id: order.commande_id }) }}" class="customer-order-edit-form">
-                {# Token CSRF : protege l ajout d un menu a la commande. #}
+                {# Le même jeton protège toutes les actions authentifiées de l’espace client. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <h3>Ajouter un menu</h3>
                 <div class="customer-order-edit-grid customer-order-edit-grid--two">
@@ -145,14 +139,14 @@
 
             <hr>
 
-            {# Zone permettant d'annuler cette ligne de commande. #}
+            {# Malgré son libellé, cette action cible la route d’annulation de la commande entière. #}
             <div class="customer-order-remove-menu">
                 <div>
                     <h3>Supprimer ce menu</h3>
                     <p>Cette action annule uniquement cette ligne de commande.</p>
                 </div>
                 <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce menu de votre commande ?');">
-                    {# Token CSRF : protege l annulation de la commande. #}
+                    {# Protège l’annulation contre les soumissions provenant d’autres sites. #}
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                     <button type="submit" class="buttonoffwhite">Supprimer ce menu</button>
                 </form>
@@ -162,11 +156,10 @@
 
     <hr class="order-detail-separator">
 
-    {# Section de contenu detaille de la commande. #}
+    {# Décomposition financière calculée à partir de toutes les lignes de menu. #}
     <section class="order-detail-section">
         <h2>Récapitulatif de ma commande</h2>
 
-        {# Liste descriptive du menu, des quantites, des reductions et du total. #}
         <div class="order-detail-recap-card">
             <dl>
                 {% for orderMenu in orderMenus %}
@@ -213,19 +206,16 @@
 
     <hr class="order-detail-separator">
 
-    {# Section de contenu detaille de la commande. #}
+    {# Composition de chaque menu, limitée aux catégories effectivement renseignées. #}
     <section class="order-detail-section">
         <h2>Détail du menu</h2>
 
-        {# Liste des elements de chaque menu commande. #}
         <div class="order-detail-meal-list">
             {% for orderMenu in orderMenus %}
                 <h3>{{ orderMenu.nom_menu }}</h3>
-                {# Boucle sur l entree, le plat et le dessert du menu. #}
                 {% for category, item in orderMenu.mealItems %}
                     {% if item %}
                         <article class="order-detail-meal-card">
-                            {# Image de l'element du menu, ou emplacement vide si aucune image n'existe. #}
                             {% if item.image_url %}
                                 <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
                             {% else %}
@@ -246,20 +236,17 @@
 
     <hr class="order-detail-separator">
 
-    {# Section de contenu detaille de la commande. #}
+    {# Chronologie construite à partir des changements de statut enregistrés. #}
     <section class="order-detail-section">
         <h2>Suivi de la commande</h2>
 
-        {# Historique des statuts de la commande. #}
         <div class="order-detail-timeline">
-            {# Chaque etape correspond a un changement de statut enregistre. #}
             {% for step in statusHistory %}
                 <article class="order-detail-timeline__step">
                     <span aria-hidden="true"></span>
                     <div>
                         <h3>{{ step.statut_libelle }}</h3>
                         <p>{{ step.date_changement ? step.date_changement|date('d/m/Y à H\\hi') : 'Date non renseignée' }}</p>
-                        {# Commentaire eventuel associe au changement de statut. #}
                         {% if step.commentaire %}
                             <p>{{ step.commentaire }}</p>
                         {% endif %}
@@ -271,29 +258,26 @@
 
     <hr class="order-detail-separator">
 
-    {# Section d'avis liee a cette commande. #}
+    {# L’avis n’est proposé qu’une fois la commande terminée et s’il n’en existe pas déjà un. #}
     <section class="order-detail-review-section">
         <h2>Donnez votre avis</h2>
 
-        {# L'avis est bloque tant que la commande n'est pas terminee. #}
         {% if statusCode != 'terminee' %}
             <div class="customer-review-card order-detail-review-card">
                 <h3>Vous pourrez laisser un avis lorsque cette commande sera termin&eacute;e.</h3>
             </div>
-        {# Si un avis existe deja, le formulaire n'est plus affiche. #}
         {% elseif hasReview %}
             <div class="customer-review-card order-detail-review-card">
                 <h3>Merci, votre avis a déjà été envoyé pour cette commande.</h3>
             </div>
         {% else %}
-            {# Formulaire d'avis pour une commande terminee sans avis existant. #}
             <form class="customer-review-card order-detail-review-card" method="post" action="{{ path('customer_order_detail', { id: order.commande_id }) }}">
-                {# Token CSRF : protege l avis envoye depuis le detail de commande. #}
+                {# Protège l’envoi de l’avis contre les soumissions provenant d’autres sites. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                 <h3>Comment évalueriez-vous votre expérience ?</h3>
                 <input type="hidden" name="commande_id" value="{{ order.commande_id }}">
 
-                {# Note obligatoire de 1 a 5 etoiles. #}
+                {# L’ordre décroissant permet au CSS d’afficher et de surligner les étoiles de droite à gauche. #}
                 <fieldset class="customer-rating">
                     <legend>Votre note</legend>
                     <div class="customer-rating-stars">
@@ -304,13 +288,11 @@
                     </div>
                 </fieldset>
 
-                {# Commentaire facultatif du client. #}
                 <label class="customer-review-field">
                     <span>Votre commentaire (facultatif)</span>
                     <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
                 </label>
 
-                {# Bouton d'envoi de l'avis. #}
                 <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
             </form>
         {% endif %}

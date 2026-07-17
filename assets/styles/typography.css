@@ -1,3 +1,4 @@
+/* Hiérarchie typographique globale fondée sur les variables du thème. */
 h1 {
   font-family: var(--font-title);
   font-size: var(--font-size-h1);

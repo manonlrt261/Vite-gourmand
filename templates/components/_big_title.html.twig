@@ -1,15 +1,14 @@
-{# Composant reutilisable du grand bandeau de page. #}
+{# Bandeau de titre réutilisable : `title` est requis, `image` et `image_alt` sont facultatifs. #}
 <section class="bigtittle">
-    {# Image de fond du bandeau. Si aucune image n'est fournie, l'image par defaut est utilisee. #}
+    {# Le visuel générique garantit un rendu complet lorsqu’aucune image propre à la page n’est fournie. #}
     <img
         src="{{ image|default(asset('assets/bigtittle.png')) }}"
         alt="{{ image_alt|default('Visuel Vite et Gourmand') }}"
         class="bigtittle-image"
     >
 
-    {# Voile visuel place par-dessus l'image pour rendre le titre plus lisible. #}
+    {# Ce voile purement décoratif maintient le contraste du titre sur l’image. #}
     <div class="bigtittle-overlay" aria-hidden="true"></div>
 
-    {# Titre affiche au centre du bandeau. La valeur vient de la page qui inclut ce composant. #}
     <h1 class="bigtittle-title">{{ title }}</h1>
 </section>

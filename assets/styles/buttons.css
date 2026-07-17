@@ -1,4 +1,4 @@
-/* Mise en page de test des composants */
+/* Boutons réutilisables et conteneur facultatif pour leur présentation groupée. */
 .components-preview {
   display: flex;
   gap: 16px;
@@ -6,7 +6,7 @@
   align-items: center;
 }
 
-/*Bouton primary*/
+/* Action principale, avec états de survol et de focus contrastés. */
 .buttonprimary {
   min-width: 120px;
   height: 40px;
@@ -38,7 +38,7 @@
   outline-offset: 2px;
 }
 
-/* Bouton white */
+/* Action secondaire sur fond clair. */
 .buttonwhite {
   min-width: 120px;
   height: 40px;
@@ -59,7 +59,7 @@
   cursor: pointer;
 }
 
-/* Bouton offwhite */
+/* Action secondaire sur fond cassé. */
 .buttonoffwhite {
   min-width: 120px;
   height: 40px;
@@ -80,7 +80,7 @@
   cursor: pointer;
 }
 
-/* Bouton modifier */
+/* Action compacte de modification. */
 .buttonedit {
   width: 70px;
   height: 19px;
@@ -105,7 +105,7 @@
   cursor: pointer;
 }
 
-/* Bouton supprimer */
+/* Action compacte de suppression. */
 .buttondelete {
   width: 80px;
   height: 19px;
@@ -141,7 +141,7 @@
   text-decoration: none;
 }
 
-/* Bouton valider */
+/* Action compacte de validation, distinguée par la couleur verte. */
 .buttonvalidate {
   width: 70px;
   height: 19px;
@@ -166,7 +166,7 @@
   cursor: pointer;
 }
 
-/* Bouton accepter l'avis */
+/* Action de modération pour accepter un avis. */
 .buttonaccept {
   width: 94px;
   height: 23px;
@@ -197,7 +197,7 @@
   color: white;
 }
 
-/* Bouton refuser l'avis */
+/* Action de modération pour refuser un avis. */
 .buttonrefuse {
   width: 94px;
   height: 23px;

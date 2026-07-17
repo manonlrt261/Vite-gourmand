@@ -1,3 +1,4 @@
+/* Styles des pages métier : espaces employé et administrateur, parcours client et pages publiques. */
 body {
   margin: 0;
   background-color: var(--white);
@@ -6,7 +7,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Focus clavier global : rend visible l'element actif lorsque l'utilisateur navigue avec Tab. */
+/* Focus clavier global : rend visible l’élément actif lors d’une navigation au clavier. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -19,7 +20,7 @@ summary:focus-visible,
   box-shadow: 0 0 0 5px rgba(181, 99, 32, 0.22);
 }
 
-/* Texte accessible aux lecteurs d'ecran, sans modifier l'affichage visuel. */
+/* Masque visuellement un texte tout en le conservant accessible aux lecteurs d’écran. */
 .sr-only {
   width: 1px;
   height: 1px;
@@ -32,7 +33,7 @@ summary:focus-visible,
   border: 0;
 }
 
-/* Ombre commune appliquee aux grands encadres du site pour garder une profondeur visuelle coherente. */
+/* Ombre commune des grands encadrés, pour une profondeur visuelle cohérente entre les pages. */
 .employee-action-card,
 .employee-orders-filters-panel,
 .employee-material-email-card,
@@ -69,6 +70,7 @@ summary:focus-visible,
 }
 
 @media (max-width: 1024px) {
+  /* Le tableau de bord employé passe sur deux colonnes et empile son contenu principal. */
   .employee-action-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -87,6 +89,7 @@ summary:focus-visible,
 }
 
 @media (max-width: 768px) {
+  /* Les premières vues employé adoptent une disposition verticale sur mobile. */
   .employee-dashboard-page {
     width: min(100% - 32px, 720px);
     padding-top: 40px;
@@ -139,6 +142,7 @@ summary:focus-visible,
   }
 }
 
+/* Socle commun des pages de l’espace employé et de leur introduction. */
 .employee-page {
   min-height: calc(100vh - 89px);
   padding: 72px 24px;
@@ -170,6 +174,7 @@ summary:focus-visible,
   margin: 0;
 }
 
+/* Tableau de bord employé : raccourcis, commandes récentes, avis et déconnexion. */
 .employee-dashboard-page {
   width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
@@ -334,6 +339,7 @@ summary:focus-visible,
   min-height: 111px;
 }
 
+/* Gestion détaillée des commandes : recherche, filtres, statuts et prise de contact. */
 .employee-orders-management-page {
   width: min(1352px, calc(100% - 48px));
   margin: 0 auto;
@@ -606,7 +612,7 @@ summary:focus-visible,
   border-radius: 5px;
 }
 
-/* Tableau de bord employe : les cartes commandes gardent un rendu plat pour eviter une page trop chargee. */
+/* Les commandes du tableau de bord employé restent plates pour alléger cette vue dense. */
 .employee-orders-list .cardvieworderemployee {
   box-shadow: none;
 }
@@ -732,6 +738,7 @@ summary:focus-visible,
   }
 }
 
+/* Tableau de bord administrateur : raccourcis, indicateurs, graphiques et revenus. */
 .admin-dashboard-page {
   width: min(1352px, calc(100% - 48px));
   margin: 0 auto;
@@ -925,6 +932,7 @@ summary:focus-visible,
   margin: 0;
 }
 
+/* Gestion des menus et plats dans l’espace employé. */
 .employee-management-page {
   width: min(1352px, calc(100% - 48px));
   margin: 0 auto;
@@ -1057,6 +1065,7 @@ summary:focus-visible,
   line-height: 1.2;
 }
 
+/* Fenêtre de confirmation utilisée avant la suppression d’un menu ou d’un plat. */
 .employee-delete-modal[hidden] {
   display: none;
 }
@@ -1124,6 +1133,7 @@ body.employee-modal-is-open {
   overflow: hidden;
 }
 
+/* Listes tabulaires des menus et plats, avec défilement horizontal si nécessaire. */
 .employee-list-page {
   padding-top: 48px;
 }
@@ -1231,6 +1241,7 @@ body.employee-modal-is-open {
   margin: 0;
 }
 
+/* Formulaires employé de création et de modification des éléments de restauration. */
 .employee-form-page {
   padding-top: 48px;
 }
@@ -1311,6 +1322,7 @@ body.employee-modal-is-open {
   width: 132px;
 }
 
+/* Gestion des plats associés à un menu et fenêtre d’édition correspondante. */
 .employee-linked-meals {
   border-top: 1px solid var(--primary);
   padding-top: 20px;
@@ -1445,6 +1457,7 @@ body.employee-modal-is-open {
   }
 }
 
+/* Gestion des horaires hebdomadaires et des périodes de fermeture. */
 .employee-hours-page {
   width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
@@ -1737,6 +1750,7 @@ body.employee-modal-is-open {
   font-size: 14px;
 }
 
+/* Modération des avis clients : filtres, liste, statuts et actions. */
 .employee-reviews-page {
   width: min(1352px, calc(100% - 48px));
   margin: 0 auto;
@@ -2056,6 +2070,7 @@ body.employee-modal-is-open {
   }
 }
 
+/* Socle de l’espace client : tableau de bord, commandes récentes et dépôt d’avis. */
 .customer-page {
   width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
@@ -2371,6 +2386,7 @@ body.employee-modal-is-open {
   font-size: 18px;
 }
 
+/* Historique complet des commandes et actions disponibles pour le client. */
 .customer-orders-page {
   min-height: 520px;
 }
@@ -2459,6 +2475,7 @@ body.employee-modal-is-open {
   background-color: var(--white);
 }
 
+/* Fenêtre de dépôt d’un avis depuis l’historique des commandes. */
 .customer-review-modal[hidden] {
   display: none;
 }
@@ -2514,6 +2531,7 @@ body.has-open-modal {
   overflow: hidden;
 }
 
+/* Gestion des informations personnelles, de l’adresse et du mot de passe. */
 .customer-profile-page {
   padding-top: 48px;
 }
@@ -2669,6 +2687,7 @@ body.has-open-modal {
   min-width: 260px;
 }
 
+/* Détail d’une commande : résumé, modification, repas, suivi et avis. */
 .order-detail-page {
   padding-top: 80px;
 }
@@ -3214,6 +3233,7 @@ textarea {
   padding: 48px 0;
 }
 
+/* Page d’accueil : présentation, valeurs, engagements et avis clients. */
 .home-hero {
   margin-bottom: 32px;
 }
@@ -3612,6 +3632,7 @@ textarea {
   font-size: 14px;
 }
 
+/* Page de contact : formulaire, retours de validation et informations pratiques. */
 .contact-page {
   width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
@@ -3791,6 +3812,7 @@ textarea {
   line-height: 1.15;
 }
 
+/* Messagerie employé : demandes reçues, réponses et suppression des échanges. */
 .employee-messages-page {
   width: min(1320px, calc(100% - 48px));
   margin: 64px auto 90px;
@@ -4401,6 +4423,7 @@ textarea {
   font-size: 14px;
 }
 
+/* Panier : coordonnées, livraison, quantités, remises et récapitulatif final. */
 .cart-page {
   width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
@@ -4838,6 +4861,7 @@ textarea {
   color: #a93030 !important;
 }
 
+/* Connexion client et carte d’orientation vers la création de compte. */
 .auth-page {
   width: min(1030px, calc(100% - 48px));
   margin: 0 auto;
@@ -5053,6 +5077,7 @@ textarea {
   border: 0.5px solid #65a87a;
 }
 
+/* Demande et finalisation de la réinitialisation du mot de passe. */
 .forgot-page {
   width: min(1030px, calc(100% - 48px));
   margin: 0 auto;
@@ -5261,6 +5286,7 @@ textarea {
   background-color: var(--primary);
 }
 
+/* Inscription client : identité, coordonnées, adresse et mot de passe. */
 .register-page {
   width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
@@ -5428,6 +5454,7 @@ textarea {
   text-decoration: underline;
 }
 
+/* Catalogue des menus : filtres, tri, sections repliables et contact. */
 .menus-page {
   width: min(1280px, calc(100% - 48px));
   margin: 0 auto;
@@ -6180,6 +6207,7 @@ textarea {
   }
 }
 
+/* Première variante de gestion administrative des employés et de ses fenêtres modales. */
 .admin-employees-page {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -6451,7 +6479,7 @@ textarea {
   }
 }
 
-/* Gestion des employes - alignement Figma node 309:1892 */
+/* Gestion des employés : mise en page de la liste, du formulaire de création et des actions. */
 .admin-employees-page {
   width: min(1400px, calc(100% - 112px));
   margin: 0 auto;
@@ -6972,6 +7000,7 @@ textarea {
   }
 }
 
+/* Analyse administrative des commandes par menu : filtres, graphiques et tableau détaillé. */
 .admin-orders-menu-page {
   width: min(100% - 112px, 1400px);
   margin: 0 auto;
@@ -7421,8 +7450,8 @@ textarea {
   }
 }
 
-/* Responsive de la page "Les menus et les plats" : les cartes se placent
-   les unes sous les autres pour rester lisibles sur telephone. */
+/* Adaptation de la page « Les menus et les plats » : les cartes se placent
+   les unes sous les autres pour rester lisibles sur téléphone. */
 @media (max-width: 768px) {
   .employee-management-page .employee-editable-grid {
     display: flex;

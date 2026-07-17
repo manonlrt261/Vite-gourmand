@@ -1,3 +1,4 @@
+// Met à jour le panier en AJAX et estime les frais de livraison à partir de l'adresse saisie.
 document.addEventListener('DOMContentLoaded', () => {
   const cartForm = document.querySelector('[data-cart-form]');
 
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const DELIVERY_BASE_PRICE = 5;
   const DELIVERY_PRICE_PER_KM = 0.59;
   const knownPostalDistances = {
+    // Distances de repli utilisées lorsque les services de géocodage ou de routage sont indisponibles.
     33100: 5,
     33200: 4,
     33300: 4,
@@ -66,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateCartDisplay = (data) => {
+    // Synchronise les quantités, remises et totaux avec la réponse calculée côté serveur.
     if (data.isEmpty) {
       renderEmptyCart();
       return;
@@ -131,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const calculateDistanceKm = (startLat, startLon, endLat, endLon) => {
+    // Formule de Haversine : distance à vol d'oiseau entre deux coordonnées géographiques.
     const earthRadiusKm = 6371;
     const latDistance = ((endLat - startLat) * Math.PI) / 180;
     const lonDistance = ((endLon - startLon) * Math.PI) / 180;
@@ -145,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const estimateDistanceFromPostalCode = (postalCode) => knownPostalDistances[postalCode] || 25;
 
   const findCoordinates = async (query) => {
+    // L'API Adresse renvoie les coordonnées dans l'ordre longitude, latitude.
     const response = await fetch(`https://api-adresse.data.gouv.fr/search/?limit=1&q=${encodeURIComponent(query)}`);
 
     if (!response.ok) {
@@ -165,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const findDrivingDistance = async (latitude, longitude) => {
+    // Demande à OSRM une distance routière depuis le point de référence situé à Bordeaux.
     const url = `https://router.project-osrm.org/route/v1/driving/${BORDEAUX_LONGITUDE},${BORDEAUX_LATITUDE};${longitude},${latitude}?overview=false`;
     const response = await fetch(url);
 
@@ -193,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let distanceKm = estimateDistanceFromPostalCode(postalCode);
 
     if (query.length > 7) {
+      // Privilégie la distance routière, puis la distance directe, avant le barème postal de repli.
       try {
         const coordinates = await findCoordinates(query);
         distanceKm = await findDrivingDistance(coordinates.latitude, coordinates.longitude);
@@ -230,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const debounce = (callback, delay = 500) => {
+    // Regroupe les saisies rapprochées afin de limiter les appels aux services géographiques.
     let timeoutId;
 
     return () => {
@@ -256,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   cartForm.addEventListener('submit', async (event) => {
+    // Intercepte uniquement le bouton de recalcul ; la validation finale conserve son envoi normal.
     if (!event.submitter || !event.submitter.matches('[data-cart-update-button]')) {
       return;
     }
@@ -295,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.querySelectorAll('[data-cart-remove-button]').forEach((button) => {
+    // Chaque bouton cible son propre formulaire grâce à l'attribut HTML « form ».
     button.addEventListener('click', async (event) => {
       event.preventDefault();
 

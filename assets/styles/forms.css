@@ -1,3 +1,4 @@
+/* Champs de formulaire réutilisables, déclinés selon la couleur de fond. */
 .forms-preview {
   display: flex;
   flex-direction: column;
@@ -5,7 +6,7 @@
   padding: 24px;
 }
 
-/*Form primary*/
+/* Champ monoligne sur fond principal. */
 .formprimary {
   width: 248px;
   height: 28px;
@@ -32,7 +33,7 @@
   outline: none;
 }
 
-/* Form offwhite */
+/* Champ monoligne sur fond cassé. */
 .formoffwhite {
   width: 248px;
   height: 28px;
@@ -59,7 +60,7 @@
   outline: none;
 }
 
-/* Form white */
+/* Champ monoligne sur fond clair. */
 .formwhite {
   width: 248px;
   height: 28px;
@@ -86,7 +87,7 @@
   outline: none;
 }
 
-/* Textarea primary */
+/* Zone de texte sur fond principal. */
 .textareaprimary {
   width: 248px;
   height: 115px;
@@ -114,7 +115,7 @@
   outline: none;
 }
 
-/* Textarea offwhite */
+/* Zone de texte sur fond cassé. */
 .textareaoffwhite {
   width: 248px;
   height: 115px;
@@ -142,7 +143,7 @@
   outline: none;
 }
 
-/* Textarea white */
+/* Zone de texte sur fond clair. */
 .textareawhite {
   width: 248px;
   height: 115px;

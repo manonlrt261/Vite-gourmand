@@ -1,3 +1,4 @@
+// Gère les fenêtres de création de plats liés et synchronise leur thème avec celui du menu.
 document.addEventListener('DOMContentLoaded', () => {
   const page = document.querySelector('[data-linked-meals]');
 
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const linkedThemeSelects = document.querySelectorAll('[data-linked-meal-theme]');
 
   const syncLinkedTheme = (select, force = false) => {
+    // Respecte un choix manuel, sauf lors de l'ouverture où le thème du menu redevient prioritaire.
     if (!menuThemeSelect || !select || !menuThemeSelect.value) {
       return;
     }
@@ -27,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Le theme choisi sur le menu est automatiquement repris dans la fenetre ouverte.
+    // Le thème du menu est repris à l'ouverture, y compris après une sélection différente antérieure.
     syncLinkedTheme(modal.querySelector('[data-linked-meal-theme]'), true);
 
     modal.hidden = false;
@@ -36,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const closeModal = (modal) => {
+    // La classe appliquée au corps de la page rétablit notamment le défilement à la fermeture.
     modal.hidden = true;
     document.body.classList.remove('employee-modal-is-open');
   };

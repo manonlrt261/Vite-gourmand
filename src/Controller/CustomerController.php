@@ -9,10 +9,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-// Controleur de l espace client et des commandes client.
+// Contrôleur de l'espace client : profil, commandes, modifications et avis.
 class CustomerController extends AbstractController
 {
-    // Affiche le tableau de bord client avec profil, commandes recentes et avis.
+    // Affiche le tableau de bord avec le profil, les commandes récentes et les avis déposables.
     public function account(Request $request, Connection $connection): Response
     {
         $session = $request->getSession();
@@ -23,7 +23,7 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Le token CSRF evite qu un avis soit envoye depuis une page externe au site.
+            // Le jeton CSRF évite qu'un avis soit envoyé depuis une page externe au site.
             if (!$this->isValidCustomerCsrf($request)) {
                 if ($request->isXmlHttpRequest()) {
                     return $this->json(['success' => false, 'message' => 'Le formulaire a expiré, veuillez réessayer.'], 400);
@@ -36,7 +36,7 @@ class CustomerController extends AbstractController
 
             $reviewResult = $this->handleReviewSubmit($request, $connection, $userId);
 
-            // Si le formulaire est envoye par JavaScript, on repond sans recharger la page.
+            // Si le formulaire est envoyé par JavaScript, on répond sans recharger la page.
             if ($request->isXmlHttpRequest()) {
                 return $this->json($reviewResult, $reviewResult['success'] ? 200 : 400);
             }
@@ -51,7 +51,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Affiche toutes les commandes du client connecte.
+    // Liste toutes les commandes appartenant au client connecté.
     public function orders(Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -61,7 +61,7 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Protection CSRF du formulaire d avis ouvert depuis la liste des commandes.
+            // Protection CSRF du formulaire d'avis ouvert depuis la liste des commandes.
             if (!$this->isValidCustomerCsrf($request)) {
                 $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -78,7 +78,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Affiche le detail d une commande appartenant au client.
+    // Affiche le détail d'une commande après vérification de son appartenance au client.
     public function orderDetail(int $id, Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -88,7 +88,7 @@ class CustomerController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            // Protection CSRF du formulaire d avis disponible sur le detail d une commande.
+            // Protection CSRF du formulaire d'avis disponible dans le détail d'une commande.
             if (!$this->isValidCustomerCsrf($request)) {
                 $this->addFlash('review_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -136,7 +136,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Permet au client de modifier une commande encore en attente.
+    // Modifie les informations de livraison d'une commande encore en attente.
     public function updateOrder(int $id, Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -145,7 +145,7 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
         }
 
-        // La modification d une commande est une action sensible : le token CSRF est obligatoire.
+        // La modification d'une commande est une action sensible : le jeton CSRF est obligatoire.
         if (!$this->isValidCustomerCsrf($request)) {
             $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -173,7 +173,7 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
         }
 
-        // Verifie les nouvelles informations de livraison avant de modifier la commande.
+        // Vérifie les nouvelles informations de livraison avant de modifier la commande.
         $deliveryError = $this->validateDeliveryData($datePrestation, $heureLivraison, $adresse, $ville, $codePostal);
         if ($deliveryError !== null) {
             $this->addFlash('order_error', $deliveryError);
@@ -207,7 +207,7 @@ class CustomerController extends AbstractController
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
 
-    // Ajoute un menu a une commande client encore modifiable.
+    // Ajoute un menu disponible à une commande en attente et recalcule ses totaux.
     public function addMenuToOrder(int $id, Request $request, Connection $connection): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -216,7 +216,7 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
         }
 
-        // Le token CSRF protege l ajout d un menu dans une commande existante.
+        // Le jeton CSRF protège l'ajout d'un menu dans une commande existante.
         if (!$this->isValidCustomerCsrf($request)) {
             $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -287,7 +287,7 @@ class CustomerController extends AbstractController
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
 
-    // Permet au client d annuler une commande tant qu elle est en attente.
+    // Annule une commande autorisée, historise le changement et met à jour les statistiques.
     public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         $userId = (int) $request->getSession()->get('utilisateur_id');
@@ -296,7 +296,7 @@ class CustomerController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_orders')]);
         }
 
-        // Annuler une commande modifie la base : le token CSRF empeche une annulation non voulue.
+        // Annuler une commande modifie la base : le jeton CSRF empêche une annulation non voulue.
         if (!$this->isValidCustomerCsrf($request)) {
             $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -345,14 +345,14 @@ class CustomerController extends AbstractController
         ]);
 
         $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulée par le client.');
-        // La commande reste dans MySQL pour la tracabilite, mais sort immediatement des statistiques MongoDB.
+        // La commande reste dans MySQL pour la traçabilité, mais sort immédiatement des statistiques MongoDB.
         $mongoStatsService->getOrdersByMenuDocuments($connection);
         $this->addFlash('order_success', 'Votre commande a bien été annulée.');
 
         return $this->redirectToRoute('customer_orders');
     }
 
-    // Affiche et traite la page Mes informations du client.
+    // Affiche et traite les modifications du profil du client connecté.
     public function profile(Request $request, Connection $connection): Response
     {
         $session = $request->getSession();
@@ -397,7 +397,7 @@ class CustomerController extends AbstractController
         return $this->isCsrfTokenValid('customer_action', (string) $request->request->get('_csrf_token'));
     }
 
-    // Enregistre les modifications des informations personnelles ou du mot de passe.
+    // Centralise la mise à jour du profil, de l'adresse e-mail et du mot de passe.
     private function handleProfileSubmit(Request $request, Connection $connection, array $customer): void
     {
         $userId = (int) $customer['id'];
@@ -442,8 +442,8 @@ class CustomerController extends AbstractController
             ], ['id' => $userId]);
 
             try {
-                // Si le compte employe avait un mot de passe initial visible par l'administrateur,
-                // il est efface des que l'utilisateur definit son propre mot de passe.
+            // Si le compte employé avait un mot de passe initial visible par l'administrateur,
+            // il est effacé dès que l'utilisateur définit son propre mot de passe.
                 $connection->update('utilisateurs', ['mot_de_passe_initial' => null], ['id' => $userId]);
             } catch (\Throwable) {
             }
@@ -490,7 +490,7 @@ class CustomerController extends AbstractController
             return;
         }
 
-        // Controle les informations personnelles modifiees par le client.
+            // Contrôle les informations personnelles modifiées par le client.
         $profileError = $this->validateProfileData($data);
         if ($profileError !== null) {
             $this->addFlash('profile_error', $profileError);
@@ -521,7 +521,7 @@ class CustomerController extends AbstractController
     /**
      * @return array{success: bool, message: string, commande_id?: int}
      */
-    // Enregistre un avis client pour une commande terminee.
+    // Valide qu'une commande terminée peut recevoir un unique avis du client.
     private function handleReviewSubmit(Request $request, Connection $connection, int $userId): array
     {
         $commandeId = (int) $request->request->get('commande_id');
@@ -535,7 +535,7 @@ class CustomerController extends AbstractController
             return ['success' => false, 'message' => $message];
         }
 
-        // Limite la taille du commentaire pour eviter une saisie trop longue en base.
+        // Limite la taille du commentaire pour éviter une saisie trop longue en base.
         if (!InputValidator::hasMaxLength($commentaire, 1500)) {
             $message = 'Votre commentaire est trop long.';
             $this->addFlash('review_error', $message);
@@ -598,7 +598,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les dernieres commandes a afficher dans l espace client.
+    // Récupère les dernières commandes à afficher dans l'espace client.
     private function getLatestOrders(Connection $connection, int $userId, int $limit): array
     {
         return $connection->fetchAllAssociative(
@@ -622,7 +622,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les commandes terminees pouvant recevoir un avis.
+    // Récupère les commandes terminées pouvant recevoir un avis.
     private function getReviewableOrders(Connection $connection, int $userId): array
     {
         return $connection->fetchAllAssociative(
@@ -643,7 +643,7 @@ class CustomerController extends AbstractController
         );
     }
 
-    // Recupere une commande du client seulement si elle est encore en attente.
+    // Ne retourne qu'une commande en attente appartenant au client, afin de sécuriser les modifications.
     private function getPendingCustomerOrder(Connection $connection, int $orderId, int $userId): array|false
     {
         $order = $connection->fetchAssociative(
@@ -669,7 +669,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les menus actifs disponibles pour modification de commande.
+    // Récupère les menus actifs disponibles pour modifier une commande.
     private function getAvailableMenus(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -683,7 +683,7 @@ class CustomerController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les menus contenus dans une commande, avec une compatibilite pour les anciennes commandes a menu unique.
+    // Récupère les menus d'une commande tout en restant compatible avec les anciennes commandes à menu unique.
     private function getOrderMenuLines(Connection $connection, array $order): array
     {
         try {
@@ -723,7 +723,7 @@ class CustomerController extends AbstractController
     /**
      * @return array{people:int, price:float}
      */
-    // Calcule les totaux d une commande a partir de ses lignes de menus.
+    // Calcule les totaux d'une commande à partir de ses lignes de menus.
     private function getOrderMenuTotals(Connection $connection, int $orderId): array
     {
         $totals = $connection->fetchAssociative(
@@ -740,7 +740,7 @@ class CustomerController extends AbstractController
         ];
     }
 
-    // Cree la table des lignes de commande si elle n existe pas encore.
+    // Crée la table des lignes de commande si elle n'existe pas encore.
     private function ensureOrderMenuTable(Connection $connection): void
     {
         $connection->executeStatement(
@@ -763,7 +763,7 @@ class CustomerController extends AbstractController
     /**
      * @return array<string, array<string, mixed>|false>
      */
-    // Recupere la composition du menu associe a une commande.
+    // Récupère la composition du menu associé à une commande.
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
@@ -857,7 +857,7 @@ class CustomerController extends AbstractController
         return $timeline;
     }
 
-    // Ajoute une ligne dans l historique des statuts de commande.
+    // Conserve chaque changement de statut dans l'historique visible du client.
     private function addOrderStatusHistory(Connection $connection, int $orderId, int $statusId, string $comment): void
     {
         try {
@@ -871,7 +871,7 @@ class CustomerController extends AbstractController
         }
     }
 
-    // Met a jour les informations du client stockees en session.
+    // Recharge en session les informations de profil après une modification réussie.
     private function refreshCustomerSession(Request $request, Connection $connection, int $userId): void
     {
         $user = $connection->fetchAssociative(
@@ -900,7 +900,7 @@ class CustomerController extends AbstractController
         ]);
     }
 
-    // Verifie le mot de passe saisi avec le mot de passe stocke.
+    // Vérifie le mot de passe saisi avec le mot de passe stocké.
     private function isPasswordValid(string $password, string $storedPassword): bool
     {
         if ($storedPassword === '') {
@@ -910,7 +910,7 @@ class CustomerController extends AbstractController
         return password_verify($password, $storedPassword) || hash_equals($storedPassword, $password);
     }
 
-    // Controle que le nouveau mot de passe respecte les regles de securite.
+    // Contrôle que le nouveau mot de passe respecte les règles de sécurité.
     private function isStrongPassword(string $password): bool
     {
         return strlen($password) >= 10
@@ -920,7 +920,7 @@ class CustomerController extends AbstractController
             && preg_match('/[^A-Za-z0-9]/', $password);
     }
 
-    // Valide les champs modifiables d une commande cote client.
+    // Valide les champs modifiables d'une commande côté client.
     private function validateDeliveryData(string $datePrestation, string $heureLivraison, string $adresse, string $ville, string $codePostal): ?string
     {
         if (!InputValidator::isFutureOrTodayDate($datePrestation)) {

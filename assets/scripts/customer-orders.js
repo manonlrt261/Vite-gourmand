@@ -1,3 +1,4 @@
+// Gère la fenêtre permettant à un client de déposer un avis depuis l'historique de ses commandes.
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.querySelector('[data-review-modal]');
 
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastFocusedButton = null;
 
   const openModal = (button) => {
+    // Recopie l'identifiant après la réinitialisation afin de conserver la commande ciblée dans le formulaire.
     lastFocusedButton = button;
     orderIdInput.value = button.dataset.orderId || '';
     orderLabel.textContent = button.dataset.orderLabel || '';
@@ -19,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.hidden = false;
     document.body.classList.add('has-open-modal');
 
-    // Le focus entre directement dans la fenêtre pour faciliter l'utilisation au clavier.
+    // Le point de focalisation entre directement dans la fenêtre pour faciliter l'utilisation au clavier.
     modal.querySelector('[data-review-close]')?.focus();
   };
 
@@ -27,12 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.hidden = true;
     document.body.classList.remove('has-open-modal');
 
-    // Après fermeture, le focus revient au bouton qui a ouvert la fenêtre.
+    // Après la fermeture, le point de focalisation revient au bouton qui a ouvert la fenêtre.
     lastFocusedButton?.focus();
     lastFocusedButton = null;
   };
 
   document.addEventListener('click', (event) => {
+    // La délégation d'événement couvre aussi les boutons ajoutés ultérieurement au document.
     const openButton = event.target.closest('[data-review-open]');
 
     if (openButton) {

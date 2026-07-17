@@ -1,3 +1,4 @@
+// Gère les filtres, les changements de statut et les actions de contact de la liste des commandes de l'espace employé.
 document.addEventListener('DOMContentLoaded', () => {
   const page = document.querySelector('[data-employee-orders-page]');
 
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetButton = filters.querySelector('[data-order-reset]');
 
   const getPeriodRange = (period) => {
+    // Convertit le choix de période en bornes inclusives comparables aux dates portées par les cartes.
     const now = new Date();
     const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
@@ -59,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const isInPeopleRange = (people, range) => {
+    // Le dernier intervalle est ouvert ; les autres utilisent la forme « minimum-maximum ».
     if (!range) {
       return true;
     }
@@ -74,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const normalize = (value) => String(value || '').trim().toLowerCase();
 
   const applyFilters = () => {
+    // Évalue les critères dans l'ordre et ignore les suivants dès qu'une carte est exclue.
     const search = normalize(fields.search.value);
     const status = String(fields.status.value || '');
     const periodRange = getPeriodRange(String(fields.period.value || ''));
@@ -128,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const resetFilters = () => {
+    // Restaure la première option des listes et vide les champs libres avant de recalculer l'affichage.
     Object.values(fields).forEach((field) => {
       if (field.tagName === 'SELECT') {
         field.selectedIndex = 0;
@@ -161,8 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       field.disabled = !isPending;
     });
 
-    // Quand une commande revient en attente, les actions reapparaissent
-    // et le resume du dernier contact se masque pour laisser place aux formulaires.
+    // En attente, les formulaires de contact remplacent le résumé du dernier échange ; sinon ils sont verrouillés.
     contactLogs.forEach((log) => {
       log.hidden = isPending;
     });
@@ -186,13 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // On prepare les donnees avant de desactiver le select :
-      // un champ disabled n'est pas inclus dans FormData.
+      // Prépare les données avant de désactiver le champ, car un champ désactivé est exclu de FormData.
       const formData = new FormData(form);
       select.disabled = true;
 
       try {
-        // Le formulaire contient le token CSRF cache : on l envoie aussi en AJAX.
+        // Le formulaire embarque le jeton CSRF, transmis sans traitement particulier par FormData.
         const response = await fetch(form.action, {
           method: 'POST',
           body: formData,
@@ -223,18 +226,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Le changement de statut se fait des que l'employe choisit une valeur dans le menu.
+    // Le changement de statut est envoyé dès que l'employé choisit une valeur.
     select.addEventListener('change', () => {
       form.requestSubmit();
     });
   });
 
   cards.forEach((card) => {
+    // Aligne l'état initial des actions de contact sur le statut rendu par le serveur.
     setOrderContactActionsState(card, card.dataset.orderStatus || 'en_attente');
   });
 
   filters.addEventListener('keydown', (event) => {
-    // La touche Entree applique les filtres comme le bouton principal.
+    // La touche Entrée applique les filtres comme le bouton principal.
     if (event.key === 'Enter' && event.target.matches('input, select')) {
       event.preventDefault();
       applyFilters();

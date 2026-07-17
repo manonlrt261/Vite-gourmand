@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur. #}
+{# Gestion opérationnelle des commandes, de leur statut et des échanges avec le client. #}
 {% block title %}Gestion des commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Grand bandeau visuel de la page employe. #}
+    {# Grand bandeau visuel de la page employé. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Gestion des commandes',
         image: asset('assets/bigtittle.png'),
@@ -14,7 +14,7 @@
     {# Contenu principal de la page de gestion des commandes. #}
 <main class="employee-orders-management-page" data-employee-orders-page>
     {% set today = 'now'|date('Y-m-d') %}
-        {# Lien de retour adapte selon le role connecte. #}
+        {# Lien de retour adapté selon le rôle connecté. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
         {# Introduction de la page et objectif de l'outil. #}
@@ -23,19 +23,19 @@
             <p>Consultez les commandes, filtrez les demandes et faites avancer leur statut.</p>
         </section>
 
-        {# Messages de confirmation apres une action sur une commande. #}
+        {# Messages de confirmation après une action sur une commande. #}
         {% for message in app.flashes('order_success') %}
             <p class="contact-alert contact-alert--success">{{ message }}</p>
         {% endfor %}
 
-        {# Messages d'erreur si une action sur une commande echoue. #}
+        {# Messages d'erreur si une action sur une commande échoue. #}
         {% for message in app.flashes('order_error') %}
             <p class="contact-alert contact-alert--error">{{ message }}</p>
         {% endfor %}
 
-        {# Bloc de filtres utilise par JavaScript pour trier les commandes sans recharger la page. #}
+        {# Les filtres sont appliqués côté navigateur aux données portées par chaque carte. #}
         <section class="employee-orders-filters-panel" data-order-filters>
-            {# Recherche par numero de commande ou nom du client. #}
+            {# Recherche par numéro de commande ou nom du client. #}
             <label class="employee-orders-filter employee-orders-filter--search">
                 <span>Rechercher une commande</span>
                 <input type="search" name="search" placeholder="N&deg; de commande ou nom du client" data-order-search>
@@ -54,7 +54,7 @@
                     </select>
                 </label>
 
-                {# Filtre par periode de commande. #}
+                {# Filtre par période de commande. #}
                 <label class="employee-orders-filter">
                     <span>P&eacute;riode</span>
                     <select name="period" data-order-period>
@@ -68,7 +68,7 @@
                     </select>
                 </label>
 
-                {# Filtre par nombre de personnes prevu pour la prestation. #}
+                {# Filtre par nombre de personnes prévu pour la prestation. #}
                 <label class="employee-orders-filter">
                     <span>Nombre de personnes</span>
                     <select name="people" data-order-people>
@@ -93,26 +93,26 @@
                 </label>
             </div>
 
-            {# Boutons pour appliquer ou reinitialiser les filtres. #}
+            {# Boutons pour appliquer ou réinitialiser les filtres. #}
             <div class="employee-orders-filter-actions">
                 <button type="button" class="buttonprimary" data-order-apply>Appliquer les filtres</button>
                 <button type="button" class="buttonoffwhite" data-order-reset>R&eacute;initialiser les filtres</button>
             </div>
         </section>
 
-        {# Liste des commandes affichees apres filtrage. #}
+        {# Liste des commandes affichées après filtrage. #}
         <section class="employee-orders-results">
-            {# Compteur mis a jour par JavaScript selon les filtres appliques. #}
+            {# Compteur mis à jour par JavaScript selon les filtres appliqués. #}
             <p class="employee-orders-count"><span data-order-count>{{ orders|length }}</span> commande(s) affich&eacute;e(s)</p>
 
             <div class="employee-orders-management-list" data-order-list>
                 {% for order in orders %}
-                    {# Variables utiles pour calculer l'affichage du statut et du client. #}
+                    {# Normalise les valeurs réutilisées par l'affichage, les filtres et les actions. #}
                     {% set statusCode = order.statut_code|default('en_attente') %}
                     {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode == 'en_attente' ? 'badgeattente' : 'badgevalidee') %}
                     {% set customerName = (order.prenom|default('Client') ~ ' ' ~ order.nom|default(''))|trim %}
 
-                    {# Carte commande avec les donnees necessaires aux filtres JavaScript. #}
+                    {# Carte de commande avec les données nécessaires aux filtres JavaScript. #}
                     <article
                         class="ordergestion"
                         data-order-card
@@ -170,9 +170,9 @@
                             </div>
                         </div>
 
-                        {# Formulaire de choix du statut : le select garde le visuel du badge mais permet de choisir directement le statut voulu. #}
+                        {# Le sélecteur conserve le visuel du badge tout en permettant un changement direct de statut. #}
                         <form method="post" action="{{ path('employee_order_advance_status', { id: order.commande_id }) }}" data-order-status-form>
-                            {# Token CSRF : protege le changement de statut d une commande. #}
+                            {# Le jeton CSRF sécurise le changement de statut de la commande. #}
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                             <label class="ordergestion-status-wrapper">
                                 <span class="sr-only">Statut de la commande n&deg;{{ order.commande_id }}</span>
@@ -194,13 +194,13 @@
                             </label>
                         </form>
 
-                        {# Les actions restent presentes dans la page pour pouvoir etre reactivees sans rechargement si le statut repasse en attente. #}
+                        {# Les actions restent dans le DOM afin que le script puisse les réactiver si le statut revient à « en attente ». #}
                         <section class="employee-order-contact-actions{% if statusCode != 'en_attente' %} is-disabled{% endif %}" data-order-contact-actions aria-disabled="{{ statusCode == 'en_attente' ? 'false' : 'true' }}">
                                 {# Formulaire de modification de commande. #}
                                 <details>
                                     <summary>Modifier la commande</summary>
                                     <form method="post" action="{{ path('employee_order_update', { id: order.commande_id }) }}" class="employee-order-contact-form">
-                                        {# Token CSRF : protege la modification employee d une commande. #}
+                                        {# Le jeton CSRF sécurise la modification de la commande par un employé. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                         {# Nouvelles informations de prestation et de livraison. #}
                                         <div class="employee-order-contact-grid">
@@ -230,7 +230,7 @@
                                             </label>
                                         </div>
 
-                                        {# Informations obligatoires prouvant que le client a ete contacte. #}
+                                        {# La modification exige la traçabilité préalable du contact avec le client. #}
                                         <div class="employee-order-contact-grid employee-order-contact-grid--contact">
                                             <label>
                                                 <span>M&eacute;thode de contact client</span>
@@ -251,7 +251,7 @@
                                             </label>
                                         </div>
 
-                                        {# Message expliquant ce qui a ete convenu avec le client. #}
+                                        {# Message expliquant ce qui a été convenu avec le client. #}
                                         <label class="employee-order-contact-message">
                                             <span>Message / accord du client</span>
                                             <textarea name="contact_message_client" rows="3" placeholder="Expliquez ce qui a &eacute;t&eacute; convenu avec le client." required></textarea>
@@ -261,13 +261,13 @@
                                     </form>
                                 </details>
 
-                                {# Formulaire d'annulation de commande apres contact client. #}
+                                {# Formulaire d'annulation de commande après contact avec le client. #}
                                 <details>
                                     <summary>Annuler la commande</summary>
                                     <form method="post" action="{{ path('employee_order_cancel', { id: order.commande_id }) }}" class="employee-order-contact-form">
-                                        {# Token CSRF : protege l annulation employee d une commande. #}
+                                        {# Le jeton CSRF sécurise l'annulation de la commande par un employé. #}
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
-                                        {# Methode, date et heure du contact client. #}
+                                        {# Méthode, date et heure du contact client. #}
                                         <div class="employee-order-contact-grid employee-order-contact-grid--contact">
                                             <label>
                                                 <span>M&eacute;thode de contact client</span>
@@ -299,7 +299,7 @@
                                 </details>
                         </section>
                         {% if statusCode != 'en_attente' and (order.contact_methode_client or order.contact_message_client) %}
-                            {# Resume du dernier contact client quand la commande n'est plus modifiable. #}
+                            {# Affiche la trace du dernier contact lorsque les formulaires ne sont plus disponibles. #}
                             <section class="employee-order-contact-log" data-order-contact-log>
                                 <p>Contact client : {{ order.contact_methode_client|default('non renseign&eacute;') }}</p>
                                 {% if order.contact_client_at %}
@@ -312,11 +312,11 @@
                         {% endif %}
                     </article>
                 {% else %}
-                    {# Message affiche si aucune commande n'existe. #}
+                    {# Message affiché si aucune commande n'existe. #}
                     <p class="employee-empty">Aucune commande pour le moment.</p>
                 {% endfor %}
 
-                {# Message affiche par JavaScript quand les filtres ne donnent aucun resultat. #}
+                {# Message affiché par JavaScript quand les filtres ne donnent aucun résultat. #}
                 <p class="employee-empty" data-order-empty hidden>Aucune commande ne correspond aux filtres.</p>
             </div>
         </section>
@@ -325,6 +325,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui gere les filtres et les changements de statut sans rechargement complet. #}
+    {# Script qui gère les filtres et les changements de statut sans rechargement complet. #}
     <script src="{{ asset('assets/scripts/employee-orders.js') }}" defer></script>
 {% endblock %}

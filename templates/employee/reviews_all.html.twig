@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page de tous les avis. #}
+{# Historique de modération regroupant les avis selon leur statut courant. #}
 {% block title %}Tous les avis - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {# Bandeau principal réutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Tous les avis',
         image: asset('assets/bigtittle.png'),
@@ -22,9 +22,9 @@
             <p>Retrouvez les avis en attente, les avis accept&eacute;s et les avis refus&eacute;s.</p>
         </section>
 
-        {# Filtres JavaScript communs aux pages d'avis. #}
+        {# Filtres communs appliqués côté navigateur aux cartes des trois groupes. #}
         <section class="employee-review-filters" data-review-filters>
-            {# Recherche par client ou numero de commande. #}
+            {# Recherche par client ou numéro de commande. #}
             <label>
                 <span class="sr-only">Rechercher un avis par client ou num&eacute;ro de commande</span>
                 <input type="search" name="search" placeholder="Rechercher par client ou num&eacute;ro de commande" data-review-search>
@@ -42,7 +42,7 @@
                     </select>
                 </label>
 
-                {# Filtre par periode. #}
+                {# Filtre par période. #}
                 <label>
                     <span class="sr-only">Filtrer les avis par p&eacute;riode</span>
                     <select name="period" data-review-period>
@@ -74,16 +74,16 @@
                 <button type="button" class="buttonoffwhite" data-review-reset>R&eacute;initialiser les filtres</button>
             </div>
 
-            {# Compteur du nombre d'avis affiches. #}
+            {# Le script actualise ce total après chaque filtrage. #}
             <p><span data-review-count>{{ reviews|length }}</span> avis affich&eacute;s</p>
         </section>
 
-        {# Separation des avis par statut pour l'affichage. #}
+        {# Prépare trois collections d'affichage sans modifier la collection reçue du contrôleur. #}
         {% set pendingReviews = reviews|filter(review => review.statut == 'en_attente') %}
         {% set acceptedReviews = reviews|filter(review => review.statut == 'valide') %}
         {% set refusedReviews = reviews|filter(review => review.statut == 'refuse') %}
 
-        {# Liste globale des avis, organisee en trois groupes. #}
+        {# Liste globale des avis, organisée en trois groupes. #}
         <div class="employee-review-all-list" data-review-list>
             {# Groupe des avis en attente. #}
             <section class="employee-review-group" data-review-group="en_attente">
@@ -96,29 +96,29 @@
                 {% endfor %}
             </section>
 
-            {# Groupe des avis acceptes. #}
+            {# Groupe des avis acceptés. #}
             <section class="employee-review-group" data-review-group="valide">
                 <h2>Accept&eacute;s</h2>
                 {% for review in acceptedReviews %}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
-                    {# Message si aucun avis accepte n'existe. #}
+                    {# Message si aucun avis accepté n'existe. #}
                     <p class="employee-empty" data-review-group-empty>Aucun avis accept&eacute;.</p>
                 {% endfor %}
             </section>
 
-            {# Groupe des avis refuses. #}
+            {# Groupe des avis refusés. #}
             <section class="employee-review-group" data-review-group="refuse">
                 <h2>Refus&eacute;s</h2>
                 {% for review in refusedReviews %}
                     {% include 'employee/_review_card.html.twig' with { review: review } %}
                 {% else %}
-                    {# Message si aucun avis refuse n'existe. #}
+                    {# Message si aucun avis refusé n'existe. #}
                     <p class="employee-empty" data-review-group-empty>Aucun avis refus&eacute;.</p>
                 {% endfor %}
             </section>
 
-            {# Message affiche si les filtres masquent tous les avis. #}
+            {# Message affiché si les filtres masquent tous les avis. #}
             <p class="employee-empty" data-review-empty hidden>Aucun avis ne correspond aux filtres.</p>
         </div>
     </main>
@@ -126,6 +126,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui gere les filtres et les actions de changement de statut. #}
+    {# Gère le filtrage transversal et les changements de statut des avis. #}
     <script src="{{ asset('assets/scripts/employee-reviews.js') }}" defer></script>
 {% endblock %}

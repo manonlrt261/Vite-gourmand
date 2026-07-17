@@ -1,48 +1,42 @@
 ﻿{% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page Mes informations. #}
+{# Page de gestion des coordonnées, de l’adresse de livraison et du mot de passe du client connecté. #}
 {% block title %}Mes informations - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page. #}
+{# Bandeau commun aux pages publiques et à l’espace client. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Mes informations',
     image_alt: 'Informations personnelles Vite et Gourmand'
 } %}
 
-{# Contenu principal de la page de profil client. #}
 <main class="customer-page customer-profile-page">
-    {# Lien de retour vers l'espace client. #}
     <a href="{{ path('customer_account') }}" class="cart-back-link">← Retour à mon espace client</a>
 
-    {# Introduction qui explique l'objectif de la page. #}
     <section class="customer-profile-intro">
         <h1>Mes informations personnelles</h1>
         <p>Modifiez vos informations personnelles ci-dessous.<br>Ces informations seront utilisées pour vos commandes.</p>
     </section>
 
-    {# Message de succes apres modification des informations ou du mot de passe. #}
+    {# Retours du contrôleur après la mise à jour du profil ou du mot de passe. #}
     {% for message in app.flashes('profile_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
 
-    {# Message d'erreur si une modification est impossible. #}
     {% for message in app.flashes('profile_error') %}
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
-    {# Formulaire principal pour modifier les informations personnelles et l'adresse. #}
+    {# Mise à jour des données réutilisées pour identifier le client et préremplir ses commandes. #}
     <form class="customer-profile-form" method="post" action="{{ path('customer_profile') }}">
-        {# Token CSRF : protege la modification des informations personnelles. #}
+        {# Le même jeton protège toutes les actions authentifiées de l’espace client. #}
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
-        {# Champ cache indiquant au controleur que l'action concerne les informations du profil. #}
+        {# Distingue ce traitement de celui du mot de passe, les deux formulaires ciblant la même route. #}
         <input type="hidden" name="profile_action" value="information">
         <div class="customer-profile-columns">
-            {# Bloc des informations personnelles du client. #}
             <section class="customer-profile-card-panel">
                 <h2>Informations personnelles</h2>
 
-                {# Champs prenom et nom affiches cote a cote. #}
                 <div class="customer-profile-grid customer-profile-grid--two">
                     <label>
                         <span>Prénom</span>
@@ -55,32 +49,27 @@
                     </label>
                 </div>
 
-                {# Email du client, utilise aussi pour la connexion. #}
+                {# L’adresse électronique sert également d’identifiant de connexion. #}
                 <label>
                     <span>Email</span>
                     <input type="email" name="email" value="{{ customer.email }}" placeholder="{{ customer.email }}" autocomplete="email" required>
                 </label>
 
-                {# Numero de telephone utile pour le suivi de commande. #}
                 <label>
                     <span>Numéro de téléphone</span>
                     <input type="tel" name="telephone" value="{{ customer.telephone }}" placeholder="{{ customer.telephone }}" autocomplete="tel" required>
                 </label>
             </section>
 
-            {# Bloc des informations personnelles du client. #}
-            {# Bloc de l'adresse de livraison par defaut. #}
+            {# Adresse proposée par défaut lors de la préparation d’une nouvelle commande. #}
             <section class="customer-profile-card-panel">
                 <h2>Adresse de livraison par défaut</h2>
 
-                {# Adresse postale utilisee par defaut au panier. #}
                 <label>
                     <span>Adresse</span>
                     <input type="text" name="adresse_postale" value="{{ customer.adresse_postale }}" placeholder="{{ customer.adresse_postale }}" autocomplete="street-address" required>
                 </label>
 
-                {# Champs prenom et nom affiches cote a cote. #}
-                {# Code postal et ville de livraison. #}
                 <div class="customer-profile-grid customer-profile-grid--two">
                     <label>
                         <span>Code postal</span>
@@ -97,25 +86,22 @@
             </section>
         </div>
 
-        {# Actions du formulaire d'informations : enregistrer ou annuler. #}
         <div class="customer-profile-actions customer-profile-actions--information">
             <button type="submit" class="buttonprimary">Enregistrer les modifications</button>
             <a href="{{ path('customer_account') }}" class="buttonwhite">Annuler</a>
         </div>
     </form>
 
-    {# Deuxieme formulaire dedie au changement de mot de passe. #}
+    {# Changement de mot de passe traité séparément pour ne pas mêler les contrôles de sécurité aux coordonnées. #}
     <form class="customer-profile-form customer-password-form" method="post" action="{{ path('customer_profile') }}">
-        {# Token CSRF : protege le changement de mot de passe. #}
+        {# Protège la demande de changement de mot de passe contre les soumissions provenant d’autres sites. #}
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
-        {# Champ cache indiquant au controleur que l'action concerne le mot de passe. #}
+        {# Oriente le contrôleur vers la validation du mot de passe actuel et du nouveau mot de passe. #}
         <input type="hidden" name="profile_action" value="password">
 
-        {# Bloc contenant les champs de changement de mot de passe. #}
         <section class="customer-profile-card-panel customer-password-panel">
             <h2>Changer mon mot de passe</h2>
 
-            {# Trois champs : mot de passe actuel, nouveau mot de passe et confirmation. #}
             <div class="customer-profile-grid customer-profile-grid--three">
                 <label>
                     <span>Mot de passe actuel</span>
@@ -142,7 +128,7 @@
                 </label>
             </div>
 
-            {# Rappel des regles de securite du nouveau mot de passe. #}
+            {# Règles que le nouveau mot de passe doit respecter côté serveur. #}
             <div class="customer-password-rules">
                 <p>Le mot de passe doit contenir au minimum :</p>
                 <ul>
@@ -156,7 +142,6 @@
             </div>
         </section>
 
-        {# Action finale du formulaire de mot de passe. #}
         <div class="customer-profile-actions customer-profile-actions--password">
             <button type="submit" class="buttonprimary">Enregistrer mon nouveau mot de passe</button>
         </div>

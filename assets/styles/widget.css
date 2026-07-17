@@ -1,4 +1,4 @@
-/*Widget du tableau de bord de l'administrateur*/
+/* Indicateurs synthétiques du tableau de bord administrateur. */
 .admindashboardwidget-preview {
   padding: 24px;
 }
@@ -52,7 +52,7 @@
   line-height: 1;
 }
 
-/*Widget commandes par menu*/
+/* Répartition du nombre de commandes par menu. */
 .menubasedorder-preview {
   padding: 24px;
 }
@@ -110,7 +110,7 @@
   line-height: 1;
 }
 
-/*Widget KPI Chiffre d'affaires*/
+/* Indicateurs clés liés au chiffre d’affaires. */
 .kpiadministrator-preview {
   padding: 24px;
 }

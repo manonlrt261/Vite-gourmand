@@ -1,3 +1,4 @@
+// Calcule et affiche la répartition du chiffre d'affaires par menu et par thème à partir des données de la page.
 document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-revenue-menu-page]');
 
@@ -40,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isInDateRange = (document) => {
         const date = document.date_commande || '';
 
+        // Sans période explicite, les calculs portent sur l'année de référence.
         if (!startInput.value && !endInput.value) {
             return date.startsWith(currentYear);
         }
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getFilteredDocuments = () => {
+        // Les critères de période, thème et menus se combinent avant tout calcul financier.
         const selectedTheme = themeSelect.value;
         const selectedMenus = getSelectedMenus();
 
@@ -69,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const groupByMenu = (items) => {
+        // Additionne le prix total des commandes pour chaque menu avant le classement décroissant.
         const grouped = new Map();
 
         items.forEach((item) => {
@@ -96,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const groupByTheme = (items) => {
+        // Agrège les montants par thème pour alimenter le graphique de répartition.
         const grouped = new Map();
 
         items.forEach((item) => {
@@ -107,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderDonut = (items) => {
+        // Le dégradé conique représente la part de chiffre d'affaires de chaque thème.
         const total = items.reduce((sum, item) => sum + item.total, 0);
         let cursor = 0;
 
@@ -141,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderBars = (items) => {
+        // Compare les huit meilleurs menus sur une échelle relative au montant maximal courant.
         const max = Math.max(...items.map((item) => item.total), 1);
         const topItems = items.slice(0, 8);
 
@@ -180,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const render = () => {
+        // Utilise le même total filtré pour le résumé général et les pourcentages du tableau.
         const filteredDocuments = getFilteredDocuments();
         const menuGroups = groupByMenu(filteredDocuments);
         const themeGroups = groupByTheme(filteredDocuments);
@@ -192,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     page.addEventListener('keydown', (event) => {
-        // La touche Entree applique les filtres comme le bouton principal.
+        // La touche Entrée applique les filtres comme le bouton principal.
         if (event.key === 'Enter' && event.target.matches('input, select')) {
             event.preventDefault();
             render();

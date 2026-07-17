@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
-// Controleur de l'espace administrateur et des statistiques.
+// Contrôleur de l'espace administrateur : statistiques et gestion des comptes employés.
 class AdminController extends AbstractController
 {
     // Affiche le tableau de bord administrateur avec les indicateurs principaux.
@@ -30,7 +30,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Affiche la page de gestion des employes.
+    // Affiche la page de gestion des employés.
     public function employees(Request $request, Connection $connection): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -46,7 +46,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Cree un compte employe depuis l espace administrateur.
+    // Crée un compte employé depuis l'espace administrateur.
     public function createEmployee(Request $request, Connection $connection, MailerInterface $mailer): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -60,7 +60,7 @@ class AdminController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            // Le token CSRF confirme que la creation vient bien du formulaire administrateur.
+            // Le jeton CSRF confirme que la création vient bien du formulaire administrateur.
             if (!$this->isValidAdminCsrf($request)) {
                 $errors[] = 'Le formulaire a expire, veuillez reessayer.';
 
@@ -71,7 +71,7 @@ class AdminController extends AbstractController
                 ]);
             }
 
-            // Controle les donnees avant de creer un compte employe.
+            // Contrôle les données avant de créer un compte employé.
             $errors = $this->validateEmployeeData($connection, $formData, null, true);
 
             if ($errors === []) {
@@ -90,7 +90,7 @@ class AdminController extends AbstractController
                     'telephone' => $formData['telephone'],
                     'poste' => $formData['poste'],
                     'mot_de_passe' => password_hash($formData['password'], PASSWORD_DEFAULT),
-                    // Mot de passe initial visible par l'administrateur tant que l'employe ne l'a pas change.
+                    // Mot de passe initial visible par l'administrateur tant que l'employé ne l'a pas changé.
                     'mot_de_passe_initial' => $formData['password'],
                     'role_id' => $this->getEmployeeRoleId($connection),
                     'actif' => 1,
@@ -134,7 +134,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Affiche les statistiques du chiffre d affaires par menu.
+    // Affiche les statistiques du chiffre d'affaires par menu.
     public function revenueByMenu(Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {
         if (!$this->canAccessAdminSpace($request)) {
@@ -154,14 +154,14 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Active ou desactive un employe sans rechargement de page.
+    // Active ou désactive un employé sans rechargement de page.
     public function toggleEmployeeStatus(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
             return $this->json(['success' => false], 403);
         }
 
-        // Protection CSRF : l activation/desactivation d un employe est une action sensible.
+        // Protection CSRF : l'activation ou la désactivation d'un employé est une action sensible.
         if (!$this->isValidAdminCsrf($request)) {
             return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
         }
@@ -189,14 +189,14 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Met a jour les informations d un employe.
+    // Met à jour les informations d'un employé.
     public function updateEmployee(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
             return $this->json(['success' => false], 403);
         }
 
-        // Protection CSRF : la modification d un employe doit venir de la fenetre du site.
+        // Protection CSRF : la modification d'un employé doit venir de la fenêtre du site.
         if (!$this->isValidAdminCsrf($request)) {
             return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
         }
@@ -224,7 +224,7 @@ class AdminController extends AbstractController
             'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
 
-        // Reutilise les memes controles que la creation pour securiser la modification.
+        // Réutilise les mêmes contrôles que la création pour sécuriser la modification.
         $errors = $this->validateEmployeeData($connection, $payload, $id);
         if ($errors !== []) {
             return $this->json([
@@ -289,14 +289,14 @@ class AdminController extends AbstractController
         ]);
     }
 
-    // Supprime un compte employe apres confirmation administrateur.
+    // Supprime un compte employé après confirmation de l'administrateur.
     public function deleteEmployee(int $id, Request $request, Connection $connection): JsonResponse
     {
         if (!$this->canAccessAdminSpace($request)) {
             return $this->json(['success' => false], 403);
         }
 
-        // Protection CSRF : empeche la suppression d un employe par une requete externe.
+        // Protection CSRF : empêche la suppression d'un employé par une requête externe.
         if (!$this->isValidAdminCsrf($request)) {
             return $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403);
         }
@@ -314,7 +314,7 @@ class AdminController extends AbstractController
         return $this->json(['success' => true]);
     }
 
-    // Verifie que l utilisateur connecte est administrateur.
+    // Vérifie que l'utilisateur connecté est administrateur.
     private function canAccessAdminSpace(Request $request): bool
     {
         $user = $request->getSession()->get('utilisateur');
@@ -324,13 +324,13 @@ class AdminController extends AbstractController
         return $role === 'administrateur' || $roleId === 3;
     }
 
-    // Verifie le token CSRF commun aux actions sensibles de gestion des employes.
+    // Vérifie le jeton CSRF commun aux actions sensibles de gestion des employés.
     private function isValidAdminCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('admin_employee_action', (string) $request->request->get('_csrf_token'));
     }
 
-    // Redirige vers la connexion si l administrateur n est pas connecte.
+    // Redirige vers la connexion si l'administrateur n'est pas connecté.
     private function redirectToAdminLogin(Request $request): Response
     {
         if (!$request->getSession()->get('utilisateur_id')) {
@@ -343,8 +343,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Construit les documents de statistiques depuis les commandes MySQL.
-    // Recupere le nombre de commandes par menu depuis MySQL.
+    // Transforme les commandes MySQL en documents statistiques, puis relit la copie NoSQL persistée.
     private function getOrdersByMenuDocuments(Connection $connection): array
     {
         $documents = $connection->fetchAllAssociative(
@@ -387,7 +386,7 @@ class AdminController extends AbstractController
     /**
      * @param list<array<string, mixed>> $documents
      */
-    // Ecrit les statistiques dans la base NoSQL.
+    // Persiste un instantané JSON des commandes utilisé comme stockage documentaire local.
     private function writeNoSqlOrdersByMenu(array $documents): void
     {
         $directory = dirname(__DIR__, 2) . '/var/nosql';
@@ -409,7 +408,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Lit les statistiques stockees dans la base NoSQL.
+    // Lit les documents de l'instantané NoSQL et renvoie une liste vide si celui-ci est absent ou invalide.
     private function readNoSqlOrdersByMenu(): array
     {
         $path = dirname(__DIR__, 2) . '/var/nosql/commandes_par_menu.json';
@@ -426,7 +425,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les menus utiles aux pages de statistiques.
+    // Récupère les menus utiles aux pages de statistiques.
     private function getMenusForOrderStats(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -439,7 +438,7 @@ class AdminController extends AbstractController
     /**
      * @return list<string>
      */
-    // Recupere la liste des themes de menus disponibles.
+    // Récupère la liste des thèmes de menus disponibles.
     private function getMenuThemes(Connection $connection): array
     {
         $themes = array_map(static fn (array $row): string => self::normalizeMenuTheme((string) $row['theme']), $connection->fetchAllAssociative(
@@ -455,7 +454,7 @@ class AdminController extends AbstractController
      *
      * @return array<string, mixed>
      */
-    // Prepare les donnees du graphique commandes par menu.
+    // Prépare les données du graphique des commandes par menu.
     private function buildOrdersByMenuStats(array $documents, array $menus): array
     {
         $year = (int) (new \DateTimeImmutable())->format('Y');
@@ -480,7 +479,7 @@ class AdminController extends AbstractController
      *
      * @return array<string, mixed>
      */
-    // Prepare les donnees du graphique chiffre d affaires par menu.
+    // Prépare les données du graphique du chiffre d'affaires par menu.
     private function buildRevenueByMenuStats(array $documents, array $menus): array
     {
         $year = (int) (new \DateTimeImmutable())->format('Y');
@@ -531,7 +530,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere le nombre de commandes par menu depuis MySQL.
+    // Récupère le nombre de commandes par menu depuis MySQL.
     private function getOrdersByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -548,7 +547,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere le chiffre d affaires par menu depuis MySQL.
+    // Récupère le chiffre d'affaires par menu depuis MySQL.
     private function getRevenueByMenu(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -565,7 +564,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les derniers employes ajoutes.
+    // Récupère les derniers employés ajoutés.
     private function getLatestEmployees(Connection $connection): array
     {
         $this->ensureEmployeeColumns($connection);
@@ -583,7 +582,7 @@ class AdminController extends AbstractController
         );
     }
 
-    // Ajoute les colonnes employe manquantes si besoin.
+    // Assure la compatibilité avec les anciennes bases en ajoutant les colonnes métier manquantes.
     private function ensureEmployeeColumns(Connection $connection): void
     {
         try {
@@ -592,7 +591,7 @@ class AdminController extends AbstractController
         }
 
         try {
-            // Corrige les anciennes valeurs de poste qui avaient ete enregistrees avec un mauvais encodage.
+            // Corrige les anciennes valeurs de poste qui avaient été enregistrées avec un mauvais encodage.
             $connection->executeStatement(
                 'UPDATE utilisateurs SET poste = ? WHERE poste IN (?, ?)',
                 ['Employé polyvalent', 'Employé polyvalent', 'Employé polyvalent']
@@ -605,7 +604,7 @@ class AdminController extends AbstractController
         }
     }
 
-    // Ajoute les colonnes d identite employe si elles n existent pas.
+    // Complète à la volée le schéma des anciennes bases avec les données d'identité des employés.
     private function ensureEmployeeIdentityColumns(Connection $connection): void
     {
         try {
@@ -625,8 +624,8 @@ class AdminController extends AbstractController
         }
 
         try {
-            // Ce champ conserve uniquement le mot de passe cree par l'administrateur.
-            // Il reste vide si l'employe a deja defini son propre mot de passe.
+            // Ce champ conserve uniquement le mot de passe créé par l'administrateur.
+            // Il reste vide si l'employé a déjà défini son propre mot de passe.
             $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN mot_de_passe_initial VARCHAR(255) DEFAULT NULL');
         } catch (\Throwable) {
         }
@@ -635,7 +634,7 @@ class AdminController extends AbstractController
     /**
      * @return array<string, string>
      */
-    // Recupere les donnees envoyees par les formulaires employe.
+    // Récupère les données envoyées par les formulaires des employés.
     private function getEmployeeFormData(Request $request): array
     {
         return [
@@ -659,12 +658,12 @@ class AdminController extends AbstractController
      * @param array<string, string> $data
      * @return list<string>
      */
-    // Valide les informations employe avant creation ou modification.
+    // Valide les informations de l'employé avant création ou modification.
     private function validateEmployeeData(Connection $connection, array $data, ?int $ignoredUserId = null, bool $isCreation = false): array
     {
         $errors = [];
 
-        // Tous les champs d identite employe sont obligatoires.
+        // Tous les champs d'identité de l'employé sont obligatoires.
         foreach (['nom', 'prenom', 'date_naissance', 'lieu_naissance', 'adresse_postale', 'code_postal', 'ville', 'email', 'telephone', 'poste'] as $field) {
             if (($data[$field] ?? '') === '') {
                 $errors[] = 'Tous les champs sont obligatoires.';
@@ -696,7 +695,7 @@ class AdminController extends AbstractController
             $errors[] = 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
         }
 
-        // La date de naissance doit exister et ne pas etre dans le futur.
+        // La date de naissance doit exister et ne pas être dans le futur.
         if (($data['date_naissance'] ?? '') !== '' && !$this->isValidDate($data['date_naissance'])) {
             $errors[] = 'Veuillez renseigner une date de naissance valide.';
         }
@@ -708,7 +707,7 @@ class AdminController extends AbstractController
             }
         }
 
-        // Controle les formats metier : telephone, code postal et poste autorise.
+        // Contrôle les formats métier : téléphone, code postal et poste autorisé.
         if (($data['telephone'] ?? '') !== '' && !InputValidator::isValidPhone($data['telephone'])) {
             $errors[] = 'Veuillez renseigner un numero de telephone valide.';
         }
@@ -721,7 +720,7 @@ class AdminController extends AbstractController
             $errors[] = 'Le poste selectionne est invalide.';
         }
 
-        // Protege la base en limitant chaque champ a la taille prevue.
+        // Protège la base en limitant chaque champ à la taille prévue.
         $maxLengths = [
             'nom' => 100,
             'prenom' => 100,
@@ -742,7 +741,7 @@ class AdminController extends AbstractController
             }
         }
 
-        // Evite les doublons d email, sauf pour l employe actuellement modifie.
+        // Évite les doublons d'e-mail, sauf pour l'employé actuellement modifié.
         if (($data['email'] ?? '') !== '') {
             $parameters = [$data['email']];
             $sql = 'SELECT id FROM utilisateurs WHERE email = ?';
@@ -760,7 +759,7 @@ class AdminController extends AbstractController
         return array_values(array_unique($errors));
     }
 
-    // Controle qu une date saisie est valide.
+    // Contrôle qu'une date saisie est valide.
     private function isValidDate(string $date): bool
     {
         $parsedDate = \DateTimeImmutable::createFromFormat('Y-m-d', $date);
@@ -823,7 +822,7 @@ class AdminController extends AbstractController
         }
     }
 
-    // Recupere l identifiant du role employe.
+    // Récupère l'identifiant du rôle employé.
     private function getEmployeeRoleId(Connection $connection): int
     {
         $roleId = $connection->fetchOne('SELECT role_id FROM roles WHERE libelle IN (?, ?, ?) ORDER BY role_id ASC LIMIT 1', ['employe', 'employé', 'employé']);
@@ -831,7 +830,7 @@ class AdminController extends AbstractController
         return $roleId ? (int) $roleId : 2;
     }
 
-    // Genere un mot de passe temporaire pour un nouvel employe.
+    // Génère un mot de passe temporaire pour un nouvel employé.
     private function generateTemporaryEmployeePassword(): string
     {
         try {
@@ -844,7 +843,7 @@ class AdminController extends AbstractController
     /**
      * @return list<string>
      */
-    // Fournit la liste des postes disponibles pour les employes.
+    // Fournit la liste des postes disponibles pour les employés.
     private function getEmployeeJobs(): array
     {
         return [
@@ -880,7 +879,7 @@ class AdminController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere tous les employes pour la page de gestion.
+    // Récupère tous les employés pour la page de gestion.
     private function getEmployees(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
@@ -899,7 +898,7 @@ class AdminController extends AbstractController
     /**
      * @return array<string, mixed>|false
      */
-    // Recupere un employe precis par son identifiant.
+    // Récupère un employé précis par son identifiant.
     private function getEmployeeById(Connection $connection, int $id): array|false
     {
         return $connection->fetchAssociative(

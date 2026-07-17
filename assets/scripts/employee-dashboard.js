@@ -1,3 +1,4 @@
+// Anime le tableau de bord employé : filtres de commandes, statuts et modération rapide des avis.
 document.addEventListener('DOMContentLoaded', () => {
   const dashboard = document.querySelector('[data-employee-dashboard]');
   const form = document.querySelector('[data-employee-order-filters]');
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const getPeriodRange = (period) => {
+    // Retourne des bornes inclusives couvrant des journées complètes dans le fuseau horaire du navigateur.
     const now = new Date();
     const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
@@ -51,11 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const parseOrderIds = (value) => value
+    // Accepte plusieurs identifiants séparés par des espaces, virgules ou points-virgules.
     .split(/[\s,;]+/)
     .map((item) => item.trim())
     .filter(Boolean);
 
   const applyFilters = (event = null) => {
+    // Sans filtre, seules les quatre premières commandes restent affichées comme aperçu du tableau de bord.
     if (event) {
       event.preventDefault();
     }
@@ -105,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', applyFilters);
 
   form.addEventListener('keydown', (event) => {
-    // La touche Entree applique les filtres comme le bouton Valider.
+    // La touche Entrée applique les filtres comme le bouton Valider.
     if (event.key === 'Enter' && event.target.matches('input, select')) {
       event.preventDefault();
       applyFilters();
@@ -119,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   dashboard.querySelectorAll('[data-dashboard-order-status-form]').forEach((statusForm) => {
+    // Mémorise le statut validé afin de restaurer l'interface si la requête échoue.
     const select = statusForm.querySelector('[data-dashboard-order-status-select]');
 
     if (!select) {
@@ -136,8 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Le FormData doit etre cree avant de desactiver le select,
-      // sinon la valeur choisie ne serait pas envoyee.
+      // FormData doit être créé avant de désactiver le champ, sinon sa valeur ne serait pas envoyée.
       const formData = new FormData(statusForm);
       select.disabled = true;
 
@@ -171,13 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Le statut se met a jour des que l'employe choisit une valeur.
+    // Le statut est envoyé dès que l'employé choisit une valeur.
     select.addEventListener('change', () => {
       statusForm.requestSubmit();
     });
   });
 
   dashboard.addEventListener('submit', async (event) => {
+    // Délègue la modération pour prendre en charge tous les formulaires d'avis du tableau de bord.
     const reviewForm = event.target.closest('[data-dashboard-review-action]');
 
     if (!reviewForm) {
@@ -200,11 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     try {
-      // Les boutons Valider et Refuser envoient le meme formulaire qu'avant,
-      // mais en AJAX pour rester sur le tableau de bord.
-      // Le champ cache s'appelle "action" pour indiquer accepter/refuser.
-      // On lit donc l'attribut HTML du formulaire, sinon reviewForm.action
-      // peut pointer vers le champ cache au lieu de l'URL.
+      // L'attribut HTML est lu explicitement : le champ nommé « action » peut masquer la propriété form.action.
       const response = await fetch(reviewForm.getAttribute('action'), {
         method: 'POST',
         body: new FormData(reviewForm),

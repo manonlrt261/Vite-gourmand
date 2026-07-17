@@ -1,12 +1,10 @@
-{# Recuperation de l'utilisateur connecte depuis la session. #}
+{# Adapte la destination au rôle conservé en session ; l’identifiant sert de repli si le libellé est absent. #}
 {% set workspaceUser = app.session.get('utilisateur') %}
-{# Lecture du role sous forme de libelle et d'identifiant pour securiser la detection. #}
 {% set workspaceRole = workspaceUser.role_libelle|default('') %}
 {% set workspaceRoleId = workspaceUser.role_id|default(0) %}
-{# Determine si l'utilisateur est administrateur afin d'adapter le lien de retour. #}
 {% set isAdminWorkspace = workspaceRole == 'administrateur' or workspaceRoleId == 3 %}
 
-{# Lien reutilisable : il renvoie vers l'espace administrateur ou employe selon le role connecte. #}
+{# Tout rôle non administrateur est dirigé vers l’espace employé. #}
 <a href="{{ path(isAdminWorkspace ? 'admin_dashboard' : 'employee_dashboard') }}" class="cart-back-link">
     &larr; Retour &agrave; mon espace {{ isAdminWorkspace ? 'administrateur' : 'employ&eacute;' }}
 </a>

@@ -1,3 +1,4 @@
+// Filtre, trie et replie les cartes de menus tout en restaurant leur organisation initiale à la réinitialisation.
 document.addEventListener('DOMContentLoaded', () => {
   const filterPanel = document.querySelector('[data-menu-filters]');
   const cards = Array.from(document.querySelectorAll('[data-menu-card]'));
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sectionToggles = Array.from(document.querySelectorAll('[data-menu-section-toggle]'));
 
   const originalCards = cards.map((card, index) => ({
+    // Mémorise le conteneur et l'ordre d'origine, car le filtrage déplace les cartes dans la grille de résultats.
     card,
     index,
     grid: card.closest('[data-menu-grid]'),
@@ -54,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const cardMatchesFilters = (card, filters) => {
+    // Le prix ne filtre pas les cartes : sa valeur détermine uniquement leur ordre plus bas.
     const stock = getNumber(card, 'stock');
     const minimumPerson = getNumber(card, 'minimumPerson');
 
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sortCards = (visibleCards, filters) => {
+    // Le tri de prix choisi dans le filtre dédié a priorité sur le tri général.
     const sortValue = filters.price ? `price-${filters.price}` : filters.sort;
 
     return visibleCards.sort((first, second) => {
@@ -108,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const applyFilters = () => {
+    // Les résultats filtrés sont déplacés dans une grille commune, hors de leurs sections thématiques.
     const filters = getSelectedFilters();
     const visibleCards = originalCards.filter(({ card }) => cardMatchesFilters(card, filters));
     const sortedCards = sortCards(visibleCards, filters);
@@ -130,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const resetFilters = () => {
+    // Replace chaque carte dans sa grille d'origine et dans l'ordre mémorisé au chargement.
     Object.values(fields).forEach((field) => {
       field.selectedIndex = 0;
     });
@@ -148,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   filterPanel.addEventListener('keydown', (event) => {
-    // La touche Entree applique les filtres comme le bouton principal.
+    // La touche Entrée applique les filtres comme le bouton principal.
     if (event.key === 'Enter' && event.target.matches('input, select')) {
       event.preventDefault();
       applyFilters();
@@ -159,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
   resetButton.addEventListener('click', resetFilters);
 
   sectionToggles.forEach((toggle) => {
+    // Maintient aria-expanded cohérent avec l'état visuel de la section repliable.
     toggle.addEventListener('click', () => {
       const section = toggle.closest('[data-menu-section]');
       const gridId = toggle.getAttribute('aria-controls');

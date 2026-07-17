@@ -1,3 +1,4 @@
+// Filtre les avis et met à jour leur statut ou leur visibilité sur l'accueil sans recharger la page.
 document.addEventListener('DOMContentLoaded', () => {
   const filters = document.querySelector('[data-review-filters]');
   const getCards = () => Array.from(document.querySelectorAll('[data-review-card]'));
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetButton = filters.querySelector('[data-review-reset]');
 
   const getPeriodMatch = (value, dateText) => {
+    // Compare les dates locales à minuit pour éviter un décalage de journée lié à l'UTC.
     if (!value) {
       return true;
     }
@@ -57,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const applyFilters = () => {
+    // Les cartes peuvent changer de groupe ou disparaître ; leur liste est donc relue à chaque filtrage.
     const search = (searchInput?.value || '').trim().toLowerCase();
     const note = noteSelect?.value || '';
     const period = periodSelect?.value || '';
@@ -101,8 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sendReviewAction = async (form) => {
-    // Le formulaire contient un champ cache "action" pour le statut choisi.
-    // getAttribute('action') evite de confondre ce champ avec l'URL du formulaire.
+    // Lit l'attribut HTML explicitement : le champ caché nommé « action » peut masquer form.action.
     const response = await fetch(form.getAttribute('action'), {
       method: form.method || 'POST',
       headers: {
@@ -129,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const createReviewActionForm = ({ action, label, className }, actionUrl, csrfToken) => {
+    // Recrée les actions possibles avec le même jeton CSRF que le formulaire qui vient d'être soumis.
     const form = document.createElement('form');
     form.method = 'post';
     form.action = actionUrl;
@@ -144,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const refreshReviewActions = (card, status, actionUrl, csrfToken) => {
+    // N'affiche que les transitions vers un statut différent du statut actuel.
     const actions = card.querySelector('.employee-review-card__actions');
     if (!actions) {
       return;
@@ -164,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const moveReviewCardToGroup = (card, status) => {
+    // Insère la carte avant le message vide afin de préserver la structure visuelle de la section.
     const targetGroup = document.querySelector(`[data-review-group="${status}"]`);
     if (!targetGroup) {
       return;
@@ -199,14 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
           card.dataset.status = data.status;
           card.querySelector('[data-review-status-label]').textContent = data.label;
 
-          // Sur la page "Gestion des avis", seuls les avis en attente doivent rester visibles.
-          // Un avis valide ou refuse disparait donc aussitot et se retrouve dans "Tous les avis".
+          // Sur la page « Gestion des avis », seuls les avis en attente doivent rester visibles.
+          // Un avis validé ou refusé disparaît donc aussitôt et se retrouve dans « Tous les avis ».
           if (isPendingReviewPage && data.status !== 'en_attente') {
             card.remove();
             applyFilters();
           }
 
-          // Sur la page "Tous les avis", la carte rejoint automatiquement la bonne section.
+          // Sur la page « Tous les avis », la carte rejoint automatiquement la bonne section.
           if (isAllReviewsPage) {
             moveReviewCardToGroup(card, data.status);
             refreshReviewActions(card, data.status, actionUrl, csrfToken);
@@ -232,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   filters.addEventListener('keydown', (event) => {
-    // La touche Entree applique les filtres comme le bouton principal.
+    // La touche Entrée applique les filtres comme le bouton principal.
     if (event.key === 'Enter' && event.target.matches('input, select')) {
       event.preventDefault();
       applyFilters();

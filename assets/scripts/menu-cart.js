@@ -1,5 +1,7 @@
+// Ajoute un menu au panier en AJAX et affiche brièvement le résultat sur le bouton déclencheur.
 document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', async (event) => {
+    // La délégation permet aux cartes de menus déplacées par les filtres de conserver cette action.
     const button = event.target.closest('[data-add-to-cart]');
 
     if (!button) {
@@ -7,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const cartUrl = button.dataset.cartUrl;
-    // Token CSRF fourni par Twig : il prouve que l ajout au panier vient du bouton du site.
+    // Le jeton CSRF fourni par Twig protège la requête d'ajout au panier.
     const cartToken = button.dataset.cartToken || '';
 
     if (!cartUrl || button.disabled) {
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const initialText = button.textContent.trim();
+    // Le verrouillage empêche un double ajout pendant le traitement de la requête.
     button.disabled = true;
     button.textContent = 'Ajout...';
 

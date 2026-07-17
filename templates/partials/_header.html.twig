@@ -1,19 +1,16 @@
-{# Utilisateur connecte recupere depuis la session. #}
+{# Détermine la variante du bandeau et sa destination à partir du rôle en session. #}
 {% set connectedUser = app.session.get('utilisateur') %}
-{# Role de l'utilisateur utilise pour adapter le header. #}
 {% set roleLibelle = connectedUser.role_libelle|default('') %}
 {% set roleId = connectedUser.role_id|default(0) %}
-{# Verifie si l'utilisateur est administrateur. #}
+{# L’identifiant complète le libellé afin de tolérer l’absence de l’une des deux valeurs. #}
 {% set isAdminHeader = roleLibelle == 'administrateur' or roleId == 3 %}
-{# Verifie si l'utilisateur doit voir le header employe/admin. #}
+{# Conserve les libellés alternatifs du rôle employé présents dans les données historiques. #}
 {% set isEmployeeHeader = roleLibelle in ['employe', 'employé', 'administrateur'] or roleId in [2, 3] %}
-{# Route du tableau de bord selon le role. #}
 {% set dashboardRoute = isAdminHeader ? 'admin_dashboard' : 'employee_dashboard' %}
 
-{# Header specifique pour les employes et administrateurs. #}
+{# Bandeau réservé aux espaces employé et administrateur. #}
 {% if isEmployeeHeader %}
     <header class="employee-header">
-        {# Logo et nom de marque qui renvoient vers le tableau de bord interne. #}
         <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
             <img
                 src="{{ asset('assets/logo.png') }}"
@@ -24,7 +21,7 @@
             <span class="employee-header__title">Vite et gourmand</span>
         </a>
 
-        {# Actions du header interne : acces tableau de bord et ouverture du menu burger. #}
+        {# Le bouton expose son état aux technologies d’assistance ; le script le met à jour à l’ouverture. #}
         <div class="employee-header__actions">
             <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
             <button class="employee-header__burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="employee-menu-overlay" data-employee-menu-open>
@@ -35,10 +32,10 @@
         </div>
     </header>
 
-    {# Menu superpose ouvert par le bouton burger. #}
+    {# Menu superposé masqué par défaut, piloté via les attributs data-* par le script du bandeau. #}
     <div class="employee-menu-overlay" id="employee-menu-overlay" hidden data-employee-menu-overlay>
         <div class="employee-menu-panel" role="dialog" aria-modal="true" aria-label="Menu">
-            {# Haut du menu superpose avec logo et bouton de fermeture. #}
+            {# En-tête du panneau reprenant l’accès au tableau de bord et l’action de fermeture. #}
             <div class="employee-menu-panel__top">
                 <a href="{{ path(dashboardRoute) }}" class="employee-header__brand" aria-label="Tableau de bord Vite et Gourmand">
                     <img
@@ -50,7 +47,6 @@
                     <span class="employee-header__title">Vite et gourmand</span>
                 </a>
 
-                {# Bouton permettant de fermer le menu superpose. #}
                 <div class="employee-header__actions">
                     <a href="{{ path(dashboardRoute) }}" class="employee-header__dashboard">Tableau de bord</a>
                     <button class="employee-header__close" type="button" aria-label="Fermer le menu" data-employee-menu-close>
@@ -61,7 +57,7 @@
                 </div>
             </div>
 
-            {# Navigation interne disponible pour les employes et administrateurs. #}
+            {# Outils communs aux employés et aux administrateurs. #}
             <nav class="employee-menu-panel__nav" aria-label="Navigation">
                 <a href="{{ path(dashboardRoute) }}">Accueil</a>
                 <a href="{{ path('employee_orders') }}">Gestion des commandes</a>
@@ -69,7 +65,7 @@
                 <a href="{{ path('employee_hours') }}">Gestion des horaires</a>
                 <a href="{{ path('employee_reviews') }}">Gestion des avis clients</a>
                 <a href="{{ path('employee_messages') }}">Messagerie</a>
-                {# Liens supplementaires visibles uniquement pour l'administrateur. #}
+                {# Fonctions de pilotage réservées au rôle administrateur. #}
                 {% if isAdminHeader %}
                     <a href="{{ path('admin_employees') }}">Gestion des employ&eacute;s</a>
                     <a href="{{ path('admin_orders_by_menu') }}">Commandes par menu</a>
@@ -80,9 +76,8 @@
         </div>
     </div>
 {% else %}
-    {# Header public affiche aux visiteurs et aux clients. #}
+    {# Bandeau public affiché aux visiteurs et aux clients. #}
     <header class="header-desktop">
-        {# Logo et nom de marque qui renvoient vers la page d'accueil. #}
         <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
             <img
                 src="{{ asset('assets/logo.png') }}"
@@ -93,19 +88,18 @@
             <span class="header-title">Vite et Gourmand</span>
         </a>
 
-        {# Bouton burger affiche uniquement sur mobile pour ouvrir le menu public en superposition. #}
+        {# Commande du menu mobile ; aria-controls relie explicitement le bouton au panneau ciblé. #}
         <button class="header-mobile-burger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="public-mobile-menu-overlay" data-public-menu-open>
             <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
                 <path d="M2 4h12M2 8h12M2 12h12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
             </svg>
         </button>
 
-        {# Navigation principale du site public. #}
+        {# Navigation principale adaptée à l’état de la session client. #}
         <nav class="header-nav" aria-label="Navigation principale">
             <a href="{{ path('home_show') }}">Accueil</a>
             <a href="{{ path('menu_index') }}">Menus</a>
             <a href="{{ path('contact_index') }}">Contact</a>
-            {# Si un client est connecte, on affiche son compte et la deconnexion. Sinon, on affiche connexion. #}
             {% if app.session.get('utilisateur_id') %}
                 <a href="{{ path('customer_account') }}">Mon compte</a>
                 <a href="{{ path('logout') }}">D&eacute;connexion</a>
@@ -114,7 +108,7 @@
             {% endif %}
         </nav>
 
-        {# Acces direct au panier. #}
+        {# Accès direct au panier, représenté visuellement par une icône. #}
         <a href="{{ path('cart_index') }}" class="header-cart" aria-label="Mon panier">
             <svg class="header-cart__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15a1 1 0 0 1 .99 1.141l-.825 5.775A2.5 2.5 0 0 1 12.69 15H3.31a2.5 2.5 0 0 1-2.475-2.084L.01 7.141A1 1 0 0 1 1 6h1.217L5.07 1.243a.5.5 0 0 1 .686-.172ZM1 7l.825 5.775A1.5 1.5 0 0 0 3.31 14h9.38a1.5 1.5 0 0 0 1.485-1.225L15 7H1Z"/>
@@ -122,10 +116,10 @@
         </a>
     </header>
 
-    {# Menu mobile public : il s'ouvre au-dessus de la page et se ferme avec la croix ou un clic en dehors. #}
+    {# Variante mobile masquée par défaut et pilotée par le script via les attributs data-*. #}
     <div class="public-menu-overlay" id="public-mobile-menu-overlay" hidden data-public-menu-overlay>
         <div class="public-menu-panel" role="dialog" aria-modal="true" aria-label="Menu principal mobile">
-            {# Haut du menu mobile : meme structure que le header, avec la croix a la place du burger. #}
+            {# Reprend l’identité du bandeau et remplace le bouton d’ouverture par la fermeture. #}
             <div class="public-menu-panel__top">
                 <a href="{{ path('home_show') }}" class="header-brand" aria-label="Accueil Vite et Gourmand">
                     <img
@@ -137,7 +131,6 @@
                     <span class="header-title">Vite et Gourmand</span>
                 </a>
 
-                {# Bouton de fermeture du menu mobile. #}
                 <button class="public-menu-panel__close" type="button" aria-label="Fermer le menu" data-public-menu-close>
                     <svg aria-hidden="true" viewBox="0 0 16 16" focusable="false">
                         <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
@@ -145,7 +138,7 @@
                 </button>
             </div>
 
-            {# Navigation mobile reprenant les liens principaux du header public. #}
+            {# Reprend les liens publics et ajoute le panier dans le panneau mobile. #}
             <nav class="public-menu-panel__nav" aria-label="Navigation mobile">
                 <a href="{{ path('home_show') }}">Accueil</a>
                 <a href="{{ path('menu_index') }}">Menus</a>

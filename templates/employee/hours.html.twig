@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la gestion des horaires. #}
+{# Gestion des horaires hebdomadaires et des fermetures exceptionnelles. #}
 {% block title %}Gestion des horaires - Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {# Bandeau principal réutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Gestion des horaires',
         image: asset('assets/bigtittle.png'),
@@ -13,22 +13,22 @@
 
     {# Contenu principal de la page de gestion des horaires. #}
     <main class="employee-hours-page">
-        {# Lien de retour adapte automatiquement a l'espace employe ou administrateur. #}
+        {# Lien de retour adapté automatiquement à l'espace employé ou administrateur. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
-        {# Introduction expliquant l'impact des horaires modifies sur le site public. #}
+        {# Introduction expliquant l'impact des horaires modifiés sur le site public. #}
         <section class="employee-hours-intro">
             <h1>Horaires d'ouverture</h1>
             <p>Modifiez les jours et horaires d'ouverture de l'entreprise. Ces horaires seront visibles par les clients sur le site.</p>
         </section>
 
-        {# Mise en page principale : horaires hebdomadaires a gauche, informations et fermetures a droite. #}
+        {# Mise en page principale : horaires hebdomadaires à gauche, informations et fermetures à droite. #}
         <div class="employee-hours-layout">
             {# Formulaire de sauvegarde des horaires de la semaine. #}
             <form method="post" class="employee-schedule-card" data-hours-form>
-                {# Token CSRF : protege l enregistrement des horaires. #}
+                {# Le jeton CSRF sécurise l'enregistrement des horaires. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
-                {# Champ cache indiquant au controleur que l'action concerne les horaires. #}
+                {# Le type d'action permet au contrôleur de distinguer les formulaires de cette page. #}
                 <input type="hidden" name="action" value="save_hours">
 
                 <h2>Horaires de la semaine</h2>
@@ -36,7 +36,7 @@
                 <div class="employee-schedule-list">
                     {# Boucle sur chaque jour de la semaine. #}
                     {% for day in weeklyHours %}
-                        {# Determine si ce jour est ouvert. #}
+                        {# Une valeur absente est interprétée comme un jour fermé. #}
                         {% set isOpen = day.est_ouvert == 1 %}
 
                         {# Ligne d'un jour avec interrupteur et horaires d'ouverture/fermeture. #}
@@ -49,7 +49,7 @@
                                 <span></span>
                             </label>
 
-                            {# Champs horaires desactives automatiquement si le jour est ferme. #}
+                            {# Le script synchronise la disponibilité des champs avec l'interrupteur du jour. #}
                             <input type="time" name="hours[{{ day.jour_code }}][heure_ouverture]" value="{{ day.heure_ouverture|default('') }}" {{ not isOpen ? 'disabled' : '' }} data-hours-input aria-label="Heure d'ouverture {{ day.jour_label }}">
                             <span class="employee-schedule-separator">&agrave;</span>
                             <input type="time" name="hours[{{ day.jour_code }}][heure_fermeture]" value="{{ day.heure_fermeture|default('') }}" {{ not isOpen ? 'disabled' : '' }} data-hours-input aria-label="Heure de fermeture {{ day.jour_label }}">
@@ -61,9 +61,9 @@
                 <button type="submit" class="buttonprimary employee-hours-save">Enregistrer les modifications</button>
             </form>
 
-            {# Colonne laterale avec aide et gestion des fermetures exceptionnelles. #}
+            {# Colonne latérale avec aide et gestion des fermetures exceptionnelles. #}
             <aside class="employee-hours-sidebar">
-                {# Encadre informatif pour rappeler les effets des modifications. #}
+                {# Encadré informatif rappelant les effets des modifications. #}
                 <section class="employee-hours-info">
                     <h2>
                         <span aria-hidden="true">i</span>
@@ -81,9 +81,9 @@
 
                     {# Formulaire pour ajouter une fermeture exceptionnelle. #}
                     <form method="post" class="employee-closure-form">
-                        {# Token CSRF : protege l ajout d une fermeture exceptionnelle. #}
+                        {# Le jeton CSRF sécurise l'ajout d'une fermeture exceptionnelle. #}
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
-                        {# Champ cache indiquant au controleur que l'action ajoute une fermeture. #}
+                        {# Champ caché indiquant au contrôleur que l'action ajoute une fermeture. #}
                         <input type="hidden" name="action" value="add_closure">
 
                         <label>
@@ -104,7 +104,7 @@
                         <button type="submit" class="buttonwhite">Ajouter une fermeture</button>
                     </form>
 
-                    {# Liste des fermetures exceptionnelles deja enregistrees. #}
+                    {# Liste des fermetures exceptionnelles déjà enregistrées. #}
                     <div class="employee-closure-list">
                         {# Boucle sur les fermetures. #}
                         {% for closure in closures %}
@@ -121,13 +121,13 @@
 
                                 {# Formulaire de suppression d'une fermeture. #}
                                 <form method="post" action="{{ path('employee_closure_delete', { id: closure.fermeture_id }) }}">
-                                    {# Token CSRF : protege la suppression d une fermeture exceptionnelle. #}
+                                    {# Le jeton CSRF sécurise la suppression de la fermeture. #}
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                     <button type="submit" class="employee-icon-button" aria-label="Supprimer cette fermeture">Suppr.</button>
                                 </form>
                             </article>
                         {% else %}
-                            {# Message affiche si aucune fermeture exceptionnelle n'existe. #}
+                            {# Message affiché si aucune fermeture exceptionnelle n'existe. #}
                             <p class="employee-hours-empty">Aucune fermeture exceptionnelle enregistr&eacute;e.</p>
                         {% endfor %}
                     </div>
@@ -139,6 +139,6 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui active/desactive les champs horaires selon les interrupteurs. #}
+    {# Script qui active ou désactive les champs horaires selon les interrupteurs. #}
     <script src="{{ asset('assets/scripts/employee-hours.js') }}" defer></script>
 {% endblock %}

@@ -1,25 +1,25 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la messagerie. #}
+{# Messagerie de suivi des demandes clients et des retours de matériel. #}
 {% block title %}Messagerie - Vite & Gourmand{% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script de la messagerie : onglets, archivage, restauration et suppression sans rechargement. #}
+    {# Chargé en amont pour gérer les onglets et les actions asynchrones de la messagerie. #}
     <script src="{{ asset('assets/scripts/employee-messages.js') }}" defer></script>
 {% endblock %}
 
 {% block body %}
-    {# Bandeau principal reutilisable avec le titre de la page. #}
+    {# Bandeau principal réutilisable avec le titre de la page. #}
     {% include 'components/_big_title.html.twig' with {
         title: 'Messagerie',
         image: asset('assets/bigtittle.png'),
         image_alt: 'Messagerie Vite et Gourmand'
     } %}
 
-    {# Contenu principal de la messagerie employe/administrateur. #}
+    {# Contenu principal de la messagerie employé/administrateur. #}
     <main class="employee-messages-page">
-        {# Lien de retour adapte au role connecte. #}
+        {# Lien de retour adapté au rôle connecté. #}
         {% include 'components/_workspace_back_link.html.twig' %}
 
         {# Introduction de la page. #}
@@ -28,10 +28,10 @@
             <p>Consultez les demandes envoyées depuis la page contact, répondez aux clients et classez les messages.</p>
         </section>
 
-        {# Zone de message dynamique : les actions AJAX affichent leur retour ici sans recharger la page. #}
+        {# Région annoncée aux technologies d'assistance après chaque action asynchrone. #}
         <div class="employee-message-feedback" data-message-feedback hidden></div>
 
-        {# Messages de succes ou d'erreur apres une action classique. #}
+        {# Messages de succès ou d'erreur après une action classique. #}
         {% for message in app.flashes('message_success') %}
             <p class="contact-alert contact-alert--success">{{ message }}</p>
         {% endfor %}
@@ -40,16 +40,16 @@
             <p class="contact-alert contact-alert--error">{{ message }}</p>
         {% endfor %}
 
-        {# Formulaire d'envoi d'un email de demande de retour de materiel. #}
+        {# Formulaire d'envoi d'un e-mail de demande de retour de matériel. #}
         <section class="employee-material-email-card">
             <h2>Demande de retour de mat&eacute;riel</h2>
             <p>S&eacute;lectionnez une commande et compl&eacute;tez les informations utiles. Le mail est pr&eacute;par&eacute; automatiquement pour le client.</p>
 
             <form method="post" action="{{ path('employee_material_return_email') }}" class="employee-material-email-form">
-                {# Token CSRF : protege l'envoi d'un rappel de retour materiel. #}
+                {# Le jeton CSRF sécurise l'envoi du rappel de retour de matériel. #}
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
 
-                {# Selection de la commande concernee par le retour materiel. #}
+                {# Sélection de la commande concernée par le retour de matériel. #}
                 <label>
                     <span>Commande concern&eacute;e</span>
                     <select name="commande_id" required>
@@ -62,19 +62,19 @@
                     </select>
                 </label>
 
-                {# Date limite demandee au client pour retourner le materiel. #}
+                {# Date limite demandée au client pour retourner le matériel. #}
                 <label>
                     <span>Date limite de retour</span>
                     <input type="date" name="date_retour" required>
                 </label>
 
-                {# Materiel attendu en retour. #}
+                {# Matériel attendu en retour. #}
                 <label class="employee-material-email-form__full">
                     <span>Mat&eacute;riel &agrave; retourner</span>
                     <textarea name="materiel" rows="3" placeholder="Exemple : plats de service, supports, nappage..." required></textarea>
                 </label>
 
-                {# Consignes complementaires facultatives. #}
+                {# Consignes complémentaires facultatives. #}
                 <label class="employee-material-email-form__full">
                     <span>Informations compl&eacute;mentaires</span>
                     <textarea name="instructions" rows="3" placeholder="Adresse de retour, horaires, consignes particuli&egrave;res..."></textarea>
@@ -100,7 +100,7 @@
             </a>
         </nav>
 
-        {# Liste des messages correspondant a l'onglet selectionne. #}
+        {# Liste des messages correspondant à l'onglet sélectionné. #}
         <section class="employee-message-list" data-message-list>
             {% for contactMessage in messages %}
                 {# Carte d'un message client. #}
@@ -110,7 +110,7 @@
                     data-message-status="{{ contactMessage.statut|default('nouveau') }}"
                     data-message-has-reply="{{ contactMessage.reponse ? '1' : '0' }}"
                 >
-                    {# En-tete : numero, sujet et date du message. #}
+                    {# En-tête : numéro, sujet et date du message. #}
                     <header class="employee-message-card__header">
                         <div>
                             <p>Message n°{{ contactMessage.contact_id }}</p>
@@ -125,10 +125,10 @@
                         <span>{{ contactMessage.statut|default('nouveau') }}</span>
                     </div>
 
-                    {# Contenu du message envoye depuis la page contact. #}
+                    {# Contenu du message envoyé depuis la page de contact. #}
                     <p class="employee-message-card__content">{{ contactMessage.description }}</p>
 
-                    {# Bloc affiche si une reponse a deja ete envoyee. #}
+                    {# Conserve la réponse envoyée avec sa date pour assurer le suivi du message. #}
                     {% if contactMessage.reponse %}
                         <div class="employee-message-reply">
                             <h3>Réponse envoyée</h3>
@@ -144,10 +144,10 @@
                         </div>
                     {% endif %}
 
-                    {# Formulaire de reponse, masque dans les onglets repondus et supprimes. #}
+                    {# Formulaire de réponse, masqué dans les onglets « Répondus » et « Supprimés ». #}
                     {% if currentTab not in ['replied', 'deleted'] %}
                         <form method="post" action="{{ path('employee_message_reply', { id: contactMessage.contact_id }) }}" class="employee-message-reply-form">
-                            {# Token CSRF : protege l'envoi d'une reponse au message client. #}
+                            {# Le jeton CSRF sécurise l'envoi de la réponse au client. #}
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                             <input type="hidden" name="tab" value="{{ currentTab }}">
                             <label>
@@ -162,7 +162,7 @@
                     <div class="employee-message-actions">
                         {% if currentTab == 'active' %}
                             <form method="post" action="{{ path('employee_message_archive', { id: contactMessage.contact_id }) }}" data-message-action="archive">
-                                {# Token CSRF : protege l'archivage d'un message. #}
+                                {# Le jeton CSRF sécurise l'archivage du message. #}
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <input type="hidden" name="tab" value="{{ currentTab }}">
                                 <button type="submit" class="buttonoffwhite" aria-label="Archiver le message n&deg;{{ contactMessage.contact_id }}">Archiver</button>
@@ -171,7 +171,7 @@
 
                         {% if currentTab == 'archived' %}
                             <form method="post" action="{{ path('employee_message_unarchive', { id: contactMessage.contact_id }) }}" data-message-action="unarchive">
-                                {# Token CSRF : protege le retour d'un message archive. #}
+                                {# Le jeton CSRF sécurise le retour d'un message archivé. #}
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <button type="submit" class="buttonprimary" aria-label="D&eacute;placer le message n&deg;{{ contactMessage.contact_id }} dans les messages re&ccedil;us">Déplacer dans messages reçus</button>
                             </form>
@@ -179,7 +179,7 @@
 
                         {% if currentTab == 'deleted' %}
                             <form method="post" action="{{ path('employee_message_restore', { id: contactMessage.contact_id }) }}" data-message-action="restore">
-                                {# Token CSRF : protege la restauration d'un message supprime. #}
+                                {# Le jeton CSRF sécurise la restauration d'un message supprimé. #}
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <button
                                     type="submit"
@@ -193,7 +193,7 @@
 
                         {% if currentTab in ['active', 'archived', 'replied'] %}
                             <form method="post" action="{{ path('employee_message_delete', { id: contactMessage.contact_id }) }}" data-message-action="delete">
-                                {# Token CSRF : protege la suppression d'un message. #}
+                                {# Le jeton CSRF sécurise la suppression du message. #}
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                 <input type="hidden" name="tab" value="{{ currentTab }}">
                                 <button type="submit" class="buttonoffwhite" aria-label="Supprimer le message n&deg;{{ contactMessage.contact_id }}">Supprimer</button>
@@ -202,12 +202,12 @@
                     </div>
                 </article>
             {% else %}
-                {# Message affiche si l'onglet ne contient aucun message. #}
+                {# Message affiché si l'onglet ne contient aucun message. #}
                 <p class="employee-empty" data-message-empty>Aucun message dans cet onglet.</p>
             {% endfor %}
         </section>
 
-        {# Fenetre de confirmation avant suppression d'un message. #}
+        {# Une fenêtre commune confirme toute suppression avant l'envoi du formulaire concerné. #}
         <div class="employee-message-delete-modal" data-message-delete-modal hidden>
             <div class="employee-message-delete-modal__overlay" data-message-delete-cancel></div>
             <section class="employee-message-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="message-delete-title">

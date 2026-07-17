@@ -1,47 +1,41 @@
 ﻿{% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour l'historique des commandes. #}
+{# Historique complet des commandes du client, avec les actions autorisées selon leur statut. #}
 {% block title %}Mes commandes - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page. #}
+{# Bandeau commun aux pages publiques et à l’espace client. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Mes commandes',
     image_alt: 'Historique des commandes Vite et Gourmand'
 } %}
 
-{# Contenu principal de la page qui liste toutes les commandes du client. #}
 <main class="customer-page customer-orders-page">
-    {# Lien de retour vers le tableau de bord client. #}
     <a href="{{ path('customer_account') }}" class="cart-back-link">← Retour à mon espace client</a>
 
-    {# Introduction de la page. #}
     <section class="customer-profile-intro">
         <h1>Toutes mes commandes</h1>
         <p>Retrouvez ici l'historique de vos commandes passées chez Vite & Gourmand.</p>
     </section>
 
-    {# Message de succes apres l'envoi d'un avis. #}
+    {# Retours du contrôleur après un avis ou une action sur une commande. #}
     {% for message in app.flashes('review_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
 
-    {# Message d'erreur lie a l'envoi d'un avis. #}
     {% for message in app.flashes('review_error') %}
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
-    {# Message de succes apres une action sur une commande. #}
     {% for message in app.flashes('order_success') %}
         <p class="customer-alert customer-alert--success">{{ message }}</p>
     {% endfor %}
 
-    {# Message d'erreur apres une action impossible sur une commande. #}
     {% for message in app.flashes('order_error') %}
         <p class="customer-alert customer-alert--error">{{ message }}</p>
     {% endfor %}
 
-    {# Cas ou le client n'a aucune commande en base. #}
+    {# L’état vide redirige le client vers le catalogue pour démarrer une commande. #}
     {% if orders is empty %}
         <section class="cart-empty-card">
             <h2>Aucune commande pour le moment</h2>
@@ -49,18 +43,14 @@
             <a href="{{ path('menu_index') }}" class="buttonprimary">Voir les menus</a>
         </section>
     {% else %}
-        {# Liste complete des commandes du client. #}
         <section class="customer-all-orders">
-            {# Boucle sur toutes les commandes du client. #}
             {% for order in orders %}
-                {# Preparation du statut, du badge et de l'information avis deja envoye. #}
+                {# Le statut détermine à la fois la présentation et les actions disponibles. #}
                 {% set statusCode = order.statut_code|default('en_attente') %}
                 {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
                 {% set hasReview = order.avis_count|default(0) > 0 %}
 
-                {# Ligne recapitulant une commande. #}
                 <article class="customer-order-row">
-                    {# Informations principales de la commande. #}
                     <div class="customer-order-row__main">
                         <h2>Commande n°{{ order.commande_id }}</h2>
                         <p>{{ order.nom_menu|default('Menu') }}</p>
@@ -70,22 +60,20 @@
                         {% endif %}
                     </div>
 
-                    {# Badge de statut et montant total. #}
                     <span class="{{ statusClass }}">{{ order.statut_libelle|default('En attente') }}</span>
                     <strong>{{ order.prix_total|default(0)|number_format(2, ',', ' ') }} €</strong>
 
-                    {# Actions disponibles sur la commande. #}
                     <div class="customer-order-row__actions">
                         <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary">Voir le détail</a>
-                        {# Annulation possible uniquement tant que la commande est en attente. #}
+                        {# L’annulation est proposée uniquement avant l’acceptation de la commande. #}
                         {% if statusCode == 'en_attente' %}
                             <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment annuler cette commande ?');">
-                                {# Token CSRF : protege l annulation de commande. #}
+                                {# Protège l’annulation contre les soumissions provenant d’autres sites. #}
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
                                 <button type="submit" class="buttonoffwhite" aria-label="Annuler la commande n&deg;{{ order.commande_id }}">Annuler</button>
                             </form>
                         {% endif %}
-                        {# L'avis peut etre laisse seulement si la commande est terminee et sans avis existant. #}
+                        {# Un seul avis est autorisé, et seulement après la fin de la commande. #}
                         {% if statusCode == 'terminee' and not hasReview %}
                             <button
                                 type="button"
@@ -98,7 +86,6 @@
                                 Laisser un avis
                             </button>
                         {% else %}
-                            {# Indication affichee si un avis a deja ete envoye pour cette commande. #}
                             {% if hasReview %}
                                 <span class="customer-review-done">Avis envoyé</span>
                             {% endif %}
@@ -110,27 +97,23 @@
     {% endif %}
 </main>
 
-{# Fenetre modale permettant de laisser un avis depuis la liste des commandes. #}
+{# Modale d’avis alimentée avec la commande sélectionnée sans quitter l’historique. #}
 <div class="customer-review-modal" data-review-modal hidden>
-    {# Overlay permettant de fermer la fenetre en cliquant a l'exterieur. #}
     <div class="customer-review-modal__overlay" data-review-close></div>
 
-    {# Boite de dialogue contenant le formulaire d'avis. #}
     <section class="customer-review-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
-        {# Bouton de fermeture de la fenetre. #}
         <button type="button" class="customer-review-modal__close" aria-label="Fermer la fenêtre" data-review-close>×</button>
 
-        {# Formulaire d'avis envoye vers la page Mes commandes. #}
         <form class="customer-review-card customer-review-card--modal" method="post" action="{{ path('customer_orders') }}">
-            {# Token CSRF : protege l envoi d un avis client. #}
+            {# Protège l’envoi de l’avis contre les soumissions provenant d’autres sites. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
             <h3 id="review-modal-title">Comment évalueriez-vous votre expérience ?</h3>
 
-            {# Identifiant de commande rempli par JavaScript au clic sur Laisser un avis. #}
+            {# JavaScript injecte ici l’identifiant et le libellé du bouton qui a ouvert la modale. #}
             <input type="hidden" name="commande_id" data-review-order-id>
             <p class="customer-review-modal__order" data-review-order-label></p>
 
-            {# Note obligatoire de 1 a 5 etoiles. #}
+            {# L’ordre décroissant permet au CSS d’afficher et de surligner les étoiles de droite à gauche. #}
             <fieldset class="customer-rating">
                 <legend>Votre note</legend>
                 <div class="customer-rating-stars">
@@ -141,13 +124,11 @@
                 </div>
             </fieldset>
 
-            {# Commentaire facultatif associe a l'avis. #}
             <label class="customer-review-field">
                 <span>Votre commentaire (facultatif)</span>
                 <textarea name="commentaire" placeholder="Écrivez votre commentaire ici."></textarea>
             </label>
 
-            {# Bouton d'envoi de l'avis. #}
             <button type="submit" class="buttonprimary customer-review-submit">Envoyer mon avis</button>
         </form>
     </section>
@@ -156,7 +137,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {# Script qui ouvre/ferme la modale d'avis et pre-remplit la commande concernee. #}
+    {# Gère l’ouverture, la fermeture et le préremplissage de la modale d’avis. #}
     <script src="{{ asset('assets/scripts/customer-orders.js') }}" defer></script>
 {% endblock %}
 

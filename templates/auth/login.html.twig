@@ -1,52 +1,46 @@
 {% extends 'base.html.twig' %}
 
-{# Titre affiche dans l'onglet du navigateur pour la page de connexion. #}
+{# Page de connexion des clients, employés et administrateurs. #}
 {% block title %}Connexion - Vite & Gourmand{% endblock %}
 
 {% block body %}
-{# Bandeau principal reutilisable avec le titre de la page et l'image de fond. #}
 {% include 'components/_big_title.html.twig' with {
     title: 'Connexion',
     image: asset('assets/bigtittle.png'),
     image_alt: 'Table gourmande Vite et Gourmand'
 } %}
 
-{# Contenu principal de la page de connexion. #}
 <main class="auth-page">
-    {# Lien de retour vers la page d'accueil du site. #}
     <a href="{{ path('home_show') }}" class="cart-back-link auth-back-link">&larr; Retour &agrave; l'accueil</a>
 
-    {# Carte contenant le formulaire de connexion. #}
     <section class="auth-card">
-        {# En-tete de la carte : message d'accueil et courte explication. #}
         <div class="auth-card__header">
             <h1>Bienvenue !</h1>
             <p>Connectez-vous à votre compte pour accéder à vos commandes.</p>
             <span aria-hidden="true"></span>
         </div>
 
-        {# Messages d'erreur envoyes par le controleur, par exemple email ou mot de passe incorrect. #}
+        {# Retours d’authentification : formulaire expiré, compte inactif ou identifiants invalides. #}
         {% for message in app.flashes('error') %}
             <div class="auth-alert auth-alert--error">{{ message }}</div>
         {% endfor %}
 
-        {# Messages de succes, par exemple apres une inscription ou une reinitialisation de mot de passe. #}
+        {# Confirmation notamment utilisée après une réinitialisation réussie du mot de passe. #}
         {% for message in app.flashes('success') %}
             <div class="auth-alert auth-alert--success">{{ message }}</div>
         {% endfor %}
 
-        {# Formulaire envoye vers la route de connexion, en conservant les parametres de retour eventuels. #}
+        {# Les paramètres de requête sont conservés afin que le contrôleur puisse rediriger vers la cible initiale. #}
         <form class="auth-form" method="post" action="{{ path('login', app.request.query.all) }}">
-            {# Token CSRF : protege la tentative de connexion contre les envois externes. #}
+            {# Le même identifiant CSRF protège l’ensemble des actions publiques d’authentification. #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('auth_action') }}">
 
-            {# Champ email utilise pour identifier l'utilisateur. #}
             <label class="auth-field">
                 <span>Email</span>
                 <input type="email" name="email" placeholder="votre.email@exemple.fr" autocomplete="email" required>
             </label>
 
-            {# Champ mot de passe avec bouton afficher/masquer gere par JavaScript. #}
+            {# Les attributs data-* relient le champ au script commun d’affichage et de masquage des mots de passe. #}
             <label class="auth-field">
                 <span>Mot de passe</span>
                 <span class="auth-password-control">
@@ -60,15 +54,12 @@
                     >
                     <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher ou masquer le mot de passe">Afficher</button>
                 </span>
-                {# Lien vers le parcours de mot de passe oublie. #}
                 <a href="{{ path('forgot_password') }}" class="auth-forgot-link">Mot de passe oublié ?</a>
             </label>
 
-            {# Actions principales : se connecter ou aller vers la creation de compte. #}
             <div class="auth-actions">
                 <button type="submit" class="buttonprimary">Se connecter</button>
 
-                {# Separateur visuel entre les deux actions. #}
                 <span class="auth-separator">
                     <span></span>
                     <p>ou</p>
@@ -80,7 +71,6 @@
         </form>
     </section>
 
-    {# Carte d'appel a contact pour les visiteurs qui souhaitent parler d'un projet. #}
     <section class="auth-contact-card">
         <h2>Un projet en tête ?</h2>
         <p>Parlons-en ensemble et créons un moment gourmand qui vous ressemble.</p>

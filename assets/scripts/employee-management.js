@@ -1,3 +1,4 @@
+// Gère en AJAX l'activation et la suppression des menus, plats et formules depuis l'espace employé.
 document.addEventListener('DOMContentLoaded', () => {
   const toggleForms = document.querySelectorAll('[data-toggle-active-form]');
   const deleteForms = document.querySelectorAll('[data-confirm-delete]');
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const syncChildrenStatus = (menuId, active) => {
+    // Répercute visuellement l'état d'un menu sur les éléments qui lui sont rattachés.
     if (!menuId) {
       return;
     }
@@ -25,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sendForm = async (form) => {
+    // Uniformise l'envoi des actions et restitue le message métier renvoyé en cas d'échec HTTP.
     const response = await fetch(form.action, {
       method: form.method || 'POST',
       headers: {
@@ -44,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   toggleForms.forEach((form) => {
+    // Le bouton reste verrouillé pendant la requête pour prévenir les changements de statut concurrents.
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
@@ -79,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modal) {
       modal.hidden = false;
       document.body.classList.add('employee-modal-is-open');
-      // Le focus arrive sur l'action principale de la fenêtre de confirmation.
+      // Le point de focalisation arrive sur l'action principale de la fenêtre de confirmation.
       confirmButton?.focus();
     }
   };
@@ -103,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   confirmButton?.addEventListener('click', async () => {
+    // Conserve le formulaire en attente jusqu'à la confirmation explicite dans la modale.
     if (!pendingDeleteForm) {
       closeDeleteModal();
       return;

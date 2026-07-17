@@ -1,3 +1,4 @@
+// Construit côté client les statistiques de commandes par menu à partir des données JSON intégrées à la page.
 document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-orders-menu-page]');
 
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isInDateRange = (document) => {
         const date = document.date_commande || '';
 
+        // Sans période explicite, le tableau de bord reste limité à l'année de référence.
         if (!startInput.value && !endInput.value) {
             return date.startsWith(currentYear);
         }
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getFilteredDocuments = () => {
+        // Les filtres actifs sont cumulatifs ; une sélection de menus vide signifie « tous les menus ».
         const selectedTheme = themeSelect.value;
         const selectedMenus = getSelectedMenus();
 
@@ -64,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const groupByMenu = (items) => {
+        // Agrège une ligne par menu, puis classe les menus par nombre de commandes décroissant.
         const grouped = new Map();
 
         items.forEach((item) => {
@@ -91,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const groupByTheme = (items) => {
+        // Produit les totaux attendus par le graphique circulaire, indépendamment du détail par menu.
         const grouped = new Map();
 
         items.forEach((item) => {
@@ -102,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderDonut = (items) => {
+        // Chaque groupe occupe dans le dégradé conique une portion proportionnelle à son total.
         const total = items.reduce((sum, item) => sum + item.total, 0);
         let cursor = 0;
 
@@ -136,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderBars = (items) => {
+        // Limite le graphique aux huit menus les plus commandés et conserve une hauteur minimale visible.
         const max = Math.max(...items.map((item) => item.total), 1);
         const topItems = items.slice(0, 8);
 
@@ -175,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const render = () => {
+        // Recalcule toutes les représentations à partir d'un même jeu de données filtré.
         const filteredDocuments = getFilteredDocuments();
         const menuGroups = groupByMenu(filteredDocuments);
         const themeGroups = groupByTheme(filteredDocuments);
@@ -187,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     page.addEventListener('keydown', (event) => {
-        // La touche Entree applique les filtres comme le bouton principal.
+        // La touche Entrée applique les filtres comme le bouton principal.
         if (event.key === 'Enter' && event.target.matches('input, select')) {
             event.preventDefault();
             render();

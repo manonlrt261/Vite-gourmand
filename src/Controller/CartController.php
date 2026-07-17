@@ -14,9 +14,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
-// Controleur du panier, de la validation de commande et de la confirmation.
+// Contrôleur du panier, de la validation des commandes et du calcul des frais de livraison.
 class CartController extends AbstractController
 {
+    // Coordonnées de référence utilisées pour calculer les livraisons au départ de Bordeaux.
     private const BORDEAUX_LATITUDE = 44.837789;
     private const BORDEAUX_LONGITUDE = -0.57918;
     private const DELIVERY_BASE_PRICE = 5.00;
@@ -34,22 +35,22 @@ class CartController extends AbstractController
         'heure_livraison',
     ];
 
-    // Affiche le panier sans ajouter de nouveau menu.
+    // Affiche le récapitulatif du panier conservé en session.
     public function index(Request $request, Connection $connection): Response
     {
         return $this->renderCart($request, $connection);
     }
 
-    // Ancienne route conservee pour compatibilite : elle ne modifie plus le panier en GET.
+    // Ancienne route conservée pour compatibilité : elle ne modifie plus le panier en GET.
     public function show(int $id): Response
     {
         return $this->redirectToRoute('cart_index');
     }
 
-    // Ajoute un menu au panier depuis une action rapide.
+    // Ajoute un menu actif au panier ou augmente sa quantité selon les contraintes de stock.
     public function add(int $id, Request $request, Connection $connection): Response
     {
-        // Protection CSRF de l ajout rapide au panier depuis les cartes menus.
+        // Protection CSRF de l'ajout rapide au panier depuis les cartes des menus.
         if (!$this->isValidCartCsrf($request)) {
             if (!$request->isXmlHttpRequest()) {
                 $this->addFlash('cart_error', 'Le formulaire d ajout au panier a expire, veuillez reessayer.');
@@ -85,7 +86,7 @@ class CartController extends AbstractController
         ]);
     }
 
-    // Met a jour le panier et renvoie le nouveau recapitulatif.
+    // Met à jour les quantités du panier et renvoie un résumé JSON pour les requêtes asynchrones.
     public function update(Request $request, Connection $connection): Response
     {
         // Le token CSRF confirme que la demande vient bien du formulaire du site.
@@ -138,7 +139,7 @@ class CartController extends AbstractController
     // Supprime un menu du panier.
     public function remove(int $id, Request $request, Connection $connection): Response
     {
-        // Protection CSRF : evite qu un autre site supprime un menu du panier a la place du client.
+        // Protection CSRF : évite qu'un autre site supprime un menu du panier à la place du client.
         if (!$this->isValidCartCsrf($request)) {
             return $request->isXmlHttpRequest()
                 ? $this->json(['success' => false, 'message' => 'Formulaire de suppression invalide.'], 403)
@@ -163,7 +164,7 @@ class CartController extends AbstractController
         return $this->redirectToRoute('cart_index');
     }
 
-    // Verifie le panier, cree les commandes en base et synchronise les statistiques.
+    // Valide les coordonnées et les règles métier avant de créer les commandes en transaction.
     public function checkout(Request $request, Connection $connection, MongoStatsService $mongoStatsService, MailerInterface $mailer): Response
     {
         $session = $request->getSession();
@@ -173,7 +174,7 @@ class CartController extends AbstractController
             return $this->redirectToRoute('login', ['target' => $this->generateUrl('cart_index')]);
         }
 
-        // La validation finale de commande est sensible : elle doit venir du vrai formulaire panier.
+        // La validation finale de la commande est sensible : elle doit venir du véritable formulaire du panier.
         if (!$this->isValidCartCsrf($request)) {
             $this->addFlash('cart_error', 'Le formulaire a expire, veuillez reessayer.');
 
@@ -199,7 +200,7 @@ class CartController extends AbstractController
             return $this->redirectToRoute('cart_index');
         }
 
-        // Controle les informations de commande cote serveur avant creation en base.
+        // Contrôle les informations de commande côté serveur avant leur création en base.
         $checkoutError = $this->validateCheckoutData($checkoutData);
         if ($checkoutError !== null) {
             $this->addFlash('cart_error', $checkoutError);
@@ -231,7 +232,7 @@ class CartController extends AbstractController
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
         $today = (new \DateTimeImmutable())->format('Y-m-d');
         $orderIds = [];
-        // Le client ne peut demander du materiel que si au moins un menu du panier le propose en base.
+        // Le client ne peut demander du matériel que si au moins un menu du panier le propose en base.
         $materialRequested = $request->request->getBoolean('pret_materiel');
         $hasMaterialMenu = false;
         foreach ($summary['items'] as $item) {
@@ -242,8 +243,8 @@ class CartController extends AbstractController
         }
         $pretMateriel = $materialRequested && $hasMaterialMenu ? 1 : 0;
 
-        // La table des menus commandes est verifiee avant la transaction :
-        // une requete CREATE TABLE peut fermer automatiquement une transaction MySQL.
+        // La table des menus commandés est vérifiée avant la transaction :
+        // une requête CREATE TABLE peut fermer automatiquement une transaction MySQL.
         $this->ensureOrderMenuTable($connection);
 
         try {
@@ -257,7 +258,7 @@ class CartController extends AbstractController
             $totalPeople = array_sum(array_map(static fn (array $item): int => (int) $item['nombrePersonnes'], $summary['items']));
             $commandeData = [
                 'utilisateur_id' => $userId,
-                // Cette colonne reste remplie pour garder la compatibilite avec les anciennes pages.
+            // Cette colonne reste remplie pour garder la compatibilité avec les anciennes pages.
                 'menu_id' => (int) $firstItem['menu']['menu_id'],
                 'date_commande' => $today,
                 'date_prestation' => $checkoutData['date_prestation'],
@@ -307,7 +308,7 @@ class CartController extends AbstractController
                 );
             }
 
-            // Les menus ont deja ete enregistres dans commande_menus : on evite l'ancien comportement qui creait une commande par menu.
+                // Les menus ont déjà été enregistrés dans commande_menus : on évite l'ancien comportement qui créait une commande par menu.
             $summary['items'] = [];
 
             foreach ($summary['items'] as $index => $item) {
@@ -353,7 +354,7 @@ class CartController extends AbstractController
                 }
             }
 
-            // On valide uniquement si MySQL garde encore une transaction active.
+            // On valide uniquement si MySQL conserve encore une transaction active.
             try {
                 if ($connection->isTransactionActive()) {
                     $connection->commit();
@@ -381,7 +382,7 @@ class CartController extends AbstractController
         return $this->redirectToRoute('order_confirmation');
     }
 
-    // Affiche la page de confirmation apres validation de commande.
+    // Affiche la page de confirmation après validation de la commande.
     public function confirmation(Request $request, Connection $connection): Response
     {
         $session = $request->getSession();
@@ -399,7 +400,7 @@ class CartController extends AbstractController
      * @param list<int> $orderIds
      * @return list<array<string, mixed>>
      */
-    // Recupere les commandes a afficher sur la page de confirmation.
+    // Récupère les commandes à afficher sur la page de confirmation.
     private function getOrdersForConfirmation(Connection $connection, array $orderIds, int $userId): array
     {
         $orderIds = array_values(array_filter(array_map('intval', $orderIds)));
@@ -437,7 +438,7 @@ class CartController extends AbstractController
         return $orders;
     }
 
-    // Email 3 : prepare et envoie au client le recapitulatif complet de sa commande.
+    // E-mail 3 : prépare et envoie au client le récapitulatif complet de sa commande.
     private function sendOrderConfirmationEmail(MailerInterface $mailer, array $orders, array $checkoutData): void
     {
         if ($orders === []) {
@@ -505,21 +506,21 @@ class CartController extends AbstractController
         $lines[] = '<p>À très bientôt,<br>L’équipe Vite & Gourmand</p>';
 
         try {
-            // L'email reprend les informations visibles sur la page de confirmation de commande.
+            // L'e-mail reprend les informations visibles sur la page de confirmation de commande.
             $mailer->send((new Email())
                 ->from($from)
                 ->to($to)
                 ->subject('Confirmation de votre commande - Vite & Gourmand')
                 ->html(implode("\n", $lines)));
         } catch (\Throwable) {
-            // La commande doit rester valide meme si le SMTP local n'est pas encore configure.
+            // La commande doit rester valide même si le SMTP local n'est pas encore configuré.
         }
     }
 
     /**
      * @param array<string, string> $checkoutData
      */
-    // Verifie les formats, les dates et les longueurs du formulaire panier.
+    // Vérifie les formats, les dates et les longueurs du formulaire du panier.
     private function validateCheckoutData(array $checkoutData): ?string
     {
         if (!InputValidator::isValidPhone($checkoutData['telephone'] ?? '')) {
@@ -564,7 +565,7 @@ class CartController extends AbstractController
     /**
      * @return array<string, array<string, mixed>|false>
      */
-    // Recupere l entree, le plat et le dessert associes a un menu commande.
+    // Récupère l'entrée, le plat et le dessert associés à un menu commandé.
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
@@ -595,7 +596,7 @@ class CartController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Recupere les menus contenus dans une commande, avec une compatibilite pour les anciennes commandes a menu unique.
+    // Construit les lignes d'une commande et conserve la compatibilité avec les anciennes commandes à menu unique.
     private function getOrderMenuLines(Connection $connection, array $order): array
     {
         try {
@@ -615,7 +616,7 @@ class CartController extends AbstractController
                 return $lines;
             }
         } catch (\Throwable) {
-            // Si la table commande_menus n existe pas encore, on garde l ancien affichage.
+            // Si la table commande_menus n'existe pas encore, on conserve l'ancien affichage.
         }
 
         return [[
@@ -635,7 +636,7 @@ class CartController extends AbstractController
     /**
      * @return list<array<string, mixed>>
      */
-    // Construit l historique de statut d une commande.
+    // Construit l'historique des statuts d'une commande.
     private function getOrderStatusHistory(Connection $connection, int $orderId, array $order): array
     {
         $history = $connection->fetchAllAssociative(
@@ -698,7 +699,7 @@ class CartController extends AbstractController
         return $timeline;
     }
 
-    // Prepare les donnees necessaires a l affichage du panier.
+    // Prépare les données nécessaires à l'affichage du panier.
     private function renderCart(Request $request, Connection $connection): Response
     {
         $cartItems = $this->getCartItems($request);
@@ -800,13 +801,13 @@ class CartController extends AbstractController
         ]);
     }
 
-    // Verifie le token CSRF commun aux actions sensibles du panier.
+    // Vérifie le jeton CSRF commun aux actions sensibles du panier.
     private function isValidCartCsrf(Request $request): bool
     {
         return $this->isCsrfTokenValid('cart_action', (string) $request->request->get('_csrf_token'));
     }
 
-    // Renvoie le resume du panier en JSON pour les actions sans rechargement.
+    // Renvoie le résumé du panier en JSON pour les actions sans rechargement.
     private function jsonCartSummary(Request $request, Connection $connection): JsonResponse
     {
         $cartItems = $this->getCartItems($request);
@@ -880,7 +881,7 @@ class CartController extends AbstractController
         ]);
     }
 
-    // Met a jour les nombres de personnes depuis les champs du panier.
+    // Met à jour les nombres de personnes depuis les champs du panier.
     private function updateCartQuantitiesFromRequest(Request $request, Connection $connection): void
     {
         $cartItems = $this->getCartItems($request);
@@ -913,7 +914,7 @@ class CartController extends AbstractController
         $this->saveCartItems($request, $cartItems);
     }
 
-    // Calcule les totaux du panier, la reduction et la livraison.
+    // Recalcule les prix, quantités et disponibilités à partir de la base, jamais depuis les seuls montants de session.
     private function getCartSummary(Request $request, Connection $connection, ?array $deliveryData = null): ?array
     {
         $cartItems = $this->getCartItems($request);
@@ -977,7 +978,7 @@ class CartController extends AbstractController
         ];
     }
 
-    // Verifie la colonne materiel_disponible du menu pour savoir si le client peut demander un pret de materiel.
+    // Vérifie la colonne materiel_disponible du menu pour savoir si le client peut demander un prêt de matériel.
     private function menuProvidesMaterial(array $menu): bool
     {
         return (int) ($menu['materiel_disponible'] ?? 0) === 1;
@@ -986,7 +987,7 @@ class CartController extends AbstractController
     /**
      * @param list<array<string, mixed>> $items
      */
-    // Verifie que la date choisie respecte le delai minimum indique dans les conditions du menu.
+    // Vérifie les délais minimum indiqués dans les conditions de chaque menu.
     private function validateMenuLeadTimes(array $items, string $datePrestation): ?string
     {
         try {
@@ -1022,7 +1023,7 @@ class CartController extends AbstractController
     /**
      * @return array{days: int, label: string}
      */
-    // Extrait un delai comme "5 jours", "1 semaine" ou "2 mois" depuis le texte des conditions.
+    // Extrait et convertit en jours un délai tel que « 5 jours », « 1 semaine » ou « 2 mois ».
     private function extractLeadTimeFromConditions(string $conditions): array
     {
         $normalized = mb_strtolower($conditions);
@@ -1051,7 +1052,7 @@ class CartController extends AbstractController
     /**
      * @param array<string, string> $deliveryData
      */
-    // Calcule les frais : gratuit pour Bordeaux 33000, sinon 5 euros + 0,59 euro par kilometre.
+    // Calcule les frais : livraison gratuite à Bordeaux 33000, sinon tarif de base et prix kilométrique.
     private function calculateDeliveryPrice(array $deliveryData): float
     {
         $postalCode = preg_replace('/\D/', '', (string) ($deliveryData['code_postal_livraison'] ?? ''));
@@ -1072,7 +1073,7 @@ class CartController extends AbstractController
      * @param array<string, string> $deliveryData
      * @return array{lat: float, lon: float}|null
      */
-    // Essaie de convertir l'adresse de livraison en coordonnees GPS via le service public adresse.data.gouv.fr.
+    // Géocode l'adresse de livraison ; renvoie null si le service externe ne fournit aucune coordonnée exploitable.
     private function findDeliveryCoordinates(array $deliveryData): ?array
     {
         $query = trim(sprintf(
@@ -1111,7 +1112,7 @@ class CartController extends AbstractController
         ];
     }
 
-    // Recupere une distance routiere quand le service public de calcul d itineraire est disponible.
+    // Demande la distance routière au service externe et utilise la distance à vol d'oiseau en secours.
     private function findDrivingDistanceKm(float $endLat, float $endLon): float
     {
         $url = sprintf(
@@ -1142,7 +1143,7 @@ class CartController extends AbstractController
         return ((float) $distanceMeters) / 1000;
     }
 
-    // Distance geographique entre Bordeaux et l'adresse de livraison.
+    // Applique la formule de Haversine pour obtenir une distance géographique approximative.
     private function calculateDistanceKm(float $startLat, float $startLon, float $endLat, float $endLon): float
     {
         $earthRadiusKm = 6371;
@@ -1155,7 +1156,7 @@ class CartController extends AbstractController
         return $earthRadiusKm * (2 * atan2(sqrt($a), sqrt(1 - $a)));
     }
 
-    // Estimation de secours si l'adresse ne peut pas etre geocodee.
+    // Fournit une estimation de repli par département lorsque le géocodage est indisponible.
     private function estimateDistanceFromPostalCode(string $postalCode): float
     {
         $knownDistances = [
@@ -1198,7 +1199,7 @@ class CartController extends AbstractController
     /**
      * @return list<string>
      */
-    // Recupere les colonnes d une table pour adapter les insertions SQL.
+    // Récupère les colonnes d'une table pour adapter les insertions SQL.
     private function getTableColumns(Connection $connection, string $tableName): array
     {
         try {
@@ -1216,7 +1217,7 @@ class CartController extends AbstractController
         }
     }
 
-    // Cree la table des lignes de commande si elle n'existe pas encore.
+    // Crée la table de liaison nécessaire aux paniers comportant plusieurs menus si elle n'existe pas encore.
     private function ensureOrderMenuTable(Connection $connection): void
     {
         $connection->executeStatement(
@@ -1239,7 +1240,7 @@ class CartController extends AbstractController
     /**
      * @return array<int, array{nombre_personnes: int}>
      */
-    // Recupere les menus stockes dans la session panier.
+    // Récupère les menus stockés dans la session du panier.
     private function getCartItems(Request $request): array
     {
         $session = $request->getSession();

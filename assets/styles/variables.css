@@ -1,3 +1,4 @@
+/* Palette, typographies et dimensions partagées par l’ensemble des feuilles de style. */
 :root {
   /* Couleurs */
   --primary: #b56320;
@@ -8,7 +9,7 @@
   --offwhite: #f9e8d7;
   --green: #4f6844;
 
-  /* Variables */
+  /* Alias sémantiques conservés pour les composants utilisant l’ancienne nomenclature. */
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-dark: var(--dark);
@@ -23,7 +24,7 @@
   --font-title: "Cormorant Garamond", serif;
   --font-text: "Inter", sans-serif;
 
-  /* Tailles */
+  /* Échelle typographique */
   --font-size-h1: 70px;
   --font-size-h2: 55px;
   --font-size-h3: 30px;
