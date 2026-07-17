@@ -1,0 +1,1085 @@
+/* Mise en page de test du composant */
+.card-preview {
+  display: flex;
+  padding: 24px;
+}
+
+/* Ombre commune des cartes reutilisables : menus, plats, commandes et resumes. */
+.editablemenucard,
+.descriptionordercard,
+.descriptionentrycard,
+.descriptiondishcard,
+.descriptiondessertcard,
+.cardsummaryorder,
+.cardvieworder,
+.cardvieworderemployee {
+  box-shadow: var(--card-shadow);
+}
+
+/* Carte menu modifiable */
+.editablemenucard {
+  width: 378px;
+  height: 323px;
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.editablemenucard-image {
+  width: 100%;
+  height: 138px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 0.5px solid var(--primary);
+}
+
+.editablemenucard-content {
+  position: relative;
+  height: 185px;
+  padding: 0;
+}
+
+.editablemenucard-header {
+  position: absolute;
+  top: 15px;
+  left: 9px;
+  right: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editablemenucard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.editablemenucard-description {
+  position: absolute;
+  top: 61px;
+  left: 9px;
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.editablemenucard-footer {
+  position: absolute;
+  left: 9px;
+  right: 22px;
+  bottom: 11px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.editablemenucard-price {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.editablemenucard-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/*Carte menu apperçue par le visiteurs*/
+.menucard-preview {
+  display: flex;
+  padding: 24px;
+}
+
+.menucard {
+  width: 280px;
+  min-height: 386px;
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.menucard-image {
+  width: 100%;
+  height: 180px;
+  display: block;
+  object-fit: cover;
+  border-bottom: 0.5px solid var(--primary);
+}
+
+.menucard-content {
+  flex: 1;
+  padding: 20px 17px 18px 17px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.menucard-title {
+  margin: 0 0 8px 0;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.menucard-description {
+  margin: 0 0 24px 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1.3;
+}
+
+.menucard-infos {
+  margin: auto 0 17px 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  line-height: 1.25;
+}
+
+.menucard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.menucard-button,
+.menucard-cart-button {
+  width: 118px;
+  height: 32px;
+  min-width: 0;
+  padding: 0 8px;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.menucard-cart-button {
+  white-space: nowrap;
+}
+
+.menucard-cart-button:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.menucard-cart-button.is-added {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.menucard-cart-button.is-error {
+  background-color: var(--offwhite);
+  color: var(--primary);
+}
+
+/* Description de la commande vue par le client*/
+.descriptionordercard-preview {
+  padding: 24px;
+}
+
+.descriptionordercard {
+  width: 1320px;
+  min-height: 183px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.descriptionordercard-image {
+  width: 200px;
+  height: 183px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.descriptionordercard-infos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.descriptionordercard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.descriptionordercard-infos p {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.descriptionordercard-status {
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+}
+
+@media (max-width: 768px) {
+  .descriptionordercard {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .descriptionordercard-image {
+    width: 100%;
+    height: 180px;
+  }
+
+  .descriptionordercard-status {
+    align-self: flex-start;
+  }
+}
+
+/* Description de l'entrée commandée vue par le client*/
+.descriptionentrycard-preview {
+  padding: 24px;
+}
+
+.descriptionentrycard {
+  width: 1320px;
+  min-height: 120px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.descriptionentrycard-image {
+  width: 120px;
+  height: 120px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.descriptionentrycard-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.descriptionentrycard-category {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.descriptionentrycard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.descriptionentrycard-description {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .descriptionentrycard {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .descriptionentrycard-image {
+    width: 90px;
+    height: 90px;
+  }
+
+  .descriptionentrycard-category {
+    font-size: 32px;
+  }
+
+  .descriptionentrycard-title {
+    font-size: 20px;
+  }
+
+  .descriptionentrycard-description {
+    font-size: 16px;
+  }
+}
+
+/* Description du plat commandé vue par le clien*/
+.descriptiondishcard-preview {
+  padding: 24px;
+}
+
+.descriptiondishcard {
+  width: 1320px;
+  min-height: 120px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.descriptiondishcard-image {
+  width: 120px;
+  height: 120px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.descriptiondishcard-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.descriptiondishcard-category {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.descriptiondishcard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.descriptiondishcard-description {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+/* Description du dessert commandé vue par le client*/
+.descriptiondessertcard-preview {
+  padding: 24px;
+}
+
+.descriptiondessertcard {
+  width: 1320px;
+  min-height: 120px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.descriptiondessertcard-image {
+  width: 120px;
+  height: 120px;
+  display: block;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.descriptiondessertcard-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.descriptiondessertcard-category {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.descriptiondessertcard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.descriptiondessertcard-description {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+/*Recapitulatif de la commande vue par le client lorsqu'il passe la commande*/
+.cardsummaryorder-preview {
+  padding: 24px;
+}
+
+.cardsummaryorder {
+  width: 583px;
+  height: 242px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.cardsummaryorder-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 55px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.cardsummaryorder-line {
+  width: 100%;
+  height: 1px;
+  background-color: #e7cdb5;
+  flex-shrink: 0;
+}
+
+.cardsummaryorder-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cardsummaryorder-image {
+  width: 100px;
+  height: 80px;
+  display: block;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.cardsummaryorder-infos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardsummaryorder-menu {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.cardsummaryorder-people {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.cardsummaryorder-price {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .cardsummaryorder {
+    width: 100%;
+    height: auto;
+  }
+
+  .cardsummaryorder-title {
+    font-size: 42px;
+  }
+
+  .cardsummaryorder-content {
+    align-items: flex-start;
+  }
+}
+
+/*Apperçu de la commande sur la page Mon compte*/
+.cardvieworder-preview {
+  padding: 24px;
+}
+
+.cardvieworder {
+  width: 280px;
+  height: 153px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.cardvieworder-title {
+  margin: 0 0 12px 0;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.cardvieworder-status {
+  align-self: flex-start;
+  min-width: 70px;
+  padding-left: 8px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.cardvieworder-date {
+  margin: 14px 0 0 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.cardvieworder-actions {
+  margin-top: auto;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardvieworder-detail {
+  width: 88px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.cardvieworder-edit {
+  width: 70px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.cardvieworder-edit.is-hidden {
+  display: none;
+}
+
+/* Aperçu de la commande par un employé*/
+.cardvieworderemployee-preview {
+  padding: 24px;
+}
+
+.cardvieworderemployee {
+  width: 760px;
+  padding: 16px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.cardvieworderemployee-infos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardvieworderemployee-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.cardvieworderemployee-client {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.cardvieworderemployee-date {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.cardvieworderemployee-status {
+  min-width: 78px;
+  padding-left: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.cardvieworderemployee-status:focus,
+.cardvieworderemployee-status:active {
+  box-shadow: none;
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .cardvieworderemployee {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cardvieworderemployee-status {
+    align-self: flex-start;
+  }
+}
+
+.cardvieworderemployee-status.badgeterminee {
+  border: none;
+  background-color: var(--primary);
+  color: var(--white);
+  box-shadow: none;
+  outline: none;
+}
+
+.cardvieworderemployee-status.badgeterminee:focus,
+.cardvieworderemployee-status.badgeterminee:active {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Accepter ou refuser l'avis */
+.customerreview-preview {
+  padding: 24px;
+}
+
+.customerreview {
+  width: 1028px;
+  padding: 20px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.customerreview-client {
+  width: 200px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customerreview-name {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.customerreview-order {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.customerreview-order p,
+.customerreview-note,
+.customerreview-date {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.customerreview-content {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customerreview-text {
+  min-height: 66px;
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1.2;
+}
+
+.customerreview-actions {
+  width: 88px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customerreview-accept,
+.customerreview-refuse {
+  width: 88px;
+  height: 23px;
+}
+
+@media (max-width: 768px) {
+  .customerreview {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .customerreview-client,
+  .customerreview-actions {
+    width: 100%;
+  }
+
+  .customerreview-actions {
+    flex-direction: row;
+  }
+}
+
+/*Apperçu du dernier avis laissé sur le tableau de bord employé*/
+.latestreview-preview {
+  padding: 24px;
+}
+
+.latestreview {
+  width: 557px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 12px;
+}
+
+.latestreview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.latestreview-name {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.latestreview-rating {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.latestreview-text {
+  min-height: 85px;
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1.2;
+}
+
+.latestreview-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.latestreview-refuse,
+.latestreview-accept {
+  width: 88px;
+  height: 23px;
+}
+
+/*Gestion des commandes par l'employé*/
+.ordergestion-preview {
+  padding: 24px;
+}
+
+.ordergestion {
+  width: 1352px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  background-color: var(--offwhite);
+  border-radius: 12px;
+}
+
+.ordergestion-main {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ordergestion-left,
+.ordergestion-right {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.ordergestion-left {
+  gap: 4px;
+}
+
+.ordergestion-right {
+  gap: 12px;
+}
+
+.ordergestion-number {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.ordergestion-client,
+.ordergestion-menu-line p,
+.ordergestion-delivery,
+.ordergestion-total-line p {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.ordergestion-menu-line,
+.ordergestion-total-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ordergestion-dot {
+  width: 4px;
+  height: 4px;
+  display: inline-block;
+  flex-shrink: 0;
+
+  background-color: var(--secondary);
+  border-radius: 50%;
+}
+
+.ordergestion-total {
+  color: var(--primary);
+}
+
+.ordergestion-status-wrapper {
+  position: relative;
+  display: inline-flex;
+  width: max-content;
+}
+
+.ordergestion-status-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  pointer-events: none;
+  transform: translateY(-65%) rotate(45deg);
+}
+
+.ordergestion-status {
+  min-width: 128px;
+  padding-left: 10px;
+  padding-right: 28px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+  outline: none;
+  font-family: var(--font-text);
+  font-size: 12px;
+  text-align: center;
+  text-align-last: center;
+}
+
+.ordergestion-status.badgeattente,
+.ordergestion-status.badgevalidee {
+  border: 0.5px solid var(--primary);
+}
+
+.ordergestion-status.badgeterminee {
+  border: none;
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+.ordergestion-status:focus,
+.ordergestion-status:active {
+  box-shadow: none;
+  outline: none;
+}
+
+@media (max-width: 768px) {
+  .ordergestion {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ordergestion-main {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ordergestion-status {
+    align-self: flex-start;
+  }
+}

@@ -1,0 +1,229 @@
+/* Mise en page de test des composants */
+.components-preview {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  align-items: center;
+}
+
+/*Bouton primary*/
+.buttonprimary {
+  min-width: 120px;
+  height: 40px;
+  padding: 0 20px;
+  background-color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.buttonprimary:hover {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+  color: var(--white);
+}
+
+.buttonprimary:focus {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Bouton white */
+.buttonwhite {
+  min-width: 120px;
+  height: 40px;
+  padding: 0 20px;
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Bouton offwhite */
+.buttonoffwhite {
+  min-width: 120px;
+  height: 40px;
+  padding: 0 20px;
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Bouton modifier */
+.buttonedit {
+  width: 70px;
+  height: 19px;
+  padding: 0;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Bouton supprimer */
+.buttondelete {
+  width: 80px;
+  height: 19px;
+  padding: 0;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.buttonedit:hover,
+.buttonedit:focus,
+.buttonedit:active,
+.buttonedit:visited,
+.buttondelete:hover,
+.buttondelete:focus,
+.buttondelete:active,
+.buttondelete:visited {
+  text-decoration: none;
+}
+
+/* Bouton valider */
+.buttonvalidate {
+  width: 70px;
+  height: 19px;
+  padding: 0;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--green);
+  line-height: 1;
+
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Bouton accepter l'avis */
+.buttonaccept {
+  width: 94px;
+  height: 23px;
+  padding: 0 10px;
+  background-color: var(--primary);
+  border: none;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 400;
+  color: white;
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+}
+
+.buttonaccept:hover,
+.buttonaccept:focus,
+.buttonaccept:active {
+  color: white;
+}
+
+/* Bouton refuser l'avis */
+.buttonrefuse {
+  width: 94px;
+  height: 23px;
+  padding: 0 10px;
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+}
+
+.buttonrefuse:hover,
+.buttonrefuse:focus,
+.buttonrefuse:active {
+  color: var(--secondary);
+}

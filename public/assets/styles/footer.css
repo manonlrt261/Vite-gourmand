@@ -1,0 +1,229 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-desktop {
+  width: 100%;
+  min-height: 130px;
+  padding: 0 24px;
+  box-sizing: border-box;
+
+  margin-top: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+
+  background-color: var(--primary);
+}
+
+.footer-hours {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.footer-title {
+  margin: 0 0 12px 0;
+  font-family: var(--font-title);
+  font-size: 35px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1;
+}
+
+.footer-text {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1.1;
+}
+
+.footer-brand {
+  min-height: 130px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.footer-name {
+  margin: 0 0 10px 0;
+  font-family: var(--font-title);
+  font-size: 45px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1;
+}
+
+.footer-legal,
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-legal {
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-nav {
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.footer-legal a,
+.footer-nav a {
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--white);
+  text-decoration: none;
+  line-height: 1;
+}
+
+.footer-employee {
+  min-height: 151px;
+}
+
+.footer-employee .footer-title {
+  margin-bottom: 8px;
+  font-size: 45px;
+  font-weight: 700;
+}
+
+.footer-employee .footer-name {
+  font-weight: 400;
+}
+
+.footer-employee-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-employee-links a {
+  font-family: var(--font-text);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.footer-employee .footer-legal a,
+.footer-employee .footer-nav a {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .footer-desktop {
+    min-height: 104px;
+    padding: 14px 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .footer-hours {
+    width: 34%;
+    order: 1;
+    align-items: flex-start;
+  }
+
+  .footer-brand {
+    width: 34%;
+    order: 2;
+    min-height: auto;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-legal {
+    align-items: center;
+  }
+
+  .footer-nav {
+    width: 24%;
+    order: 3;
+    align-items: flex-end;
+    gap: 5px;
+  }
+
+  .footer-title {
+    margin-bottom: 6px;
+    font-size: 24px;
+    text-align: left;
+  }
+
+  .footer-name {
+    margin-bottom: 7px;
+    font-size: 30px;
+    text-align: center;
+  }
+
+  .footer-text,
+  .footer-legal a,
+  .footer-nav a {
+    font-size: 13px;
+    line-height: 1.1;
+  }
+
+  .footer-text {
+    max-width: 170px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-desktop {
+    min-height: 92px;
+    padding: 10px 8px;
+    gap: 8px;
+  }
+
+  .footer-title {
+    font-size: 20px;
+  }
+
+  .footer-name {
+    font-size: 24px;
+  }
+
+  .footer-text,
+  .footer-legal a,
+  .footer-nav a {
+    font-size: 11px;
+  }
+
+  .footer-employee .footer-title {
+    font-size: 24px;
+  }
+
+  .footer-employee-links {
+    align-items: flex-start;
+  }
+
+  .footer-employee-links a,
+  .footer-employee .footer-legal a,
+  .footer-employee .footer-nav a {
+    font-size: 11px;
+  }
+}

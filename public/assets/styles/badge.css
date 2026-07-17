@@ -1,0 +1,192 @@
+/* Mise en page de test des composants */
+.badge-preview {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  align-items: center;
+}
+
+/*Badge acitf*/
+.badgeactif {
+  padding: 3px 7px;
+  background-color: var(--primary);
+  border: none;
+  border-radius: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/*Badge inacitf*/
+.badgeinactif {
+  padding: 3px 7px;
+  background-color: var(--secondary);
+  border: none;
+  border-radius: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Badge terminée */
+.badgeterminee {
+  padding: 3px 7px;
+  background-color: var(--primary);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--white);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Badge validée */
+.badgevalidee {
+  padding: 3px 7px;
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* Badge en attente */
+.badgeattente {
+  padding: 3px 7px;
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/*Badge catégorie classique*/
+.classiccategory {
+  padding: 4px 10px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--primary);
+  border-radius: 20px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/*Badge catégorie événementiels*/
+.eventcategory {
+  padding: 4px 10px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 20px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/*Badge catégorie saisonniers*/
+.seasonalcategory {
+  padding: 4px 10px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--secondary);
+  border-radius: 20px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/*Badge régime spécifiques*/
+.specialregimecategory {
+  padding: 4px 10px;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: var(--white);
+  border: 0.5px solid var(--primary);
+  border-radius: 20px;
+
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
