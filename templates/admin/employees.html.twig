@@ -15,11 +15,6 @@
     <main class="admin-employees-page" data-admin-employees-page data-admin-csrf-token="{{ csrf_token('admin_employee_action') }}">
         <a href="{{ path('admin_dashboard') }}" class="cart-back-link">&larr; Retour &agrave; l'espace administrateur</a>
 
-        {# Messages de confirmation affichés après la création, modification ou suppression d'un employé. #}
-        {% for message in app.flashes('employee_success') %}
-            <p class="contact-alert contact-alert--success">{{ message }}</p>
-        {% endfor %}
-
         <section class="admin-employees-heading">
             <div>
                 <h1>Gestion des employ&eacute;s</h1>
@@ -81,32 +76,34 @@
                         data-job="{{ employee.poste }}"
                     >
                         {# Badge actif/inactif cliquable : il permet de désactiver ou réactiver un employé. #}
-                        <form method="post" action="{{ path('admin_employee_toggle', { id: employee.id }) }}" data-employee-toggle-form>
-                            {# Protège le changement de statut contre les soumissions intersites. #}
-                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
-                            <button
-                                type="submit"
-                                class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}"
-                                data-employee-status-button
-                                aria-label="{{ isActive ? 'D&eacute;sactiver' : 'Activer' }} l'employ&eacute; {{ fullName }}"
-                            >
-                                {{ isActive ? 'Actif' : 'Inactif' }}
-                            </button>
-                        </form>
+                        <div class="admin-employee-row__status">
+                            <form method="post" action="{{ path('admin_employee_toggle', { id: employee.id }) }}" data-employee-toggle-form>
+                                {# Protège le changement de statut contre les soumissions intersites. #}
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_employee_action') }}">
+                                <button
+                                    type="submit"
+                                    class="{{ isActive ? 'badgeactif' : 'badgeinactif' }}"
+                                    data-employee-status-button
+                                    aria-label="{{ isActive ? 'D&eacute;sactiver' : 'Activer' }} l'employ&eacute; {{ fullName }}"
+                                >
+                                    {{ isActive ? 'Actif' : 'Inactif' }}
+                                </button>
+                            </form>
+
+                            <div class="admin-employee-row__meta">
+                                <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
+                            </div>
+                        </div>
 
                         <div class="admin-employee-row__main">
                             <h2 data-employee-name>{{ fullName }}</h2>
                             <p data-employee-identity>ID {{ employee.id }} &middot; {{ employee.email }}</p>
+                            <p class="admin-employee-row__job" data-employee-job-label>{{ employee.poste }}</p>
                         </div>
 
-                        <p class="admin-employee-row__job" data-employee-job-label>{{ employee.poste }}</p>
-
-                        <div class="admin-employee-row__meta">
-                            <span>{{ employee.created_at ? employee.created_at|date('d/m/Y') : 'Date inconnue' }}</span>
-                        </div>
-
-                        {# Les attributs data-* alimentent la modale sans nouvelle requête au serveur. #}
-                        <button
+                        <div class="admin-employee-row__actions">
+                            {# Les attributs data-* alimentent la modale sans nouvelle requête au serveur. #}
+                            <button
                             type="button"
                             class="buttonprimary admin-employee-view-button"
                             data-employee-view
@@ -123,12 +120,12 @@
                             data-ville="{{ employee.ville }}"
                             data-code-postal="{{ employee.code_postal }}"
                             data-poste="{{ employee.poste }}"
-                        >
-                            Visualiser les informations
-                        </button>
+                            >
+                                Visualiser les informations
+                            </button>
 
                         {# Même jeu de données pour préremplir le formulaire de modification. #}
-                        <button
+                            <button
                             type="button"
                             class="buttonedit"
                             aria-label="Modifier les informations de l'employ&eacute; {{ fullName }}"
@@ -146,19 +143,20 @@
                             data-ville="{{ employee.ville }}"
                             data-code-postal="{{ employee.code_postal }}"
                             data-poste="{{ employee.poste }}"
-                        >
-                            Modifier
-                        </button>
+                            >
+                                Modifier
+                            </button>
 
-                        <button
+                            <button
                             type="button"
                             class="buttondelete"
                             aria-label="Supprimer l'employ&eacute; {{ fullName }}"
                             data-employee-delete
                             data-delete-url="{{ path('admin_employee_delete', { id: employee.id }) }}"
-                        >
-                            Supprimer
-                        </button>
+                            >
+                                Supprimer
+                            </button>
+                        </div>
                     </article>
                 {% else %}
                     <p class="employee-empty">Aucun employ&eacute; pour le moment.</p>

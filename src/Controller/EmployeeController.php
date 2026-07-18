@@ -382,8 +382,6 @@ class EmployeeController extends AbstractController
             $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
             $connection->insert($config['table'], $payload);
 
-            $this->addFlash('employee_success', sprintf('%s a bien ete ajoute.', ucfirst($this->getReadableItemType($type))));
-
             return $this->redirectToRoute('employee_items_all');
         }
 

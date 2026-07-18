@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Validator\InputValidator;
 use Doctrine\DBAL\Connection;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,7 @@ use Symfony\Component\Mime\Email;
 class ContactController extends AbstractController
 {
     // Affiche le formulaire, valide et enregistre le message, puis avertit l'entreprise par e-mail.
-    public function index(Request $request, Connection $connection, MailerInterface $mailer): Response
+    public function index(Request $request, Connection $connection, MailerInterface $mailer, LoggerInterface $logger): Response
     {
         // Le traitement n'est exécuté qu'à la soumission du formulaire.
         if ($request->isMethod('POST')) {
@@ -65,10 +66,14 @@ class ContactController extends AbstractController
                 'utilisateur_id' => null,
             ]);
 
-        // Envoie une copie du message à l'entreprise, comme demandé dans le sujet.
-            $this->sendContactEmailToCompany($mailer, $email, $titre, $description);
+        // Avertit l'entreprise et confirme au visiteur que sa demande a bien été reçue.
+            $emailsSent = $this->sendContactEmails($mailer, $logger, $email, $titre, $description);
 
-            $this->addFlash('contact_success', 'Votre message a bien été envoyé.');
+            if ($emailsSent) {
+                $this->addFlash('contact_success', 'Votre message a bien été envoyé. Un email de confirmation vous a été adressé.');
+            } else {
+                $this->addFlash('contact_error', 'Votre message a bien été enregistré, mais l’envoi de la confirmation a échoué.');
+            }
 
             return $this->redirectToRoute('contact_index');
         }
@@ -77,19 +82,30 @@ class ContactController extends AbstractController
         return $this->render('contact/index.html.twig');
     }
 
-    // E-mail : transmet la demande de contact à l'adresse e-mail de l'entreprise.
-    private function sendContactEmailToCompany(MailerInterface $mailer, string $visitorEmail, string $title, string $message): void
+    // E-mails : avertit l'entreprise puis confirme la réception au visiteur.
+    private function sendContactEmails(
+        MailerInterface $mailer,
+        LoggerInterface $logger,
+        string $visitorEmail,
+        string $title,
+        string $message
+    ): bool
     {
         $companyEmail = $_ENV['ADMIN_EMAIL'] ?? $_SERVER['ADMIN_EMAIL'] ?? 'contact@vite-gourmand.fr';
         $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
 
         if (!filter_var($companyEmail, FILTER_VALIDATE_EMAIL)) {
-            return;
+            $logger->error('Envoi du formulaire de contact impossible : ADMIN_EMAIL est invalide.');
+
+            return false;
         }
 
         $safeVisitorEmail = htmlspecialchars($visitorEmail, ENT_QUOTES, 'UTF-8');
         $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
         $safeMessage = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
+
+        $companyNotificationSent = false;
+        $visitorConfirmationSent = false;
 
         try {
             // Le visiteur est ajouté en replyTo pour que l'entreprise puisse répondre directement.
@@ -106,8 +122,35 @@ class ContactController extends AbstractController
                     '<p>' . $safeMessage . '</p>' .
                     '<p>Ce message a également été enregistré dans la messagerie interne.</p>'
                 ));
-        } catch (\Throwable) {
-            // Le message reste conservé dans la messagerie même si le SMTP n'est pas encore configuré.
+            $companyNotificationSent = true;
+        } catch (\Throwable $exception) {
+            $logger->error('Échec de la notification du formulaire de contact à l’entreprise.', [
+                'exception' => $exception,
+            ]);
         }
+
+        try {
+            $mailer->send((new Email())
+                ->from($from)
+                ->to($visitorEmail)
+                ->replyTo($companyEmail)
+                ->subject('Nous avons bien reçu votre demande - Vite & Gourmand')
+                ->html(
+                    '<h1>Votre demande a bien été reçue</h1>' .
+                    '<p>Bonjour,</p>' .
+                    '<p>Merci d’avoir contacté Vite & Gourmand. Notre équipe reviendra vers vous dans les meilleurs délais.</p>' .
+                    '<p><strong>Sujet :</strong> ' . $safeTitle . '</p>' .
+                    '<h2>Votre message</h2>' .
+                    '<p>' . $safeMessage . '</p>' .
+                    '<p>À bientôt,<br>L’équipe Vite & Gourmand</p>'
+                ));
+            $visitorConfirmationSent = true;
+        } catch (\Throwable $exception) {
+            $logger->error('Échec de l’email de confirmation du formulaire de contact au visiteur.', [
+                'exception' => $exception,
+            ]);
+        }
+
+        return $companyNotificationSent && $visitorConfirmationSent;
     }
 }

@@ -6655,17 +6655,33 @@ textarea {
 
 .admin-employee-row {
   width: 100%;
-  min-height: 83px;
-  padding: 0 20px;
+  min-height: 142px;
+  padding: 22px 26px;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 78px minmax(230px, 1.4fr) minmax(150px, 0.7fr) 110px 150px 70px 80px;
+  grid-template-columns: 92px minmax(260px, 1fr) 190px;
   align-items: center;
-  gap: 16px;
+  gap: 26px;
   border: 0.5px solid var(--primary);
   border-radius: 8px;
   background-color: var(--white);
   box-shadow: none;
+}
+
+.admin-employee-row__status,
+.admin-employee-row__actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-employee-row__status {
+  align-self: stretch;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.admin-employee-row__main {
+  align-self: center;
 }
 
 .admin-employee-row[hidden],
@@ -6694,8 +6710,15 @@ textarea {
 }
 
 .admin-employee-row__job {
+  margin-top: 10px;
   color: var(--primary);
   font-weight: 500;
+}
+
+.admin-employee-row__actions {
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
 }
 
 .admin-employee-row form {
@@ -6732,16 +6755,16 @@ textarea {
 }
 
 .admin-employee-row .buttonedit {
-  width: 70px;
+  width: 100%;
   color: var(--primary);
 }
 
 .admin-employee-row .buttondelete {
-  width: 80px;
+  width: 100%;
 }
 
 .admin-employee-row .admin-employee-view-button {
-  width: 150px;
+  width: 100%;
   color: var(--offwhite);
   background-color: var(--primary);
 }
@@ -6943,14 +6966,12 @@ textarea {
   }
 
   .admin-employee-row {
-    grid-template-columns: 78px minmax(240px, 1fr) minmax(140px, 0.6fr);
+    grid-template-columns: 92px minmax(240px, 1fr) 190px;
   }
 
-  .admin-employee-row form,
-  .admin-employee-row .buttonedit,
-  .admin-employee-row .buttondelete,
-  .admin-employee-row .admin-employee-view-button {
-    justify-self: start;
+  .admin-employee-row__actions {
+    width: 190px;
+    justify-self: end;
   }
 }
 
@@ -6985,6 +7006,15 @@ textarea {
   .admin-employee-row {
     grid-template-columns: 1fr;
     padding: 18px;
+  }
+
+  .admin-employee-row__status {
+    gap: 12px;
+  }
+
+  .admin-employee-row__actions {
+    width: 100%;
+    justify-self: stretch;
   }
 
   .admin-employee-row form,
