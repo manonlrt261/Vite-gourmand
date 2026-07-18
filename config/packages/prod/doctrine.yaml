@@ -1,7 +1,7 @@
 doctrine:
     dbal:
         # Configuration utilisee uniquement en production.
-        # Elle evite que le serveur Alwaysdata interprete mal les options MySQL
-        # passees dans DATABASE_URL.
+        # Alwaysdata utilise MariaDB : on force une version complete et un charset
+        # compatible avec son pilote MySQL pour eviter l'erreur "Unknown character set".
         server_version: 'mariadb-11.4.0'
         charset: 'utf8'
