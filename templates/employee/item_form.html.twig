@@ -102,7 +102,7 @@
                 <label>
                     <span>Menu associ&eacute;</span>
                     <select name="menu_id">
-                        <option value="">Ind&eacute;pendant</option>
+                        <option value="">Indépendant</option>
                         {# Liste des menus disponibles pour l'association. #}
                         {% for menu in menus %}
                             <option value="{{ menu.menu_id }}" {{ item.menu_id|default(null) == menu.menu_id ? 'selected' : '' }}>

@@ -39,8 +39,13 @@
         {# Un panier peut produire plusieurs commandes, chacune disposant de son propre récapitulatif. #}
         {% for order in orders %}
             {# Reconstitue le sous-total brut et la réduction à partir des montants figés dans la commande. #}
-            {% set subtotal = order.prix_par_personne * order.nombre_personnes %}
-            {% set discount = subtotal - order.prix_menu %}
+            {% set firstOrderMenu = order.orderMenus|first %}
+            {% set subtotal = 0 %}
+            {% set discount = 0 %}
+            {% for orderMenu in order.orderMenus %}
+                {% set subtotal = subtotal + (orderMenu.prix_par_personne * orderMenu.nombre_personnes) %}
+                {% set discount = discount + orderMenu.reduction %}
+            {% endfor %}
             {% set statusCode = order.statut_code|default('en_attente') %}
             {# Regroupe les statuts métier en trois apparences : terminée, en cours ou en attente. #}
             {% set statusClass = statusCode in ['terminee', 'livree'] ? 'badgeterminee' : (statusCode in ['acceptee', 'en_preparation', 'en_livraison'] ? 'badgevalidee' : 'badgeattente') %}
@@ -48,8 +53,8 @@
             {# Carte de résumé : image, informations principales et statut de la commande. #}
             <section class="order-detail-summary-card">
                 {# Conserve l’emplacement visuel de l’image même si le menu n’en possède pas. #}
-                {% if order.menu_image_url %}
-                    <img src="{{ asset(order.menu_image_url) }}" alt="{{ order.menu_image_alt ?: order.nom_menu }}" class="order-detail-summary-card__image">
+                {% if firstOrderMenu.menu_image_url|default(null) %}
+                    <img src="{{ asset(firstOrderMenu.menu_image_url) }}" alt="{{ firstOrderMenu.menu_image_alt ?: firstOrderMenu.nom_menu }}" class="order-detail-summary-card__image">
                 {% else %}
                     <div class="order-detail-summary-card__image order-detail-summary-card__image--empty"></div>
                 {% endif %}
@@ -60,8 +65,9 @@
                     <p>Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</p>
                     <p>Prestation le {{ order.date_prestation ? order.date_prestation|date('d/m/Y') : 'date inconnue' }} à {{ order.heure_de_livraison ? order.heure_de_livraison|date('H\\hi') : 'heure inconnue' }}</p>
                     <p>Livraison à domicile : {{ order.adresse_livraison }}, {{ order.code_postal_livraison }} {{ order.ville_livraison }}</p>
-                    <p>{{ order.nom_menu }}</p>
-                    <p>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</p>
+                    {% for orderMenu in order.orderMenus %}
+                        <p>{{ orderMenu.nom_menu }} - {{ orderMenu.nombre_personnes }} personne{{ orderMenu.nombre_personnes > 1 ? 's' : '' }}</p>
+                    {% endfor %}
                     <p>{{ order.prix_total|number_format(2, ',', ' ') }} &euro;</p>
                 </div>
 
@@ -78,18 +84,24 @@
                 {# Liste descriptive des informations financières. #}
                 <div class="order-detail-recap-card">
                     <dl>
-                        <div>
-                            <dt>Menu choisi</dt>
-                            <dd>{{ order.nom_menu }}</dd>
-                        </div>
-                        <div>
-                            <dt>Nombre de personnes</dt>
-                            <dd>{{ order.nombre_personnes }} personne{{ order.nombre_personnes > 1 ? 's' : '' }}</dd>
-                        </div>
-                        <div>
-                            <dt>Prix unitaire</dt>
-                            <dd>{{ order.prix_par_personne|number_format(2, ',', ' ') }} &euro;</dd>
-                        </div>
+                        {% for orderMenu in order.orderMenus %}
+                            <div>
+                                <dt>Menu choisi</dt>
+                                <dd>{{ orderMenu.nom_menu }}</dd>
+                            </div>
+                            <div>
+                                <dt>Nombre de personnes</dt>
+                                <dd>{{ orderMenu.nombre_personnes }} personne{{ orderMenu.nombre_personnes > 1 ? 's' : '' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Prix unitaire</dt>
+                                <dd>{{ orderMenu.prix_par_personne|number_format(2, ',', ' ') }} &euro;</dd>
+                            </div>
+                            <div>
+                                <dt>Total du menu</dt>
+                                <dd>{{ orderMenu.prix_menu|number_format(2, ',', ' ') }} &euro;</dd>
+                            </div>
+                        {% endfor %}
                         <div>
                             <dt>Sous-total</dt>
                             <dd>{{ subtotal|number_format(2, ',', ' ') }} &euro;</dd>
@@ -122,9 +134,11 @@
 
                 <div class="order-detail-meal-list">
                     {# Les catégories absentes sont ignorées afin d’éviter des cartes vides. #}
-                    {% for category, item in order.mealItems %}
-                        {% if item %}
-                            <article class="order-detail-meal-card">
+                    {% for orderMenu in order.orderMenus %}
+                        <h3>{{ orderMenu.nom_menu }}</h3>
+                        {% for category, item in orderMenu.mealItems %}
+                            {% if item %}
+                                <article class="order-detail-meal-card">
                                 {# Image de l’entrée, du plat ou du dessert. #}
                                 {% if item.image_url %}
                                     <img src="{{ asset(item.image_url) }}" alt="{{ item.image_alt ?: item.nom }}">
@@ -138,8 +152,9 @@
                                     <h4>{{ item.nom }}</h4>
                                     <p>{{ item.description }}</p>
                                 </div>
-                            </article>
-                        {% endif %}
+                                </article>
+                            {% endif %}
+                        {% endfor %}
                     {% endfor %}
                 </div>
             </section>

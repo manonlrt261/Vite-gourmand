@@ -120,7 +120,7 @@
             <div class="employee-editable-grid">
                 {# Boucle sur les entrées affichées. #}
                 {% for entree in entrees %}
-                    {{ ui.editable_card(entree, 'entree', entree.nom_menu ? 'Menu : ' ~ entree.nom_menu : 'Entr&eacute;e ind&eacute;pendante') }}
+                    {{ ui.editable_card(entree, 'entree', entree.nom_menu ? 'Menu : ' ~ entree.nom_menu : 'Entrée indépendante') }}
                 {% else %}
                     {# Message si aucune entrée n'est disponible. #}
                     <p class="employee-empty">Aucune entr&eacute;e &agrave; afficher.</p>
@@ -143,7 +143,7 @@
             <div class="employee-editable-grid">
                 {# Boucle sur les plats affichés. #}
                 {% for plat in plats %}
-                    {{ ui.editable_card(plat, 'plat', plat.nom_menu ? 'Menu : ' ~ plat.nom_menu : 'Plat ind&eacute;pendant') }}
+                    {{ ui.editable_card(plat, 'plat', plat.nom_menu ? 'Menu : ' ~ plat.nom_menu : 'Plat indépendant') }}
                 {% else %}
                     {# Message si aucun plat n'est disponible. #}
                     <p class="employee-empty">Aucun plat &agrave; afficher.</p>
@@ -166,7 +166,7 @@
             <div class="employee-editable-grid">
                 {# Boucle sur les desserts affichés. #}
                 {% for dessert in desserts %}
-                    {{ ui.editable_card(dessert, 'dessert', dessert.nom_menu ? 'Menu : ' ~ dessert.nom_menu : 'Dessert ind&eacute;pendant') }}
+                    {{ ui.editable_card(dessert, 'dessert', dessert.nom_menu ? 'Menu : ' ~ dessert.nom_menu : 'Dessert indépendant') }}
                 {% else %}
                     {# Message si aucun dessert n'est disponible. #}
                     <p class="employee-empty">Aucun dessert &agrave; afficher.</p>

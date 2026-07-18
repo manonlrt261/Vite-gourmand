@@ -6,12 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const isPendingReviewPage = Boolean(document.querySelector('.employee-reviews-layout')) && !document.querySelector('.employee-review-all-list');
   const allReviewsList = document.querySelector('.employee-review-all-list');
   const isAllReviewsPage = Boolean(allReviewsList);
+  const deleteModal = document.querySelector('[data-review-delete-modal]');
+  const deleteConfirmButton = document.querySelector('[data-review-delete-confirm]');
+  const deleteCancelButtons = document.querySelectorAll('[data-review-delete-cancel]');
+  const deleteError = document.querySelector('[data-review-delete-error]');
+  let pendingDeleteForm = null;
+  let lastFocusedElement = null;
 
   if (!filters || getCards().length === 0) {
     return;
   }
 
   const searchInput = filters.querySelector('[data-review-search]');
+  const statusSelect = filters.querySelector('[data-review-status]');
   const noteSelect = filters.querySelector('[data-review-note]');
   const periodSelect = filters.querySelector('[data-review-period]');
   const menuSelect = filters.querySelector('[data-review-menu]');
@@ -58,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const applyFilters = () => {
     const search = (searchInput?.value || '').trim().toLowerCase();
+    const status = statusSelect?.value || '';
     const note = noteSelect?.value || '';
     const period = periodSelect?.value || '';
     const menu = menuSelect?.value || '';
@@ -65,10 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     getCards().forEach((card) => {
       const matchesSearch = !search || card.dataset.search.includes(search);
+      const matchesStatus = !status || card.dataset.status === status;
       const matchesNote = !note || card.dataset.note === note;
       const matchesPeriod = getPeriodMatch(period, card.dataset.date);
       const matchesMenu = !menu || card.dataset.menuId === menu;
-      const isVisible = matchesSearch && matchesNote && matchesPeriod && matchesMenu;
+      const isVisible = matchesSearch && matchesStatus && matchesNote && matchesPeriod && matchesMenu;
 
       card.hidden = !isVisible;
 
@@ -76,6 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
         visibleCount += 1;
       }
     });
+
+    if (isAllReviewsPage) {
+      document.querySelectorAll('[data-review-group]').forEach((group) => {
+        group.hidden = Boolean(status) && group.dataset.reviewGroup !== status;
+      });
+    }
 
     if (emptyMessage) {
       emptyMessage.hidden = visibleCount !== 0;
@@ -91,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       searchInput.value = '';
     }
 
-    [noteSelect, periodSelect, menuSelect].forEach((select) => {
+    [statusSelect, noteSelect, periodSelect, menuSelect].forEach((select) => {
       if (select) {
         select.value = '';
       }
@@ -112,11 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
       body: new FormData(form),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      throw new Error('Action impossible.');
+      throw new Error(data.message || 'Action impossible.');
     }
 
-    return response.json();
+    return data;
   };
 
   const updateGroupEmptyMessages = () => {
@@ -149,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const deleteForm = actions.querySelector('[data-review-delete]');
     const nextActions = [
       { status: 'valide', action: 'accept', label: "Valider l'avis", className: 'buttonaccept' },
       { status: 'refuse', action: 'refuse', label: "Refuser l'avis", className: 'buttonrefuse' },
@@ -161,6 +179,35 @@ document.addEventListener('DOMContentLoaded', () => {
       .forEach((item) => {
         actions.appendChild(createReviewActionForm(item, actionUrl, csrfToken));
       });
+
+    if (deleteForm) {
+      actions.appendChild(deleteForm);
+    }
+  };
+
+  const closeDeleteModal = () => {
+    pendingDeleteForm = null;
+    deleteModal?.setAttribute('hidden', '');
+    document.body.classList.remove('employee-modal-is-open');
+
+    if (deleteError) {
+      deleteError.hidden = true;
+      deleteError.textContent = '';
+    }
+
+    lastFocusedElement?.focus();
+    lastFocusedElement = null;
+  };
+
+  const openDeleteModal = (form) => {
+    pendingDeleteForm = form;
+    lastFocusedElement = document.activeElement;
+
+    if (deleteModal) {
+      deleteModal.hidden = false;
+      document.body.classList.add('employee-modal-is-open');
+      deleteConfirmButton?.focus();
+    }
   };
 
   const moveReviewCardToGroup = (card, status) => {
@@ -175,6 +222,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.addEventListener('submit', async (event) => {
+    const deleteForm = event.target.matches('[data-review-delete]') ? event.target : null;
+    if (deleteForm) {
+      event.preventDefault();
+      openDeleteModal(deleteForm);
+      return;
+    }
+
     const form = event.target.matches('[data-review-action]') ? event.target : null;
     if (!form) {
       return;
@@ -229,6 +283,45 @@ document.addEventListener('DOMContentLoaded', () => {
           button.disabled = false;
         }
       }
+  });
+
+  deleteConfirmButton?.addEventListener('click', async () => {
+    if (!pendingDeleteForm) {
+      closeDeleteModal();
+      return;
+    }
+
+    deleteConfirmButton.disabled = true;
+
+    try {
+      const form = pendingDeleteForm;
+      const card = form.closest('[data-review-card]');
+      const data = await sendReviewAction(form);
+
+      if (data.success) {
+        card?.remove();
+        closeDeleteModal();
+        updateGroupEmptyMessages();
+        applyFilters();
+      }
+    } catch (error) {
+      if (deleteError) {
+        deleteError.textContent = error.message;
+        deleteError.hidden = false;
+      }
+    } finally {
+      deleteConfirmButton.disabled = false;
+    }
+  });
+
+  deleteCancelButtons.forEach((button) => {
+    button.addEventListener('click', closeDeleteModal);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && deleteModal && !deleteModal.hidden) {
+      closeDeleteModal();
+    }
   });
 
   filters.addEventListener('keydown', (event) => {

@@ -10,5 +10,7 @@
     {# Ce voile purement décoratif maintient le contraste du titre sur l’image. #}
     <div class="bigtittle-overlay" aria-hidden="true"></div>
 
-    <h1 class="bigtittle-title">{{ title }}</h1>
+    <h1 class="bigtittle-title">
+        {% if title_html is defined %}{{ title_html|raw }}{% else %}{{ title }}{% endif %}
+    </h1>
 </section>

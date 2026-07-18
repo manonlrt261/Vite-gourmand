@@ -1,0 +1,15 @@
+{# Fenêtre partagée par les pages de gestion avant la suppression définitive d'un avis. #}
+<div class="employee-delete-modal" data-review-delete-modal hidden>
+    <div class="employee-delete-modal__overlay" data-review-delete-cancel></div>
+
+    <section class="employee-delete-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="review-delete-title">
+        <h2 id="review-delete-title">Attention</h2>
+        <p>Voulez-vous vraiment supprimer cet avis ? Cette action est d&eacute;finitive et l'avis sera supprim&eacute; du site et de la base de donn&eacute;es.</p>
+        <p class="employee-review-delete-error" data-review-delete-error hidden></p>
+
+        <div class="employee-delete-modal__actions">
+            <button type="button" class="buttonoffwhite" data-review-delete-cancel>Annuler</button>
+            <button type="button" class="buttonrefuse" data-review-delete-confirm>Supprimer</button>
+        </div>
+    </section>
+</div>

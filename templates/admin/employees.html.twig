@@ -5,9 +5,10 @@
 
 {% block body %}
     {% include 'components/_big_title.html.twig' with {
-        title: 'Gestion des employ&eacute;s',
+        title: 'Gestion des employés',
+        title_html: 'Gestion des employ&eacute;s',
         image: asset('assets/bigtittle.png'),
-        image_alt: 'Gestion des employ&eacute;s Vite et Gourmand'
+        image_alt: 'Gestion des employés Vite et Gourmand'
     } %}
 
     {# Le jeton exposé sur le conteneur authentifie les requêtes asynchrones de la page. #}

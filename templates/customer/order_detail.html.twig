@@ -139,18 +139,22 @@
 
             <hr>
 
-            {# Malgré son libellé, cette action cible la route d’annulation de la commande entière. #}
-            <div class="customer-order-remove-menu">
-                <div>
-                    <h3>Supprimer ce menu</h3>
-                    <p>Cette action annule uniquement cette ligne de commande.</p>
+            {% if orderMenus|length > 1 %}
+                <div class="customer-order-remove-menu">
+                    <div>
+                        <h3>Supprimer un menu</h3>
+                        <p>Choisissez le menu à retirer. Les autres menus resteront dans la commande.</p>
+                    </div>
+                    {% for orderMenu in orderMenus %}
+                        {% if orderMenu.commande_menu_id %}
+                            <form method="post" action="{{ path('customer_order_remove_menu', { id: order.commande_id, lineId: orderMenu.commande_menu_id }) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce menu de votre commande ?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
+                                <button type="submit" class="buttonoffwhite">Supprimer {{ orderMenu.nom_menu }}</button>
+                            </form>
+                        {% endif %}
+                    {% endfor %}
                 </div>
-                <form method="post" action="{{ path('customer_order_cancel', { id: order.commande_id }) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce menu de votre commande ?');">
-                    {# Protège l’annulation contre les soumissions provenant d’autres sites. #}
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_action') }}">
-                    <button type="submit" class="buttonoffwhite">Supprimer ce menu</button>
-                </form>
-            </div>
+            {% endif %}
         </section>
     {% endif %}
 

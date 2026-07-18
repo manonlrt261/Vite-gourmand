@@ -20,6 +20,12 @@
         <section class="employee-hours-intro">
             <h1>Horaires d'ouverture</h1>
             <p>Modifiez les jours et horaires d'ouverture de l'entreprise. Ces horaires seront visibles par les clients sur le site.</p>
+            {% for message in app.flashes('employee_success') %}
+                <p class="employee-alert employee-alert-success" role="status">{{ message }}</p>
+            {% endfor %}
+            {% for message in app.flashes('employee_error') %}
+                <p class="employee-alert employee-alert-error" role="alert">{{ message }}</p>
+            {% endfor %}
         </section>
 
         {# Mise en page principale : horaires hebdomadaires à gauche, informations et fermetures à droite. #}
@@ -45,6 +51,8 @@
 
                             {# Interrupteur permettant d'activer ou fermer le jour. #}
                             <label class="employee-switch">
+                                {# Garantit que le jour reste présent dans la requête lorsque la case est décochée. #}
+                                <input type="hidden" name="hours[{{ day.jour_code }}][est_ouvert]" value="0">
                                 <input type="checkbox" name="hours[{{ day.jour_code }}][est_ouvert]" value="1" {{ isOpen ? 'checked' : '' }} data-hours-toggle>
                                 <span></span>
                             </label>
@@ -80,7 +88,7 @@
                     </div>
 
                     {# Formulaire pour ajouter une fermeture exceptionnelle. #}
-                    <form method="post" class="employee-closure-form">
+                    <form method="post" action="{{ path('employee_hours') }}" class="employee-closure-form" data-closure-add-form>
                         {# Le jeton CSRF sécurise l'ajout d'une fermeture exceptionnelle. #}
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                         {# Champ caché indiquant au contrôleur que l'action ajoute une fermeture. #}
@@ -105,11 +113,11 @@
                     </form>
 
                     {# Liste des fermetures exceptionnelles déjà enregistrées. #}
-                    <div class="employee-closure-list">
+                    <div class="employee-closure-list" data-closure-list>
                         {# Boucle sur les fermetures. #}
                         {% for closure in closures %}
                             {# Carte d'une fermeture avec sa date, son motif et son bouton de suppression. #}
-                            <article class="employee-closure-card">
+                            <article class="employee-closure-card" data-closure-card>
                                 <div>
                                     {% if closure.date_fin_fermeture is defined and closure.date_fin_fermeture and closure.date_fin_fermeture != closure.date_fermeture %}
                                         <h3>Du {{ closure.date_fermeture|date('d/m/Y') }} au {{ closure.date_fin_fermeture|date('d/m/Y') }}</h3>
@@ -120,7 +128,7 @@
                                 </div>
 
                                 {# Formulaire de suppression d'une fermeture. #}
-                                <form method="post" action="{{ path('employee_closure_delete', { id: closure.fermeture_id }) }}">
+                                <form method="post" action="{{ path('employee_closure_delete', { id: closure.fermeture_id }) }}" data-closure-delete-form>
                                     {# Le jeton CSRF sécurise la suppression de la fermeture. #}
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
                                     <button type="submit" class="employee-icon-button" aria-label="Supprimer cette fermeture">Suppr.</button>
@@ -140,5 +148,5 @@
 {% block javascripts %}
     {{ parent() }}
     {# Script qui active ou désactive les champs horaires selon les interrupteurs. #}
-    <script src="{{ asset('assets/scripts/employee-hours.js') }}" defer></script>
+    <script src="{{ asset('assets/scripts/employee-hours.js') }}?v=20260718-5" defer></script>
 {% endblock %}

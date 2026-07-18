@@ -67,5 +67,11 @@
                 <button type="submit" class="buttonwhite">Remettre en attente</button>
             </form>
         {% endif %}
+
+        {# La suppression définitive nécessite une confirmation dans une fenêtre dédiée. #}
+        <form method="post" action="{{ path('employee_review_delete', { id: review.avis_id }) }}" data-review-delete>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('employee_action') }}">
+            <button type="submit" class="buttonrefuse">Supprimer l'avis</button>
+        </form>
     </div>
 </article>

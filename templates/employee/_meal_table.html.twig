@@ -21,7 +21,7 @@
                 {# Les attributs data-* relient la ligne aux actions JavaScript de gestion. #}
                 <tr data-management-card data-item-type="{{ type }}" data-item-id="{{ item.id }}" {% if item.menu_id|default(null) %}data-parent-menu-id="{{ item.menu_id }}"{% endif %}>
                     <td>{{ item.title }}</td>
-                    <td>{{ item.nom_menu|default('Ind&eacute;pendant') ?: 'Ind&eacute;pendant' }}</td>
+                    <td>{{ item.nom_menu|default('Indépendant') ?: 'Indépendant' }}</td>
                     <td><span class="employee-category-badge">{{ item.theme }}</span></td>
                     <td>
                         {# Formulaire permettant d'activer ou désactiver l'élément. #}

@@ -287,6 +287,106 @@ class CustomerController extends AbstractController
         return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
     }
 
+    // Supprime une seule ligne de menu d'une commande en attente et recalcule ses totaux.
+    public function removeMenuFromOrder(int $id, int $lineId, Request $request, Connection $connection): Response
+    {
+        $userId = (int) $request->getSession()->get('utilisateur_id');
+
+        if ($userId <= 0) {
+            return $this->redirectToRoute('login', ['target' => $this->generateUrl('customer_order_detail', ['id' => $id])]);
+        }
+
+        if (!$this->isValidCustomerCsrf($request)) {
+            $this->addFlash('order_error', 'Le formulaire a expire, veuillez reessayer.');
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        }
+
+        $connection->beginTransaction();
+
+        try {
+            $order = $connection->fetchAssociative(
+                'SELECT c.commande_id, c.statut_id, c.prix_livraison,
+                        COALESCE(sc.code, "en_attente") AS statut_code
+                 FROM commandes c
+                 LEFT JOIN statuts_commande sc ON sc.statut_id = c.statut_id
+                 WHERE c.commande_id = ? AND c.utilisateur_id = ?
+                 FOR UPDATE',
+                [$id, $userId]
+            );
+
+            if (!$order) {
+                throw new \DomainException('Commande introuvable.');
+            }
+
+            if ((string) $order['statut_code'] !== 'en_attente') {
+                throw new \DomainException('Cette commande ne peut plus etre modifiee car elle a deja ete acceptee.');
+            }
+
+            $lines = $connection->fetchAllAssociative(
+                'SELECT commande_menu_id, menu_id
+                 FROM commande_menus
+                 WHERE commande_id = ?
+                 ORDER BY commande_menu_id ASC
+                 FOR UPDATE',
+                [$id]
+            );
+
+            if (count($lines) <= 1) {
+                throw new \DomainException('Une commande doit conserver au moins un menu.');
+            }
+
+            $lineExists = false;
+            foreach ($lines as $line) {
+                if ((int) $line['commande_menu_id'] === $lineId) {
+                    $lineExists = true;
+                    break;
+                }
+            }
+
+            if (!$lineExists) {
+                throw new \DomainException('Le menu selectionne est introuvable dans cette commande.');
+            }
+
+            $connection->delete('commande_menus', [
+                'commande_menu_id' => $lineId,
+                'commande_id' => $id,
+            ]);
+
+            $totals = $this->getOrderMenuTotals($connection, $id);
+            $remainingMenuId = (int) $connection->fetchOne(
+                'SELECT menu_id FROM commande_menus WHERE commande_id = ? ORDER BY commande_menu_id ASC LIMIT 1',
+                [$id]
+            );
+
+            $connection->update('commandes', [
+                'menu_id' => $remainingMenuId,
+                'nombre_personnes' => $totals['people'],
+                'prix_menu' => $totals['price'],
+                'prix_total' => $totals['price'] + (float) $order['prix_livraison'],
+                'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ], [
+                'commande_id' => $id,
+                'utilisateur_id' => $userId,
+            ]);
+
+            $this->addOrderStatusHistory($connection, $id, (int) $order['statut_id'], 'Menu supprimé par le client depuis le détail de commande.');
+            $connection->commit();
+        } catch (\DomainException $exception) {
+            $connection->rollBack();
+            $this->addFlash('order_error', $exception->getMessage());
+
+            return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+        } catch (\Throwable $exception) {
+            $connection->rollBack();
+            throw $exception;
+        }
+
+        $this->addFlash('order_success', 'Le menu a bien été supprimé de votre commande.');
+
+        return $this->redirectToRoute('customer_order_detail', ['id' => $id]);
+    }
+
     // Annule une commande autorisée, historise le changement et met à jour les statistiques.
     public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
     {

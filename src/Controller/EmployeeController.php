@@ -382,6 +382,8 @@ class EmployeeController extends AbstractController
             $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
             $connection->insert($config['table'], $payload);
 
+            $this->addFlash('employee_success', sprintf('%s a bien ete ajoute.', ucfirst($this->getReadableItemType($type))));
+
             return $this->redirectToRoute('employee_items_all');
         }
 
@@ -528,13 +530,21 @@ class EmployeeController extends AbstractController
             throw $this->createNotFoundException('Element introuvable.');
         }
 
-        $connection->update($config['table'], ['actif' => 0], [$config['id'] => $id]);
+        // Les composants d'un repas ne sont référencés par aucune commande : le bouton
+        // « Supprimer » doit donc réellement les retirer. Les menus restent désactivés
+        // afin de préserver l'historique des commandes qui les référencent.
+        if ($type === 'menu') {
+            $connection->update($config['table'], ['actif' => 0], [$config['id'] => $id]);
+            $this->syncMealItemsWithMenuStatus($connection, $id, 0);
+        } else {
+            $connection->delete($config['table'], [$config['id'] => $id]);
+        }
 
         if ($request->isXmlHttpRequest()) {
             return $this->json(['success' => true]);
         }
 
-        return $this->redirectToRoute('employee_menus');
+        return $this->redirectToRoute('employee_items_all');
     }
 
     // Affiche et traite les horaires hebdomadaires et les fermetures exceptionnelles.
@@ -557,11 +567,26 @@ class EmployeeController extends AbstractController
             $action = (string) $request->request->get('action');
 
             if ($action === 'save_hours') {
-                $this->saveWeeklyHours($request, $connection);
+                if ($this->saveWeeklyHours($request, $connection)) {
+                    $this->addFlash('employee_success', 'Les horaires ont bien ete enregistres.');
+                } else {
+                    $this->addFlash('employee_error', 'Les horaires saisis sont invalides. Verifiez chaque jour ouvert.');
+                }
             }
 
             if ($action === 'add_closure') {
-                $this->addExceptionalClosure($request, $connection);
+                $closure = $this->addExceptionalClosure($request, $connection);
+
+                if ($request->isXmlHttpRequest()) {
+                    if ($closure === null) {
+                        return $this->json(['success' => false, 'message' => 'Les informations de fermeture sont invalides.'], 422);
+                    }
+
+                    return $this->json([
+                        'success' => true,
+                        'closure' => $closure,
+                    ], 201);
+                }
             }
 
             return $this->redirectToRoute('employee_hours');
@@ -577,18 +602,30 @@ class EmployeeController extends AbstractController
     public function deleteClosure(int $id, Request $request, Connection $connection): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->json(['success' => false, 'message' => 'Acces refuse.'], 403);
+            }
+
             return $this->redirectToEmployeeLogin($request);
         }
 
         $this->ensureScheduleTables($connection);
         // Protection CSRF avant la suppression d'une fermeture exceptionnelle.
         if (!$this->isValidEmployeeCsrf($request)) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->json(['success' => false, 'message' => 'Le formulaire a expire, veuillez reessayer.'], 403);
+            }
+
             $this->addFlash('employee_error', 'Le formulaire a expire, veuillez reessayer.');
 
             return $this->redirectToRoute('employee_hours');
         }
 
-        $connection->delete('fermetures_exceptionnelles', ['fermeture_id' => $id]);
+        $deleted = $connection->delete('fermetures_exceptionnelles', ['fermeture_id' => $id]);
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['success' => $deleted > 0], $deleted > 0 ? 200 : 404);
+        }
 
         return $this->redirectToRoute('employee_hours');
     }
@@ -696,6 +733,38 @@ class EmployeeController extends AbstractController
         }
 
         return $this->redirectToRoute('employee_dashboard');
+    }
+
+    // Supprime définitivement un avis après confirmation par un employé ou un administrateur.
+    public function deleteReview(int $id, Request $request, Connection $connection): Response
+    {
+        if (!$this->canAccessEmployeeSpace($request, $connection)) {
+            return $this->redirectToEmployeeLogin($request);
+        }
+
+        if (!$this->isValidEmployeeCsrf($request)) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Formulaire invalide.'], 403)
+                : $this->redirectToRoute('employee_reviews');
+        }
+
+        $deleted = $connection->delete('avis', ['avis_id' => $id]);
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(
+                $deleted > 0
+                    ? ['success' => true]
+                    : ['success' => false, 'message' => 'Cet avis est introuvable.'],
+                $deleted > 0 ? 200 : 404
+            );
+        }
+
+        $this->addFlash(
+            $deleted > 0 ? 'employee_success' : 'employee_error',
+            $deleted > 0 ? 'L’avis a été supprimé.' : 'Cet avis est introuvable.'
+        );
+
+        return $this->redirectToRoute('employee_reviews_all');
     }
 
     // Affiche la messagerie filtrée ainsi que les commandes nécessitant un retour de matériel.
@@ -1707,53 +1776,79 @@ class EmployeeController extends AbstractController
     }
 
     // Met à jour chaque journée valide sans écraser les lignes dont les horaires sont incohérents.
-    private function saveWeeklyHours(Request $request, Connection $connection): void
+    private function saveWeeklyHours(Request $request, Connection $connection): bool
     {
         $days = $request->request->all('hours');
 
-        foreach ($days as $code => $day) {
-            $isOpen = isset($day['est_ouvert']) ? 1 : 0;
+        $allowedDays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+        $validatedDays = [];
+
+        foreach ($allowedDays as $code) {
+            $day = $days[$code] ?? [];
+
+            // Le champ caché vaut 0 et la case cochée vaut 1 ; on lit donc la valeur effective.
+            $isOpen = (int) ($day['est_ouvert'] ?? 0) === 1 ? 1 : 0;
             $start = $isOpen ? $this->nullableValue($day['heure_ouverture'] ?? null) : null;
             $end = $isOpen ? $this->nullableValue($day['heure_fermeture'] ?? null) : null;
 
-            // Ignore une ligne horaire invalide au lieu d'enregistrer une heure incorrecte.
-            if ($isOpen && (!is_string($start) || !is_string($end) || !InputValidator::isValidTime($start) || !InputValidator::isValidTime($end))) {
-                continue;
+            if ($isOpen && ($start === null || $end === null)) {
+                $start = '09:00';
+                $end = '18:00';
             }
 
-            $connection->update('horaires_ouverture', [
+            // Ignore une ligne horaire invalide au lieu d'enregistrer une heure incorrecte.
+            if ($isOpen && (!is_string($start) || !is_string($end) || !InputValidator::isValidTime($start) || !InputValidator::isValidTime($end))) {
+                return false;
+            }
+
+            $validatedDays[$code] = [$isOpen, $start, $end];
+        }
+
+        // Toutes les lignes sont validées avant la première écriture pour éviter une sauvegarde partielle.
+        foreach ($validatedDays as $code => [$isOpen, $start, $end]) {
+            $values = [
                 'est_ouvert' => $isOpen,
-                'heure_ouverture' => $start,
-                'heure_fermeture' => $end,
                 'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
-            ], [
+            ];
+
+            if ($isOpen) {
+                $values['heure_ouverture'] = $start;
+                $values['heure_fermeture'] = $end;
+            }
+
+            $connection->update('horaires_ouverture', $values, [
                 'jour_code' => $code,
             ]);
         }
+
+        return true;
     }
 
-    private function addExceptionalClosure(Request $request, Connection $connection): void
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function addExceptionalClosure(Request $request, Connection $connection): ?array
     {
         $date = $this->nullableValue($request->request->get('date_fermeture'));
         $endDate = $this->nullableValue($request->request->get('date_fin_fermeture'));
         // Une fermeture exceptionnelle doit avoir une véritable date de début, aujourd'hui ou dans le futur.
         if (!is_string($date) || !InputValidator::isFutureOrTodayDate($date)) {
-            return;
+            return null;
         }
 
         // La date de fin est facultative : une valeur vide correspond à une fermeture d'une seule journée.
         if ($endDate !== null && (!is_string($endDate) || !InputValidator::isValidDate($endDate))) {
-            return;
+            return null;
         }
 
         if (is_string($endDate) && new \DateTimeImmutable($endDate) < new \DateTimeImmutable($date)) {
-            return;
+            return null;
         }
 
         $motif = trim((string) $request->request->get('motif', 'Fermeture exceptionnelle'));
         // Le motif est limité pour rester compatible avec la colonne SQL.
-        if (!InputValidator::hasMaxLength($motif, 255)) {
-            return;
+        if ($motif === '' || !InputValidator::hasMaxLength($motif, 255)) {
+            return null;
         }
 
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
@@ -1764,6 +1859,17 @@ class EmployeeController extends AbstractController
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+
+        $id = (int) $connection->lastInsertId();
+
+        return [
+            'id' => $id,
+            'date' => $date,
+            'endDate' => $endDate,
+            'reason' => $motif,
+            'deleteUrl' => $this->generateUrl('employee_closure_delete', ['id' => $id]),
+            'csrfToken' => (string) $request->request->get('_csrf_token'),
+        ];
     }
 
     /**
@@ -2024,10 +2130,6 @@ class EmployeeController extends AbstractController
 
         if (!empty($payload['allergenes']) && !InputValidator::hasMaxLength((string) $payload['allergenes'], 250)) {
             return 'Le champ allergenes est trop long.';
-        }
-
-        if (empty($payload['menu_id']) || (int) $payload['menu_id'] <= 0) {
-            return 'Le menu associe est obligatoire.';
         }
 
         return null;

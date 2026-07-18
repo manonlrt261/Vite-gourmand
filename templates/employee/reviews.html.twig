@@ -31,6 +31,17 @@
             </label>
 
             <div class="employee-review-filter-row">
+                {# Filtre par statut de modération. #}
+                <label>
+                    <span class="sr-only">Filtrer les avis par statut</span>
+                    <select name="status" data-review-status>
+                        <option value="">Tous</option>
+                        <option value="valide">Accept&eacute;</option>
+                        <option value="refuse">Refus&eacute;</option>
+                        <option value="en_attente">En attente</option>
+                    </select>
+                </label>
+
                 {# Filtre par note. #}
                 <label>
                     <span class="sr-only">Filtrer les avis par note</span>
@@ -110,6 +121,8 @@
             </aside>
         </div>
     </main>
+
+    {% include 'employee/_review_delete_modal.html.twig' %}
 {% endblock %}
 
 {% block javascripts %}

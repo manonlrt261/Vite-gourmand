@@ -412,7 +412,7 @@ class CartController extends AbstractController
         $orders = $connection->fetchAllAssociative(
             'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
                     c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
-                    c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.statut_id,
+                    c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.pret_materiel, c.statut_id,
                     m.menu_id, m.nom_menu, m.description AS menu_description, m.prix_par_personne,
                     m.image_url AS menu_image_url, m.image_alt AS menu_image_alt,
                     COALESCE(sc.libelle, "En attente") AS statut_libelle,
@@ -569,7 +569,7 @@ class CartController extends AbstractController
     private function getOrderMealItems(Connection $connection, int $menuId): array
     {
         return [
-            'Entree' => $connection->fetchAssociative(
+            'Entrée' => $connection->fetchAssociative(
                 'SELECT nom_entree AS nom, description, image_url, image_alt
                  FROM entree
                  WHERE menu_id = ?

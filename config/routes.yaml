@@ -87,6 +87,14 @@ customer_order_add_menu:
     requirements:
         id: '\d+'
 
+customer_order_remove_menu:
+    path: /mon-compte/commandes/{id}/menus/{lineId}/supprimer
+    controller: App\Controller\CustomerController::removeMenuFromOrder
+    methods: [POST]
+    requirements:
+        id: '\d+'
+        lineId: '\d+'
+
 customer_profile:
     path: /mon-compte/mes-informations
     controller: App\Controller\CustomerController::profile
@@ -304,6 +312,13 @@ employee_reviews_all:
 employee_review_status:
     path: /espace-employe/avis-clients/{id}/statut
     controller: App\Controller\EmployeeController::updateReviewStatus
+    methods: [POST]
+    requirements:
+        id: '\d+'
+
+employee_review_delete:
+    path: /espace-employe/avis-clients/{id}/supprimer
+    controller: App\Controller\EmployeeController::deleteReview
     methods: [POST]
     requirements:
         id: '\d+'
