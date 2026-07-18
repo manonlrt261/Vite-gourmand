@@ -1,3 +1,6 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        # Les emails partent directement par SMTP.
+        # Sur Alwaysdata, cela evite de devoir lancer un worker Messenger.
+        message_bus: false
