@@ -963,7 +963,7 @@ class EmployeeController extends AbstractController
                     <p>Bonjour,</p>
                     <p>Vous nous avez contacté au sujet de : <strong>%s</strong>.</p>
                     <p>%s</p>
-                    <p>L'équipe de Vite & Gourmand</p>',
+                    <p>L\'équipe de Vite & Gourmand</p>',
                     htmlspecialchars((string) $message['titre'], ENT_QUOTES, 'UTF-8'),
                     nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'))
                 )));
