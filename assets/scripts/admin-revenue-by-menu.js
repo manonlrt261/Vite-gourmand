@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = page.querySelector('[data-revenue-menu-reset]');
     const totalNode = page.querySelector('[data-revenue-menu-total]');
     const donutNode = page.querySelector('[data-revenue-menu-donut]');
-    const donutTotalNode = page.querySelector('[data-revenue-menu-donut-total]');
     const legendNode = page.querySelector('[data-revenue-menu-legend]');
     const barsNode = page.querySelector('[data-revenue-menu-bars]');
     const tableNode = page.querySelector('[data-revenue-menu-table]');
@@ -115,8 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Le dégradé conique représente la part de chiffre d'affaires de chaque thème.
         const total = items.reduce((sum, item) => sum + item.total, 0);
         let cursor = 0;
-
-        donutTotalNode.textContent = formatMoney(total);
 
         if (total === 0) {
             donutNode.style.background = '#fff7ed';

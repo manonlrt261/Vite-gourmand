@@ -375,7 +375,10 @@ class EmployeeController extends AbstractController
                 return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', $payload, true, $connection));
             }
 
-            $linkedItemsError = $this->validateExistingMealItemsForMenu($request, $connection);
+            $linkedItemsError = $this->validateLinkedMealItemsForMenu($request);
+            if ($linkedItemsError === null) {
+                $linkedItemsError = $this->validateExistingMealItemsForMenu($request, $connection);
+            }
             if ($linkedItemsError !== null) {
                 $this->addFlash('employee_error', $linkedItemsError);
 
@@ -385,7 +388,8 @@ class EmployeeController extends AbstractController
             $connection->insert('menus', $payload);
             $menuId = (int) $connection->lastInsertId();
 
-            // L'entrée, le plat ou le dessert choisis sont associés au nouvel identifiant du menu.
+            // Les nouveaux éléments sont créés et les éléments existants choisis sont associés au menu.
+            $this->createLinkedMealItemsForMenu($request, $connection, $menuId);
             $this->attachExistingMealItemsToMenu($request, $connection, $menuId, (int) $payload['actif']);
 
             return $this->redirectToRoute('employee_items_all');
@@ -573,14 +577,23 @@ class EmployeeController extends AbstractController
             throw $this->createNotFoundException('Element introuvable.');
         }
 
-        // Les composants d'un repas ne sont référencés par aucune commande : le bouton
-        // « Supprimer » doit donc réellement les retirer. Les menus restent désactivés
-        // afin de préserver l'historique des commandes qui les référencent.
-        if ($type === 'menu') {
-            $connection->update($config['table'], ['actif' => 0], [$config['id'] => $id]);
-            $this->syncMealItemsWithMenuStatus($connection, $id, 0);
-        } else {
-            $connection->delete($config['table'], [$config['id'] => $id]);
+        // Le bouton « Supprimer » retire réellement l'élément de la base de données.
+        try {
+            // La ligne est réellement supprimée. Les éléments d'un menu sont supprimés
+            // automatiquement par les contraintes ON DELETE CASCADE de la base.
+            $deletedRows = $connection->delete($config['table'], [$config['id'] => $id]);
+        } catch (\Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException) {
+            $message = 'Ce menu ne peut pas être supprimé car il est associé à une commande. Désactivez-le pour le retirer de la vente.';
+
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => $message], 409)
+                : $this->redirectToRoute('employee_items_all');
+        }
+
+        if ($deletedRows === 0) {
+            return $request->isXmlHttpRequest()
+                ? $this->json(['success' => false, 'message' => 'Élément introuvable.'], 404)
+                : $this->redirectToRoute('employee_items_all');
         }
 
         if ($request->isXmlHttpRequest()) {
@@ -2062,6 +2075,26 @@ class EmployeeController extends AbstractController
         ] + $this->getMealNamePayload($request);
     }
 
+    // Vérifie les nouveaux éléments saisis dans les fenêtres avant de créer le menu.
+    private function validateLinkedMealItemsForMenu(Request $request): ?string
+    {
+        $linkedItems = $request->request->all('linked_items');
+
+        foreach (['entree', 'plat', 'dessert'] as $type) {
+            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
+            if (trim((string) ($source['nom'] ?? '')) === '') {
+                continue;
+            }
+
+            $error = $this->validateItemPayload($type, $this->getLinkedMealPayload($type, $source, 1));
+            if ($error !== null) {
+                return $error;
+            }
+        }
+
+        return null;
+    }
+
     // Vérifie les éléments existants sélectionnés dans les fenêtres avant de créer le menu.
     private function validateExistingMealItemsForMenu(Request $request, Connection $connection): ?string
     {
@@ -2089,6 +2122,28 @@ class EmployeeController extends AbstractController
         }
 
         return null;
+    }
+
+    // Crée les nouveaux éléments renseignés et les rattache au menu qui vient d'être créé.
+    private function createLinkedMealItemsForMenu(Request $request, Connection $connection, int $menuId): void
+    {
+        $linkedItems = $request->request->all('linked_items');
+
+        foreach (['entree', 'plat', 'dessert'] as $type) {
+            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
+            if (trim((string) ($source['nom'] ?? '')) === '') {
+                continue;
+            }
+
+            $config = $this->getItemConfig($type);
+            if (!$config) {
+                continue;
+            }
+
+            $payload = $this->getLinkedMealPayload($type, $source, $menuId);
+            $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
+            $connection->insert($config['table'], $payload);
+        }
     }
 
     // Associe les éléments de repas existants sélectionnés au menu qui vient d'être créé.
@@ -2120,6 +2175,31 @@ class EmployeeController extends AbstractController
 
             $connection->update($config['table'], $changes, [$config['id'] => (int) $rawId]);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $source
+     * @return array<string, mixed>
+     */
+    private function getLinkedMealPayload(string $type, array $source, int $menuId): array
+    {
+        $nameField = match ($type) {
+            'entree' => 'nom_entree',
+            'plat' => 'nom_plat',
+            'dessert' => 'nom_dessert',
+            default => 'nom',
+        };
+
+        return [
+            'menu_id' => $menuId,
+            'theme' => trim((string) ($source['theme'] ?? '')),
+            'description' => trim((string) ($source['description'] ?? '')),
+            'allergenes' => trim((string) ($source['allergenes'] ?? '')),
+            'actif' => !empty($source['actif']) ? 1 : 0,
+            'image_url' => trim((string) ($source['image_url'] ?? '')),
+            'image_alt' => trim((string) ($source['image_alt'] ?? '')),
+            $nameField => trim((string) ($source['nom'] ?? '')),
+        ];
     }
 
     /**

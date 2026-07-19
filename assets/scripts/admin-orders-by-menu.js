@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = page.querySelector('[data-orders-menu-reset]');
     const totalNode = page.querySelector('[data-orders-menu-total]');
     const donutNode = page.querySelector('[data-orders-menu-donut]');
-    const donutTotalNode = page.querySelector('[data-orders-menu-donut-total]');
     const legendNode = page.querySelector('[data-orders-menu-legend]');
     const barsNode = page.querySelector('[data-orders-menu-bars]');
     const tableNode = page.querySelector('[data-orders-menu-table]');
@@ -110,8 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Chaque groupe occupe dans le dégradé conique une portion proportionnelle à son total.
         const total = items.reduce((sum, item) => sum + item.total, 0);
         let cursor = 0;
-
-        donutTotalNode.textContent = total;
 
         if (total === 0) {
             donutNode.style.background = '#fff7ed';

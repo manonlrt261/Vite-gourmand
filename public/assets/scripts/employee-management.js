@@ -119,6 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       closeDeleteModal();
+    } catch (error) {
+      window.alert(error.message);
     } finally {
       confirmButton.disabled = false;
     }

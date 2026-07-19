@@ -625,6 +625,17 @@
   line-height: 1;
 }
 
+/* Le message d'annulation reste lisible sans dépasser de la carte de commande. */
+.cardvieworder .customer-order-cancellation-message {
+  margin: 6px 0 0;
+  font-family: var(--font-text);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  color: var(--secondary);
+}
+
 .cardvieworder-actions {
   margin-top: auto;
 
