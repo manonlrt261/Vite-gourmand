@@ -405,13 +405,13 @@ body.employee-menu-is-open {
 
 @media (max-width: 768px) {
   .employee-menu-overlay {
-    width: 100vw;
+    width: 100%;
     min-height: 100dvh;
     background-color: var(--white);
   }
 
   .employee-menu-panel {
-    width: 100vw;
+    width: 100%;
     min-height: 100dvh;
     box-shadow: none;
   }

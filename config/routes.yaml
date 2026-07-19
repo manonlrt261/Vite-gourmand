@@ -32,6 +32,14 @@ contact_index:
     path: /contact
     controller: App\Controller\ContactController::index
 
+legal_notice:
+    path: /mentions-legales
+    controller: App\Controller\LegalController::index
+
+legal_cgv:
+    path: /conditions-generales-de-vente
+    controller: App\Controller\LegalController::cgv
+
 login:
     path: /connexion
     controller: App\Controller\AuthController::login

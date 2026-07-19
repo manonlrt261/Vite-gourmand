@@ -21,6 +21,26 @@
         </div>
     </section>
 
+    {% if nextClosure %}
+        {# Avertissement affiché sous le grand bandeau pendant les 15 jours précédant la fermeture. #}
+        <aside class="home-closure-notice" role="status" aria-labelledby="home-closure-title">
+            <div class="home-closure-notice__icon" aria-hidden="true">i</div>
+            <div>
+                <h2 id="home-closure-title">Fermeture exceptionnelle</h2>
+                <p>
+                    Nous serons exceptionnellement ferm&eacute;s
+                    {% if nextClosure.date_fin_fermeture and nextClosure.date_fin_fermeture != nextClosure.date_fermeture %}
+                        du <strong>{{ nextClosure.date_fermeture|date('d/m/Y') }}</strong>
+                        au <strong>{{ nextClosure.date_fin_fermeture|date('d/m/Y') }}</strong>.
+                    {% else %}
+                        le <strong>{{ nextClosure.date_fermeture|date('d/m/Y') }}</strong>.
+                    {% endif %}
+                    {% if nextClosure.motif %}<span>{{ nextClosure.motif }}</span>{% endif %}
+                </p>
+            </div>
+        </aside>
+    {% endif %}
+
     {# Présentation des engagements qui structurent la prestation de l’entreprise. #}
     <section class="home-section home-professionalism">
         {# Les éléments vides de part et d’autre du libellé servent de traits décoratifs. #}
@@ -171,5 +191,6 @@
             <small>Bas&eacute; sur plus de 120 avis clients</small>
         </div>
     </section>
+
 </main>
 {% endblock %}

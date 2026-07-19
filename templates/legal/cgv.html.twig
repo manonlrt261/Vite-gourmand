@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conditions générales de vente - Vite & Gourmand{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/styles/legal.css') }}?v=20260719-1">
+{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Conditions générales de vente',
+    image_alt: 'Conditions générales de vente de Vite et Gourmand'
+} %}
+
+<main class="legal-page">
+    <a href="{{ path('home_show') }}" class="legal-back-link">&larr; Retour à l'accueil</a>
+
+    <div class="legal-introduction">
+        <p>Les présentes conditions encadrent les commandes de prestations de traiteur passées auprès de Vite &amp; Gourmand depuis ce site.</p>
+    </div>
+
+    <aside class="legal-summary" aria-label="Informations essentielles">
+        <h2>À retenir avant de commander</h2>
+        <ul>
+            <li>Les prix et le montant total sont affichés en euros, toutes taxes comprises.</li>
+            <li>La livraison est offerte à Bordeaux (33000) ; ailleurs : 5,00 € + 0,59 € par kilomètre.</li>
+            <li>Les livraisons sont proposées entre 8 h et 22 h, sous réserve de disponibilité.</li>
+            <li>Chaque menu peut prévoir un minimum de convives et un délai de commande particulier.</li>
+        </ul>
+    </aside>
+
+    <div class="legal-grid">
+        <section class="legal-card legal-card--wide">
+            <span class="legal-card__number" aria-hidden="true">01</span>
+            <h2>Objet et vendeur</h2>
+            <p>Les présentes CGV définissent les droits et obligations de Vite &amp; Gourmand et de toute personne physique agissant à des fins non professionnelles (le « Client ») lors d'une commande de menus ou de prestations de traiteur sur le site.</p>
+            <p>Les informations juridiques et coordonnées du vendeur figurent dans les <a href="{{ path('legal_notice') }}">mentions légales</a>. Le Client peut aussi utiliser le <a href="{{ path('contact_index') }}">formulaire de contact</a>.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">02</span>
+            <h2>Menus et allergènes</h2>
+            <p>Les caractéristiques essentielles, la composition, les allergènes déclarés, le prix par personne, le minimum de convives et les conditions particulières sont indiqués sur chaque fiche menu. Les photographies sont illustratives.</p>
+            <p>Le Client doit signaler toute allergie ou contrainte alimentaire avant sa commande. Malgré les précautions prises, des traces d'allergènes peuvent être présentes.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">03</span>
+            <h2>Prix</h2>
+            <p>Les prix applicables sont ceux affichés lors de la validation de la commande. Ils sont exprimés en euros, toutes taxes comprises. Le récapitulatif précise le prix des menus, les réductions, les frais de livraison et le total dû.</p>
+            <p>Une modification tarifaire ultérieure n'affecte pas une commande déjà enregistrée.</p>
+        </section>
+
+        <section class="legal-card legal-card--wide">
+            <span class="legal-card__number" aria-hidden="true">04</span>
+            <h2>Passage de la commande</h2>
+            <p>Le Client choisit ses menus et quantités, se connecte, renseigne ses coordonnées ainsi que la date, l'heure et l'adresse de livraison, puis vérifie le récapitulatif avant de confirmer. Il lui appartient de corriger toute erreur avant validation.</p>
+            <p>La commande enregistrée fait l'objet d'un courriel récapitulatif. Elle reste soumise aux disponibilités, quantités minimales et délais propres aux menus. En cas d'indisponibilité, Vite &amp; Gourmand contacte le Client afin de convenir d'une solution.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">05</span>
+            <h2>Paiement</h2>
+            <p>Le prix est exigible selon les modalités convenues avec Vite &amp; Gourmand lors de la confirmation. Les moyens de paiement acceptés et, le cas échéant, l'acompte demandé sont communiqués au Client avant tout règlement.</p>
+            <p>Aucun escompte n'est accordé pour paiement anticipé, sauf accord écrit contraire.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">06</span>
+            <h2>Livraison</h2>
+            <p>Le Client choisit une date et une heure entre 8 h et 22 h. La livraison est offerte pour le code postal 33000. Pour les autres destinations, les frais sont estimés à 5,00 € plus 0,59 € par kilomètre ; le montant définitif figure dans le récapitulatif.</p>
+            <p>Le Client garantit l'exactitude et l'accessibilité de l'adresse et s'assure qu'une personne peut réceptionner la commande.</p>
+        </section>
+
+        <section class="legal-card legal-card--wide">
+            <span class="legal-card__number" aria-hidden="true">07</span>
+            <h2>Modification, annulation et rétractation</h2>
+            <p>Depuis son espace, le Client peut modifier, compléter ou annuler une commande tant que son statut est « en attente ». Ensuite, toute demande doit être adressée à Vite &amp; Gourmand et reste soumise à son accord, compte tenu des achats et préparations engagés.</p>
+            <p>Conformément à l'article L. 221-28 du Code de la consommation, le droit de rétractation de quatorze jours ne s'applique notamment pas aux denrées susceptibles de se détériorer rapidement ni aux prestations de restauration fournies à une date ou période déterminée.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">08</span>
+            <h2>Réception et réclamation</h2>
+            <p>Le Client vérifie la conformité et l'état de la commande à sa réception. Toute anomalie doit être signalée dès que possible, avec les justificatifs utiles, au moyen du formulaire de contact.</p>
+            <p>Les garanties légales applicables demeurent intégralement préservées.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">09</span>
+            <h2>Matériel prêté</h2>
+            <p>Lorsqu'un prêt de matériel est proposé et choisi, ses modalités de mise à disposition et de retour sont communiquées au Client. Le matériel reste la propriété de Vite &amp; Gourmand et doit être restitué complet, à la date convenue et dans un état conforme à un usage normal.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">10</span>
+            <h2>Responsabilité</h2>
+            <p>Vite &amp; Gourmand répond de la bonne exécution de ses obligations dans les conditions prévues par la loi. Sa responsabilité ne peut être engagée si l'inexécution résulte du Client, d'un tiers imprévisible et insurmontable ou d'un cas de force majeure.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">11</span>
+            <h2>Données personnelles</h2>
+            <p>Les données nécessaires à la commande, à la livraison et au suivi client sont traitées selon les modalités décrites dans les <a href="{{ path('legal_notice') }}">mentions légales</a>. Le Client peut exercer ses droits via le formulaire de contact.</p>
+        </section>
+
+        <section class="legal-card legal-card--wide">
+            <span class="legal-card__number" aria-hidden="true">12</span>
+            <h2>Droit applicable et litiges</h2>
+            <p>Les présentes CGV sont soumises au droit français. En cas de difficulté, le Client est invité à contacter d'abord Vite &amp; Gourmand afin de rechercher une solution amiable.</p>
+            <p>Après une réclamation écrite préalable restée sans solution, le Client peut recourir gratuitement au médiateur de la consommation dont relève Vite &amp; Gourmand. Le Client conserve le droit de saisir la juridiction compétente selon les règles légales applicables.</p>
+            <p class="legal-note">Avant la mise en production, l'éditeur doit compléter l'identification de l'entreprise, les modalités exactes de paiement et les coordonnées du médiateur de la consommation.</p>
+        </section>
+    </div>
+
+    <p class="legal-update">Dernière mise à jour : 19 juillet 2026.</p>
+</main>
+{% endblock %}

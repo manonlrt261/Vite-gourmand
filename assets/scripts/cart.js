@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const addressInput = cartForm.querySelector('input[name="adresse_livraison"]');
   const postalCodeInput = cartForm.querySelector('input[name="code_postal_livraison"]');
   const cityInput = cartForm.querySelector('input[name="ville_livraison"]');
+  const deliveryDateInput = cartForm.querySelector('[data-delivery-date]');
+  const closureError = cartForm.querySelector('[data-cart-closure-error]');
+  const checkoutButton = cartForm.querySelector('[data-cart-checkout-button]');
+  const exceptionalClosures = JSON.parse(cartForm.dataset.exceptionalClosures || '[]');
   const currencyFormatter = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
@@ -65,6 +69,47 @@ document.addEventListener('DOMContentLoaded', () => {
     updateMessage.hidden = false;
     updateMessage.textContent = text;
     updateMessage.classList.toggle('is-error', isError);
+  };
+
+  const formatFrenchDate = (date) => {
+    const [year, month, day] = String(date).split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const validateDeliveryDate = () => {
+    const selectedDate = deliveryDateInput?.value || '';
+    const closure = exceptionalClosures.find((period) => {
+      const endDate = period.date_fin_fermeture || period.date_fermeture;
+      return selectedDate && selectedDate >= period.date_fermeture && selectedDate <= endDate;
+    });
+
+    if (!closure) {
+      if (closureError) {
+        closureError.hidden = true;
+        closureError.textContent = '';
+      }
+      if (checkoutButton) {
+        checkoutButton.disabled = !deliveryDateInput || deliveryDateInput.disabled;
+      }
+      deliveryDateInput?.removeAttribute('aria-invalid');
+      return true;
+    }
+
+    const start = formatFrenchDate(closure.date_fermeture);
+    const endDate = closure.date_fin_fermeture || closure.date_fermeture;
+    const message = endDate !== closure.date_fermeture
+      ? `Nous sommes désolées mais l'entreprise ferme ses portes du ${start} au ${formatFrenchDate(endDate)}. Veuillez choisir une autre date de livraison.`
+      : `Nous sommes désolées mais l'entreprise fermera ses portes le ${start}. Veuillez choisir une autre date de livraison.`;
+
+    if (closureError) {
+      closureError.textContent = message;
+      closureError.hidden = false;
+    }
+    if (checkoutButton) {
+      checkoutButton.disabled = true;
+    }
+    deliveryDateInput?.setAttribute('aria-invalid', 'true');
+    return false;
   };
 
   const updateCartDisplay = (data) => {
@@ -264,6 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   cartForm.addEventListener('submit', async (event) => {
+    if (event.submitter?.matches('[data-cart-checkout-button]') && !validateDeliveryDate()) {
+      event.preventDefault();
+      deliveryDateInput?.focus();
+      return;
+    }
+
     // Intercepte uniquement le bouton de recalcul ; la validation finale conserve son envoi normal.
     if (!event.submitter || !event.submitter.matches('[data-cart-update-button]')) {
       return;
@@ -370,4 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('change', updateDeliveryAfterAddressChange);
     input.addEventListener('blur', updateDeliveryAfterAddressChange);
   });
+
+  deliveryDateInput?.addEventListener('change', validateDeliveryDate);
+  deliveryDateInput?.addEventListener('input', validateDeliveryDate);
 });

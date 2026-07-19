@@ -208,6 +208,13 @@ class CartController extends AbstractController
             return $this->redirectToRoute('cart_index');
         }
 
+        $closureError = $this->getClosureErrorForDate($connection, $checkoutData['date_prestation']);
+        if ($closureError !== null) {
+            $this->addFlash('cart_error', $closureError);
+
+            return $this->redirectToRoute('cart_index');
+        }
+
         $this->updateCartQuantitiesFromRequest($request, $connection);
         $summary = $this->getCartSummary($request, $connection, $checkoutData);
 
@@ -798,7 +805,63 @@ class CartController extends AbstractController
             'isConnected' => $isConnected,
             'customer' => $customer,
             'canRequestMaterial' => $canRequestMaterial,
+            'exceptionalClosures' => $this->getExceptionalClosures($connection),
         ]);
+    }
+
+    /**
+     * @return list<array{date_fermeture: string, date_fin_fermeture: ?string}>
+     */
+    private function getExceptionalClosures(Connection $connection): array
+    {
+        try {
+            return $connection->fetchAllAssociative(
+                'SELECT date_fermeture, date_fin_fermeture
+                 FROM fermetures_exceptionnelles
+                 WHERE COALESCE(date_fin_fermeture, date_fermeture) >= CURRENT_DATE
+                 ORDER BY date_fermeture ASC, fermeture_id ASC'
+            );
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private function getClosureErrorForDate(Connection $connection, string $deliveryDate): ?string
+    {
+        try {
+            $closure = $connection->fetchAssociative(
+                'SELECT date_fermeture, date_fin_fermeture
+                 FROM fermetures_exceptionnelles
+                 WHERE :delivery_date BETWEEN date_fermeture AND COALESCE(date_fin_fermeture, date_fermeture)
+                 ORDER BY date_fermeture ASC, fermeture_id ASC
+                 LIMIT 1',
+                ['delivery_date' => $deliveryDate]
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (!$closure) {
+            return null;
+        }
+
+        $start = (new \DateTimeImmutable((string) $closure['date_fermeture']))->format('d/m/Y');
+        $endDate = $closure['date_fin_fermeture'] ?? null;
+
+        if ($endDate && $endDate !== $closure['date_fermeture']) {
+            $end = (new \DateTimeImmutable((string) $endDate))->format('d/m/Y');
+
+            return sprintf(
+                "Nous sommes désolées mais l'entreprise ferme ses portes du %s au %s. Veuillez choisir une autre date de livraison.",
+                $start,
+                $end
+            );
+        }
+
+        return sprintf(
+            "Nous sommes désolées mais l'entreprise fermera ses portes le %s. Veuillez choisir une autre date de livraison.",
+            $start
+        );
     }
 
     // Vérifie le jeton CSRF commun aux actions sensibles du panier.

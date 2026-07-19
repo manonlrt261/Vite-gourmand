@@ -5,7 +5,7 @@
 
 {% block javascripts %}
     {# Synchronise les quantités et le récapitulatif sans rechargement complet de la page. #}
-    <script src="{{ asset('assets/scripts/cart.js') }}" defer></script>
+    <script src="{{ asset('assets/scripts/cart.js') }}?v=20260719-1" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -41,7 +41,13 @@
     {% endfor %}
 
     {# Formulaire principal du panier : il sert à mettre à jour les quantités et à commander. #}
-    <form class="cart-layout" method="post" action="{{ path('cart_update') }}" data-cart-form>
+    <form
+        class="cart-layout"
+        method="post"
+        action="{{ path('cart_update') }}"
+        data-cart-form
+        data-exceptional-closures="{{ exceptionalClosures|default([])|json_encode|e('html_attr') }}"
+    >
         {# Un même jeton CSRF protège la mise à jour du panier et sa validation. #}
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('cart_action') }}">
 
@@ -109,7 +115,7 @@
                 <div class="cart-fields cart-fields--two">
                     <label class="cart-field">
                         <span>Date de livraison</span>
-                        <input type="date" name="date_prestation" required {{ not isConnected ? 'disabled' }}>
+                        <input type="date" name="date_prestation" required {{ not isConnected ? 'disabled' }} data-delivery-date>
                     </label>
 
                     <label class="cart-field">
@@ -117,6 +123,8 @@
                         <input type="time" name="heure_livraison" min="08:00" max="22:00" required {{ not isConnected ? 'disabled' }}>
                     </label>
                 </div>
+
+                <p class="cart-closure-error" data-cart-closure-error role="alert" hidden></p>
 
                 {# Règle tarifaire informative ; le montant effectif est calculé côté serveur. #}
                 <div class="cart-delivery-info">
@@ -271,6 +279,7 @@
                 type="submit"
                 class="buttonprimary"
                 formaction="{{ path('cart_checkout') }}"
+                data-cart-checkout-button
                 {{ not isConnected ? 'disabled' }}
             >
                 Commander

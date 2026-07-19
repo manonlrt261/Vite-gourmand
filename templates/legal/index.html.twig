@@ -1,0 +1,157 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mentions légales - Vite & Gourmand{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/styles/legal.css') }}">
+{% endblock %}
+
+{% block body %}
+{% include 'components/_big_title.html.twig' with {
+    title: 'Mentions légales',
+    image_alt: 'Mentions légales de Vite et Gourmand'
+} %}
+
+<main class="legal-page">
+    <a href="{{ path('home_show') }}" class="legal-back-link">&larr; Retour &agrave; l'accueil</a>
+
+    <div class="legal-introduction">
+        <p>
+            Les pr&eacute;sentes mentions l&eacute;gales pr&eacute;cisent les conditions d'utilisation
+            du site Vite &amp; Gourmand et les informations relatives &agrave; son &eacute;diteur.
+        </p>
+    </div>
+
+    <div class="legal-grid">
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">01</span>
+            <h2>&Eacute;diteur du site</h2>
+            <p><strong>Raison sociale :</strong> Vite &amp; Gourmand</p>
+            <p><strong>Forme juridique :</strong> Soci&eacute;t&eacute; &agrave; responsabilit&eacute; limit&eacute;e (SARL)</p>
+            <p><strong>Capital social :</strong> 20 000 &euro;</p>
+            <p><strong>Si&egrave;ge social :</strong> 18 all&eacute;e des Saveurs, 33000 Bordeaux, France</p>
+            <p><strong>SIREN :</strong> 000 000 000</p>
+            <p><strong>SIRET :</strong> 000 000 000 00000</p>
+            <p><strong>Immatriculation :</strong> RCS Bordeaux 000 000 000</p>
+            <p><strong>TVA intracommunautaire :</strong> FR00 000000000</p>
+            <p><strong>Activit&eacute; :</strong> services de traiteur et vente de prestations culinaires.</p>
+            <p><strong>Zone d'activit&eacute; :</strong> Bordeaux et ses environs.</p>
+            <p>
+                Pour toute demande concernant le site ou l'entreprise, utilisez notre
+                <a href="{{ path('contact_index') }}">formulaire de contact</a>.
+            </p>
+            <p class="legal-note">Les num&eacute;ros d'immatriculation et coordonn&eacute;es ci-dessus sont fictifs et utilis&eacute;s dans le cadre de ce projet de d&eacute;monstration.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">02</span>
+            <h2>Direction de la publication</h2>
+            <p><strong>Directeur de la publication :</strong> Jos&eacute; Pecquery</p>
+            <p>Le directeur de la publication est responsable des contenus publi&eacute;s sur le site.</p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">03</span>
+            <h2>H&eacute;bergement</h2>
+            <p><strong>H&eacute;bergeur :</strong> alwaysdata, SARL au capital de 200 000 &euro;</p>
+            <p><strong>Adresse :</strong> 91 rue du Faubourg Saint-Honor&eacute;, 75008 Paris, France</p>
+            <p><strong>RCS :</strong> Paris 492 893 490</p>
+            <p><strong>T&eacute;l&eacute;phone :</strong> +33 1 84 16 23 49</p>
+            <p><strong>Site :</strong> <a href="https://www.alwaysdata.com" rel="noopener noreferrer" target="_blank">www.alwaysdata.com</a></p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">04</span>
+            <h2>Propri&eacute;t&eacute; intellectuelle</h2>
+            <p>
+                La structure du site, son identit&eacute; visuelle, ses textes, photographies,
+                illustrations, logos et autres contenus sont prot&eacute;g&eacute;s par le droit de la
+                propri&eacute;t&eacute; intellectuelle. Toute reproduction, repr&eacute;sentation, adaptation ou
+                exploitation, totale ou partielle, sans autorisation pr&eacute;alable est interdite,
+                sauf exceptions pr&eacute;vues par la loi.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">05</span>
+            <h2>RGPD et donn&eacute;es personnelles</h2>
+            <p>
+                Les donn&eacute;es transmises lors de la cr&eacute;ation d'un compte, d'une commande ou
+                d'une prise de contact sont utilis&eacute;es uniquement pour traiter la demande,
+                assurer le suivi de la relation client et respecter les obligations l&eacute;gales.
+                Elles ne sont pas vendues &agrave; des tiers.
+            </p>
+            <p>
+                Conform&eacute;ment au R&egrave;glement g&eacute;n&eacute;ral sur la protection des donn&eacute;es et &agrave; la loi
+                Informatique et Libert&eacute;s, vous pouvez demander l'acc&egrave;s, la rectification,
+                l'effacement ou la limitation du traitement de vos donn&eacute;es via notre
+                <a href="{{ path('contact_index') }}">formulaire de contact</a>. Vous pouvez
+                &eacute;galement introduire une r&eacute;clamation aupr&egrave;s de la CNIL.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">06</span>
+            <h2>Cookies</h2>
+            <p>
+                Le site peut utiliser des cookies strictement n&eacute;cessaires &agrave; son fonctionnement,
+                notamment pour maintenir la session, s&eacute;curiser les formulaires et conserver le panier.
+                Ces cookies techniques ne sont pas utilis&eacute;s &agrave; des fins de publicit&eacute; cibl&eacute;e.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">07</span>
+            <h2>Responsabilit&eacute;</h2>
+            <p>
+                Vite &amp; Gourmand veille &agrave; fournir des informations exactes et &agrave; jour, sans
+                pouvoir garantir l'absence totale d'erreurs ou d'interruptions. L'utilisateur
+                demeure responsable de son mat&eacute;riel, de sa connexion et de l'usage qu'il fait du site.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">08</span>
+            <h2>Pr&eacute;sentation du site</h2>
+            <p>
+                Le site Vite &amp; Gourmand pr&eacute;sente les services d'un traiteur bas&eacute; &agrave;
+                Bordeaux. Il permet aux visiteurs de consulter les menus, de cr&eacute;er un compte,
+                de constituer un panier, de passer et suivre une commande, ainsi que de contacter
+                l'&eacute;quipe pour organiser une prestation culinaire.
+            </p>
+            <p>
+                Les photographies, descriptions, prix, disponibilit&eacute;s et informations affich&eacute;s
+                sont fournis &agrave; titre indicatif et peuvent &ecirc;tre actualis&eacute;s sans pr&eacute;avis.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">09</span>
+            <h2>S&eacute;curit&eacute; et protection</h2>
+            <p>
+                Vite &amp; Gourmand met en &oelig;uvre des mesures techniques et organisationnelles
+                adapt&eacute;es afin de prot&eacute;ger les comptes, formulaires, commandes et donn&eacute;es
+                personnelles contre l'acc&egrave;s non autoris&eacute;, la perte, l'alt&eacute;ration ou la divulgation.
+            </p>
+            <p>
+                L'utilisateur est responsable de la confidentialit&eacute; de ses identifiants. Il doit
+                choisir un mot de passe robuste, ne pas le communiquer et signaler rapidement toute
+                utilisation suspecte de son compte au moyen du formulaire de contact.
+            </p>
+        </section>
+
+        <section class="legal-card">
+            <span class="legal-card__number" aria-hidden="true">10</span>
+            <h2>Droit applicable</h2>
+            <p>
+                Les pr&eacute;sentes mentions l&eacute;gales et l'utilisation du site sont soumises au droit
+                fran&ccedil;ais. En cas de diff&eacute;rend, les parties rechercheront en priorit&eacute; une solution
+                amiable. &Agrave; d&eacute;faut, le litige sera port&eacute; devant les juridictions comp&eacute;tentes,
+                conform&eacute;ment aux r&egrave;gles l&eacute;gales applicables.
+            </p>
+        </section>
+    </div>
+
+    <p class="legal-update">Derni&egrave;re mise &agrave; jour : 19 juillet 2026.</p>
+</main>
+{% endblock %}
