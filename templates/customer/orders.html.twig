@@ -58,6 +58,9 @@
                         {% if order.date_prestation %}
                             <p>Prestation le {{ order.date_prestation|date('d/m/Y') }}</p>
                         {% endif %}
+                        {% if statusCode == 'annulee' and order.motif_annulation %}
+                            <p class="customer-order-cancellation-message">{{ order.motif_annulation }}</p>
+                        {% endif %}
                     </div>
 
                     <span class="{{ statusClass }}">{{ order.statut_libelle|default('En attente') }}</span>

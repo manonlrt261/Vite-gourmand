@@ -1,5 +1,17 @@
 // Active ou désactive les champs horaires de chaque journée selon son interrupteur d'ouverture.
 document.addEventListener('DOMContentLoaded', () => {
+  const showSavedMessage = () => {
+    const intro = document.querySelector('[data-hours-intro]');
+    if (!intro) return;
+
+    intro.querySelectorAll('.employee-alert').forEach((message) => message.remove());
+    const message = document.createElement('p');
+    message.className = 'employee-alert employee-alert-success';
+    message.setAttribute('role', 'status');
+    message.textContent = 'Vos modifications ont bien été enregistrées.';
+    intro.append(message);
+  };
+
   document.querySelectorAll('[data-hours-row]').forEach((row) => {
     const toggle = row.querySelector('[data-hours-toggle]');
     const inputs = row.querySelectorAll('[data-hours-input]');
@@ -56,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
           emptyMessage.textContent = 'Aucune fermeture exceptionnelle enregistrée.';
           closureList.append(emptyMessage);
         }
+        showSavedMessage();
       } catch (error) {
         window.alert(error instanceof Error ? error.message : 'La fermeture n’a pas pu être supprimée.');
         button?.removeAttribute('disabled');
@@ -106,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bindClosureDeletion(deleteForm);
       addForm.reset();
       addForm.querySelector('[name="motif"]').value = 'Fermeture exceptionnelle';
+      showSavedMessage();
     } catch (error) {
       window.alert(error instanceof Error ? error.message : 'La fermeture n’a pas pu être ajoutée.');
     } finally {

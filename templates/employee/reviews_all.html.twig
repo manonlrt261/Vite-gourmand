@@ -90,6 +90,8 @@
         </section>
 
         {# Prépare trois collections d'affichage sans modifier la collection reçue du contrôleur. #}
+        <p class="employee-empty employee-review-filter-empty" data-review-empty hidden>Aucun avis ne correspond aux filtres.</p>
+
         {% set pendingReviews = reviews|filter(review => review.statut == 'en_attente') %}
         {% set acceptedReviews = reviews|filter(review => review.statut == 'valide') %}
         {% set refusedReviews = reviews|filter(review => review.statut == 'refuse') %}
@@ -130,7 +132,6 @@
             </section>
 
             {# Message affiché si les filtres masquent tous les avis. #}
-            <p class="employee-empty" data-review-empty hidden>Aucun avis ne correspond aux filtres.</p>
         </div>
     </main>
 

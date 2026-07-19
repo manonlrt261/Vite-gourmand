@@ -59,6 +59,9 @@
                 <p>{{ orderMenu.nom_menu }} - {{ orderMenu.nombre_personnes }} personne{{ orderMenu.nombre_personnes > 1 ? 's' : '' }}</p>
             {% endfor %}
             <p>{{ order.prix_total|number_format(2, ',', ' ') }} €</p>
+            {% if statusCode == 'annulee' and order.motif_annulation %}
+                <p class="customer-order-cancellation-message">{{ order.motif_annulation }}</p>
+            {% endif %}
         </div>
 
         <span class="{{ statusClass }} order-detail-status">{{ order.statut_libelle|default('En attente') }}</span>

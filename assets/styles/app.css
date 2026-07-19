@@ -1128,6 +1128,8 @@ summary:focus-visible,
 .employee-delete-modal__actions .buttonrefuse {
   width: 120px;
   min-width: 120px;
+  height: 23px;
+  padding: 0 10px;
 }
 
 .employee-delete-modal__dialog .employee-review-delete-error {
@@ -2005,6 +2007,23 @@ body.employee-modal-is-open {
 .employee-review-group {
   padding-top: 24px;
   border-top: 1px solid rgba(181, 99, 32, 0.35);
+}
+
+.employee-review-group:last-of-type {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(181, 99, 32, 0.35);
+}
+
+.employee-review-group > [data-review-group-empty],
+.employee-review-filter-empty {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.employee-review-filter-empty {
+  margin-top: 20px;
 }
 
 .employee-review-group h2 {
@@ -3429,6 +3448,7 @@ textarea {
 
 .home-value-card--featured::after {
   bottom: -29px;
+  height: 0.5px;
   width: min(760px, 100%);
 }
 
@@ -5033,7 +5053,7 @@ textarea {
 .auth-separator span {
   width: 25px;
   height: 1px;
-  background-color: var(--secondary);
+  background-color: var(--primary);
 }
 
 .auth-separator p {
@@ -5442,7 +5462,7 @@ textarea {
 }
 
 .register-separator span {
-  height: 1px;
+  height: 0.5px;
   background: var(--primary);
 }
 
@@ -7256,28 +7276,35 @@ textarea {
 
 .admin-orders-menu-donut span,
 .admin-orders-menu-donut small {
-  position: relative;
+  position: absolute;
+  left: 50%;
   z-index: 1;
   font-family: var(--font-text);
+  text-align: center;
+  transform: translateX(-50%);
 }
 
 .admin-orders-menu-donut span {
+  top: 61px;
   color: var(--primary);
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .admin-orders-menu-donut [data-revenue-menu-donut-total] {
+  width: 82px;
   max-width: 82px;
-  font-size: 16px;
-  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .admin-orders-menu-donut small {
-  margin-top: 30px;
-  margin-left: -34px;
+  top: 86px;
+  margin: 0;
   color: var(--secondary);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .admin-orders-menu-legend {
@@ -7309,6 +7336,11 @@ textarea {
 
 .admin-orders-menu-legend-row strong {
   color: var(--primary);
+  font-size: 12px;
+}
+
+.admin-orders-menu-legend-row small {
+  font-size: 11px;
 }
 
 .admin-revenue-menu-legend-row {
@@ -7316,7 +7348,13 @@ textarea {
 }
 
 .admin-revenue-menu-legend-row strong {
-  font-size: 12px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.admin-orders-menu-page[data-revenue-menu-page] .admin-orders-menu-bar strong {
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .admin-orders-menu-bar-chart {

@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const currencyFormatter = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
+    currencyDisplay: 'narrowSymbol',
   });
   const BORDEAUX_LATITUDE = 44.837789;
   const BORDEAUX_LONGITUDE = -0.57918;

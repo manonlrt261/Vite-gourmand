@@ -217,7 +217,7 @@ class EmployeeController extends AbstractController
     }
 
     // Annule une commande, conserve sa traçabilité SQL et actualise les statistiques MongoDB.
-    public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService): Response
+    public function cancelOrder(int $id, Request $request, Connection $connection, MongoStatsService $mongoStatsService, MailerInterface $mailer): Response
     {
         if (!$this->canAccessEmployeeSpace($request, $connection)) {
             return $this->redirectToEmployeeLogin($request);
@@ -255,9 +255,11 @@ class EmployeeController extends AbstractController
         }
 
         $reason = trim((string) $request->request->get('contact_message_client'));
+        $customerCancellationMessage = 'Suite à la prise de contact avec un de nos employés, votre commande a été annulée.';
         $connection->update('commandes', [
             'statut_id' => $cancelStatusId,
-            'motif_annulation' => $reason,
+            // Le motif saisi reste interne ; ce texte stable est affiché au client.
+            'motif_annulation' => $customerCancellationMessage,
             'contact_methode_client' => trim((string) $request->request->get('contact_methode_client')),
             'contact_client_at' => $this->buildContactDateTime($request),
             'contact_message_client' => $reason,
@@ -269,9 +271,53 @@ class EmployeeController extends AbstractController
         $this->addOrderStatusHistory($connection, $id, $cancelStatusId, 'Commande annulee par un employe apres contact client : ' . $reason);
         // La commande reste dans MySQL pour la traçabilité, mais sort immédiatement des statistiques MongoDB.
         $mongoStatsService->getOrdersByMenuDocuments($connection);
+        $this->sendEmployeeCancellationEmail($connection, $mailer, $id, $customerCancellationMessage);
         $this->addFlash('employee_success', 'La commande a ete annulee.');
 
         return $this->redirectToRoute('employee_orders');
+    }
+
+    // Informe automatiquement le client lorsqu'un employé annule sa commande après l'avoir contacté.
+    private function sendEmployeeCancellationEmail(Connection $connection, MailerInterface $mailer, int $orderId, string $message): void
+    {
+        $order = $connection->fetchAssociative(
+            'SELECT c.commande_id, u.email, u.prenom, m.nom_menu
+             FROM commandes c
+             LEFT JOIN utilisateurs u ON u.id = c.utilisateur_id
+             LEFT JOIN menus m ON m.menu_id = c.menu_id
+             WHERE c.commande_id = ?',
+            [$orderId]
+        );
+
+        if (!$order || !filter_var((string) ($order['email'] ?? ''), FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $firstName = trim((string) ($order['prenom'] ?? ''));
+        $greeting = $firstName !== '' ? 'Bonjour ' . htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8') . ',' : 'Bonjour,';
+        $menuName = htmlspecialchars((string) ($order['nom_menu'] ?? 'votre menu'), ENT_QUOTES, 'UTF-8');
+
+        try {
+            $mailer->send((new Email())
+                ->from($from)
+                ->to((string) $order['email'])
+                ->subject('Annulation de votre commande - Vite & Gourmand')
+                ->html(sprintf(
+                    '<h1>Annulation de votre commande</h1>
+                    <p>%s</p>
+                    <p>Nous vous confirmons l’annulation de votre commande n&deg;%d pour le menu <strong>%s</strong>.</p>
+                    <p><strong>%s</strong></p>
+                    <p>Si vous avez la moindre question, notre équipe reste à votre disposition.</p>
+                    <p>Bien cordialement,<br>L’équipe Vite & Gourmand</p>',
+                    $greeting,
+                    (int) $order['commande_id'],
+                    $menuName,
+                    htmlspecialchars($message, ENT_QUOTES, 'UTF-8')
+                )));
+        } catch (\Throwable) {
+            // L'annulation reste effective si le service d'e-mail est momentanément indisponible.
+        }
     }
 
     // Affiche une sélection des menus et éléments de repas les plus populaires.
@@ -329,7 +375,7 @@ class EmployeeController extends AbstractController
                 return $this->render('employee/item_form.html.twig', $this->getFormViewData('menu', $payload, true, $connection));
             }
 
-            $linkedItemsError = $this->validateLinkedMealItemsForMenu($request);
+            $linkedItemsError = $this->validateExistingMealItemsForMenu($request, $connection);
             if ($linkedItemsError !== null) {
                 $this->addFlash('employee_error', $linkedItemsError);
 
@@ -339,9 +385,8 @@ class EmployeeController extends AbstractController
             $connection->insert('menus', $payload);
             $menuId = (int) $connection->lastInsertId();
 
-            // Si une entrée, un plat ou un dessert ont été renseignés dans les fenêtres modales,
-            // ils sont créés juste après le menu avec le nouvel identifiant du menu.
-            $this->createLinkedMealItemsForMenu($request, $connection, $menuId);
+            // L'entrée, le plat ou le dessert choisis sont associés au nouvel identifiant du menu.
+            $this->attachExistingMealItemsToMenu($request, $connection, $menuId, (int) $payload['actif']);
 
             return $this->redirectToRoute('employee_items_all');
         }
@@ -566,7 +611,7 @@ class EmployeeController extends AbstractController
 
             if ($action === 'save_hours') {
                 if ($this->saveWeeklyHours($request, $connection)) {
-                    $this->addFlash('employee_success', 'Les horaires ont bien ete enregistres.');
+                    $this->addFlash('employee_hours_success', 'Vos modifications ont bien été enregistrées.');
                 } else {
                     $this->addFlash('employee_error', 'Les horaires saisis sont invalides. Verifiez chaque jour ouvert.');
                 }
@@ -584,6 +629,10 @@ class EmployeeController extends AbstractController
                         'success' => true,
                         'closure' => $closure,
                     ], 201);
+                }
+
+                if ($closure !== null) {
+                    $this->addFlash('employee_hours_success', 'Vos modifications ont bien été enregistrées.');
                 }
             }
 
@@ -623,6 +672,10 @@ class EmployeeController extends AbstractController
 
         if ($request->isXmlHttpRequest()) {
             return $this->json(['success' => $deleted > 0], $deleted > 0 ? 200 : 404);
+        }
+
+        if ($deleted > 0) {
+            $this->addFlash('employee_hours_success', 'Vos modifications ont bien été enregistrées.');
         }
 
         return $this->redirectToRoute('employee_hours');
@@ -908,9 +961,9 @@ class EmployeeController extends AbstractController
                 ->html(sprintf(
                     '<h1>Reponse a votre demande</h1>
                     <p>Bonjour,</p>
-                    <p>Vous nous avez contacte au sujet de : <strong>%s</strong>.</p>
+                    <p>Vous nous avez contacté au sujet de : <strong>%s</strong>.</p>
                     <p>%s</p>
-                    <p>L equipe Vite & Gourmand</p>',
+                    <p>L'équipe de Vite & Gourmand</p>',
                     htmlspecialchars((string) $message['titre'], ENT_QUOTES, 'UTF-8'),
                     nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'))
                 )));
@@ -1926,7 +1979,31 @@ class EmployeeController extends AbstractController
             'isCreate' => $isCreate,
             'pageTitle' => $isCreate ? $labels[$type][0] : $labels[$type][1],
             'menus' => $this->getMenuChoices($connection),
+            'mealChoices' => $type === 'menu' && $isCreate ? [
+                'entree' => $this->getMealItemChoices($connection, 'entree'),
+                'plat' => $this->getMealItemChoices($connection, 'plat'),
+                'dessert' => $this->getMealItemChoices($connection, 'dessert'),
+            ] : [],
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function getMealItemChoices(Connection $connection, string $type): array
+    {
+        $config = $this->getItemConfig($type);
+        if (!$config || $type === 'menu') {
+            return [];
+        }
+
+        return $connection->fetchAllAssociative(sprintf(
+            'SELECT %s AS id, %s AS name FROM %s ORDER BY %s ASC',
+            $config['id'],
+            $config['name'],
+            $config['table'],
+            $config['name']
+        ));
     }
 
     /**
@@ -1979,40 +2056,49 @@ class EmployeeController extends AbstractController
         ] + $this->getMealNamePayload($request);
     }
 
-    // Vérifie les éléments saisis dans les fenêtres modales avant de créer le menu.
-    private function validateLinkedMealItemsForMenu(Request $request): ?string
+    // Vérifie les éléments existants sélectionnés dans les fenêtres avant de créer le menu.
+    private function validateExistingMealItemsForMenu(Request $request, Connection $connection): ?string
     {
-        $linkedItems = $request->request->all('linked_items');
+        $existingItems = $request->request->all('existing_items');
 
         foreach (['entree', 'plat', 'dessert'] as $type) {
-            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
-            $name = trim((string) ($source['nom'] ?? ''));
+            $rawId = trim((string) ($existingItems[$type] ?? ''));
 
-            if ($name === '') {
+            if ($rawId === '') {
                 continue;
             }
 
-            $payload = $this->getLinkedMealPayload($type, $source, 1);
-            $error = $this->validateItemPayload($type, $payload);
+            $config = $this->getItemConfig($type);
+            if (!$config || !ctype_digit($rawId) || (int) $rawId < 1) {
+                return 'L element selectionne est invalide.';
+            }
 
-            if ($error !== null) {
-                return $error;
+            $exists = $connection->fetchOne(
+                sprintf('SELECT 1 FROM %s WHERE %s = ?', $config['table'], $config['id']),
+                [(int) $rawId]
+            );
+            if ($exists === false) {
+                return 'L element selectionne n existe plus.';
             }
         }
 
         return null;
     }
 
-    // Crée les éléments de repas renseignés dans les fenêtres modales de création d'un menu.
-    private function createLinkedMealItemsForMenu(Request $request, Connection $connection, int $menuId): void
+    // Associe les éléments de repas existants sélectionnés au menu qui vient d'être créé.
+    private function attachExistingMealItemsToMenu(
+        Request $request,
+        Connection $connection,
+        int $menuId,
+        int $menuActive
+    ): void
     {
-        $linkedItems = $request->request->all('linked_items');
+        $existingItems = $request->request->all('existing_items');
 
         foreach (['entree', 'plat', 'dessert'] as $type) {
-            $source = is_array($linkedItems[$type] ?? null) ? $linkedItems[$type] : [];
-            $name = trim((string) ($source['nom'] ?? ''));
+            $rawId = trim((string) ($existingItems[$type] ?? ''));
 
-            if ($name === '') {
+            if ($rawId === '') {
                 continue;
             }
 
@@ -2021,36 +2107,13 @@ class EmployeeController extends AbstractController
                 continue;
             }
 
-            $payload = $this->getLinkedMealPayload($type, $source, $menuId);
-            $payload['actif'] = $this->resolveMealItemStatus($connection, $payload);
-            $connection->insert($config['table'], $payload);
+            $changes = ['menu_id' => $menuId];
+            if ($menuActive === 0) {
+                $changes['actif'] = 0;
+            }
+
+            $connection->update($config['table'], $changes, [$config['id'] => (int) $rawId]);
         }
-    }
-
-    /**
-     * @param array<string, mixed> $source
-     * @return array<string, mixed>
-     */
-    // Transforme les champs d'une fenêtre modale en données compatibles avec les tables entrée, plat ou dessert.
-    private function getLinkedMealPayload(string $type, array $source, int $menuId): array
-    {
-        $nameField = match ($type) {
-            'entree' => 'nom_entree',
-            'plat' => 'nom_plat',
-            'dessert' => 'nom_dessert',
-            default => 'nom',
-        };
-
-        return [
-            'menu_id' => $menuId,
-            'theme' => trim((string) ($source['theme'] ?? '')),
-            'description' => trim((string) ($source['description'] ?? '')),
-            'allergenes' => trim((string) ($source['allergenes'] ?? '')),
-            'actif' => !empty($source['actif']) ? 1 : 0,
-            'image_url' => trim((string) ($source['image_url'] ?? '')),
-            'image_alt' => trim((string) ($source['image_alt'] ?? '')),
-            $nameField => trim((string) ($source['nom'] ?? '')),
-        ];
     }
 
     /**

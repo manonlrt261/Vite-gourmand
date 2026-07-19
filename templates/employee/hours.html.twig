@@ -17,14 +17,11 @@
         {% include 'components/_workspace_back_link.html.twig' %}
 
         {# Introduction expliquant l'impact des horaires modifiés sur le site public. #}
-        <section class="employee-hours-intro">
+        <section class="employee-hours-intro" data-hours-intro>
             <h1>Horaires d'ouverture</h1>
             <p>Modifiez les jours et horaires d'ouverture de l'entreprise. Ces horaires seront visibles par les clients sur le site.</p>
-            {% for message in app.flashes('employee_success') %}
+            {% for message in app.flashes('employee_hours_success') %}
                 <p class="employee-alert employee-alert-success" role="status">{{ message }}</p>
-            {% endfor %}
-            {% for message in app.flashes('employee_error') %}
-                <p class="employee-alert employee-alert-error" role="alert">{{ message }}</p>
             {% endfor %}
         </section>
 
@@ -148,5 +145,5 @@
 {% block javascripts %}
     {{ parent() }}
     {# Script qui active ou désactive les champs horaires selon les interrupteurs. #}
-    <script src="{{ asset('assets/scripts/employee-hours.js') }}?v=20260718-5" defer></script>
+    <script src="{{ asset('assets/scripts/employee-hours.js') }}?v=20260719-6" defer></script>
 {% endblock %}

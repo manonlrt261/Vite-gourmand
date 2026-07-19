@@ -67,6 +67,9 @@
                             <p class="cardvieworder-date">
                                 Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
                             </p>
+                            {% if statusCode == 'annulee' and order.motif_annulation %}
+                                <p class="customer-order-cancellation-message">{{ order.motif_annulation }}</p>
+                            {% endif %}
                             <div class="cardvieworder-actions">
                                 <a href="{{ path('customer_order_detail', { id: order.commande_id }) }}" class="buttonprimary cardvieworder-detail">Voir le détail</a>
                                 {# Une commande reste modifiable uniquement avant son acceptation par l’équipe. #}

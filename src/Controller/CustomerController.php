@@ -104,6 +104,7 @@ class CustomerController extends AbstractController
             'SELECT c.commande_id, c.date_commande, c.date_prestation, c.heure_de_livraison,
                     c.adresse_livraison, c.ville_livraison, c.code_postal_livraison,
                     c.nombre_personnes, c.prix_menu, c.prix_livraison, c.prix_total, c.pret_materiel, c.statut_id,
+                    c.motif_annulation,
                     m.menu_id, m.nom_menu, m.description AS menu_description, m.prix_par_personne,
                     m.image_url AS menu_image_url, m.image_alt AS menu_image_alt,
                     COALESCE(sc.libelle, "En attente") AS statut_libelle,
@@ -702,7 +703,7 @@ class CustomerController extends AbstractController
     private function getLatestOrders(Connection $connection, int $userId, int $limit): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT c.commande_id, c.date_commande, c.date_prestation, c.prix_total,
+            'SELECT c.commande_id, c.date_commande, c.date_prestation, c.prix_total, c.motif_annulation,
                     m.nom_menu,
                     COALESCE(sc.libelle, "En attente") AS statut_libelle,
                     COALESCE(sc.code, "en_attente") AS statut_code,

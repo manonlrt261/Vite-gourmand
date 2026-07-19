@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const note = noteSelect?.value || '';
     const period = periodSelect?.value || '';
     const menu = menuSelect?.value || '';
+    const hasActiveFilters = Boolean(search || status || note || period || menu);
     let visibleCount = 0;
 
     getCards().forEach((card) => {
@@ -93,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (emptyMessage) {
-      emptyMessage.hidden = visibleCount !== 0;
+      emptyMessage.hidden = visibleCount !== 0 || !hasActiveFilters;
     }
 
     if (countLabel) {
@@ -138,9 +139,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateGroupEmptyMessages = () => {
     document.querySelectorAll('[data-review-group]').forEach((group) => {
-      const empty = group.querySelector('[data-review-group-empty]');
+      let empty = group.querySelector('[data-review-group-empty]');
+      const hasReviews = Boolean(group.querySelector('[data-review-card]'));
+
+      if (!empty && !hasReviews) {
+        const labels = {
+          en_attente: 'Aucun avis en attente.',
+          valide: 'Aucun avis accepté.',
+          refuse: 'Aucun avis refusé.',
+        };
+        empty = document.createElement('p');
+        empty.className = 'employee-empty';
+        empty.dataset.reviewGroupEmpty = '';
+        empty.textContent = labels[group.dataset.reviewGroup] || 'Aucun avis.';
+        group.appendChild(empty);
+      }
+
       if (empty) {
-        empty.hidden = Boolean(group.querySelector('[data-review-card]'));
+        empty.hidden = hasReviews;
       }
     });
   };
@@ -333,6 +349,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updateGroupEmptyMessages();
+  filters.addEventListener('input', applyFilters);
+  filters.addEventListener('change', applyFilters);
   applyButton?.addEventListener('click', applyFilters);
   resetButton?.addEventListener('click', resetFilters);
 });
