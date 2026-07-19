@@ -3036,16 +3036,16 @@ body.has-open-modal {
 }
 
 .order-detail-meal-card h4 {
-  font-family: var(--font-text);
+  font-family: var(--font-title);
   font-size: 22px;
   font-weight: 500;
-  color: var(--secondary);
+  color: var(--primary);
 }
 
 .order-detail-meal-card h5 {
   font-family: var(--font-text);
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--secondary);
 }
 
