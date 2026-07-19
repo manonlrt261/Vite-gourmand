@@ -236,10 +236,8 @@
                                     <input type="text" name="linked_items[{{ linkedType }}][image_alt]" value="{{ enteredLinkedItems[linkedType].image_alt|default('') }}">
                                 </label>
 
-                                <label class="employee-form-checkbox employee-linked-meal-modal__full">
-                                    <input type="checkbox" name="linked_items[{{ linkedType }}][actif]" value="1" {{ enteredLinkedItems[linkedType] is not defined or enteredLinkedItems[linkedType].actif|default('') == '1' ? 'checked' : '' }}>
-                                    <span>Visible sur le site</span>
-                                </label>
+                                {# Un nouvel élément de repas est actif par défaut, sans option de visibilité. #}
+                                <input type="hidden" name="linked_items[{{ linkedType }}][actif]" value="1">
 
                                 <label class="employee-linked-meal-modal__full">
                                     <span>{{ existingMealLabels[linkedType]|raw }}</span>

@@ -2235,6 +2235,19 @@ body.employee-modal-is-open {
   box-shadow: none;
 }
 
+/* Les cartes annulées disposent de la place nécessaire pour leur message explicatif. */
+.customer-order-grid .cardvieworder.cardvieworder--cancelled {
+  height: 190px;
+}
+
+.customer-order-grid .cardvieworder.cardvieworder--cancelled .customer-order-cancellation-message {
+  margin: 6px 0;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .customer-order-grid .cardvieworder-detail,
 .customer-order-grid .cardvieworder-edit {
   min-width: 0;

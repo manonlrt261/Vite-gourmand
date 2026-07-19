@@ -61,7 +61,7 @@
                             annulee: 'Annulée'
                         } %}
 
-                        <article class="cardvieworder">
+                        <article class="cardvieworder{% if statusCode == 'annulee' and order.motif_annulation %} cardvieworder--cancelled{% endif %}">
                             <h3 class="cardvieworder-title">N° {{ order.commande_id }}</h3>
                             <span class="{{ statusClass }} cardvieworder-status">{{ statusLabels[statusCode]|default(order.statut_libelle|default('En attente')) }}</span>
                             <p class="cardvieworder-date">
