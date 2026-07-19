@@ -610,6 +610,7 @@
 
 .cardvieworder-status {
   align-self: flex-start;
+  flex-shrink: 0;
   min-width: 70px;
   padding-left: 8px;
   padding-right: 8px;

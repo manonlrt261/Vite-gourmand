@@ -3017,17 +3017,26 @@ body.has-open-modal {
 }
 
 .order-detail-meal-card h4 {
-  font-family: var(--font-title);
+  font-family: var(--font-text);
   font-size: 22px;
   font-weight: 500;
-  color: var(--primary);
+  color: var(--secondary);
 }
 
 .order-detail-meal-card h5 {
   font-family: var(--font-text);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--secondary);
+}
+
+/* La page de détail utilise h4/h5 là où la confirmation utilise h3/h4. */
+.order-detail-page:not(.order-confirmation-page) .order-detail-meal-card h4 {
+  font-family: var(--font-title);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--primary);
+  line-height: 1;
 }
 
 .order-detail-meal-card p {
