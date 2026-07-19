@@ -65,7 +65,7 @@
                             <h3 class="cardvieworder-title">N° {{ order.commande_id }}</h3>
                             <span class="{{ statusClass }} cardvieworder-status">{{ statusLabels[statusCode]|default(order.statut_libelle|default('En attente')) }}</span>
                             <p class="cardvieworder-date">
-                                Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}
+                                <span style="font-weight: 600;">Commandée le {{ order.date_commande ? order.date_commande|date('d/m/Y') : 'date inconnue' }}</span>
                             </p>
                             {% if statusCode == 'annulee' and order.motif_annulation %}
                                 <p class="customer-order-cancellation-message">{{ order.motif_annulation }}</p>

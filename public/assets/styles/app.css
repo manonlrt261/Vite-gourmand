@@ -2221,6 +2221,10 @@ body.employee-modal-is-open {
   height: 190px;
 }
 
+.customer-order-grid .cardvieworder .cardvieworder-date {
+  font-weight: 600;
+}
+
 /* Le message explicatif reprend exactement la taille de la date de commande. */
 .customer-order-grid .cardvieworder .customer-order-cancellation-message {
   margin: 6px 0;
@@ -2993,6 +2997,7 @@ body.has-open-modal {
 
 .order-detail-meal-card h3,
 .order-detail-meal-card h4,
+.order-detail-meal-card h5,
 .order-detail-meal-card p {
   margin: 0;
 }
@@ -3012,6 +3017,13 @@ body.has-open-modal {
 }
 
 .order-detail-meal-card h4 {
+  font-family: var(--font-text);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--secondary);
+}
+
+.order-detail-meal-card h5 {
   font-family: var(--font-text);
   font-size: 22px;
   font-weight: 500;
