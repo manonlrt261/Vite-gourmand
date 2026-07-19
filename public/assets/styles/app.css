@@ -2218,17 +2218,14 @@ body.employee-modal-is-open {
 
 .customer-order-grid .cardvieworder {
   box-shadow: none;
-}
-
-/* Les cartes annulées disposent de la place nécessaire pour leur message explicatif. */
-.customer-order-grid .cardvieworder.cardvieworder--cancelled {
   height: 190px;
 }
 
-.customer-order-grid .cardvieworder.cardvieworder--cancelled .customer-order-cancellation-message {
+/* Le message explicatif reprend exactement la taille de la date de commande. */
+.customer-order-grid .cardvieworder .customer-order-cancellation-message {
   margin: 6px 0;
   max-width: 100%;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
