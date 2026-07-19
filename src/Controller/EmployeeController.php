@@ -953,20 +953,26 @@ class EmployeeController extends AbstractController
         ]);
 
         $from = $_ENV['MAILER_FROM'] ?? $_SERVER['MAILER_FROM'] ?? 'contact@vite-gourmand.fr';
+        $safeTitle = htmlspecialchars((string) $message['titre'], ENT_QUOTES, 'UTF-8');
+        $safeReply = nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'));
+        $emailHtml = sprintf(
+            <<<'HTML'
+                <h1>Réponse à votre demande</h1>
+                <p>Bonjour,</p>
+                <p>Vous nous avez contacté au sujet de : <strong>%s</strong>.</p>
+                <p>%s</p>
+                <p>L'équipe de Vite & Gourmand</p>
+                HTML,
+            $safeTitle,
+            $safeReply
+        );
+
         try {
             $mailer->send((new Email())
                 ->from($from)
                 ->to((string) $message['email'])
-                ->subject('Reponse a votre demande - Vite & Gourmand')
-                ->html(sprintf(
-                    '<h1>Reponse a votre demande</h1>
-                    <p>Bonjour,</p>
-                    <p>Vous nous avez contacté au sujet de : <strong>%s</strong>.</p>
-                    <p>%s</p>
-                    <p>L\'équipe de Vite & Gourmand</p>',
-                    htmlspecialchars((string) $message['titre'], ENT_QUOTES, 'UTF-8'),
-                    nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'))
-                )));
+                ->subject('Réponse à votre demande - Vite & Gourmand')
+                ->html($emailHtml));
         } catch (\Throwable) {
             // La réponse reste enregistrée dans la messagerie même si l'e-mail ne part pas.
         }
