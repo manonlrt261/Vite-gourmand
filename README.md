@@ -5,7 +5,7 @@
 
 Vite & Gourmand est une application web de gestion pour un traiteur. Elle présente le catalogue de menus, permet la constitution d'un panier et regroupe des espaces dédiés aux clients, aux employés et aux administrateurs.
 
-Le projet a été réalisé dans un cadre pédagogique et reste en cours de développement. Plusieurs parcours sont codés, mais leur validation complète est actuellement limitée par une incohérence de configuration entre PostgreSQL et le schéma MySQL fourni.
+Le projet a été réalisé dans un cadre pédagogique en 2026. L'application est déployée sur alwaysdata et utilise MySQL comme base relationnelle principale, avec MongoDB pour les statistiques agrégées.
 
 ## Sommaire
 
@@ -46,17 +46,11 @@ Le dépôt constitue un projet d'examen réalisé en 2026. Il met notamment en p
 
 ## État du projet
 
-> Le projet est actuellement en cours de développement.
+> Une version fonctionnelle est déployée sur [viteetgourmand33.alwaysdata.net](https://viteetgourmand33.alwaysdata.net/).
 
-Les contrôleurs, vues et scripts front-end couvrent une grande partie des parcours prévus. Cependant, l'application ne peut pas être qualifiée de terminée :
+Les principaux parcours visiteur, client, employé et administrateur sont implémentés. Le moteur relationnel effectivement retenu est MySQL : les scripts SQL, les requêtes applicatives et la configuration de production sont conçus pour ce moteur.
 
-- `.env` et les fichiers Docker configurent PostgreSQL 16 ;
-- les scripts de création et de démonstration sont des exports MySQL 8 ;
-- plusieurs requêtes SQL des contrôleurs utilisent une syntaxe propre à MySQL ;
-- aucune migration Doctrine ne crée le schéma ;
-- aucun test automatisé métier ou fonctionnel n'est présent.
-
-La procédure fonctionnelle décrite ci-dessous retient donc MySQL 8, qui correspond au schéma livré et aux requêtes du code. La variable `DATABASE_URL` doit être corrigée localement avant le lancement.
+Le fichier `compose.yaml`, généré initialement par Symfony, décrit encore un service PostgreSQL 16. Il n'est pas utilisé par la procédure d'installation documentée et ne doit pas être considéré comme la configuration de référence. 
 
 ## Fonctionnalités
 
@@ -86,11 +80,6 @@ Fonctionnalités implémentées dans le code :
 - modifier ses coordonnées et son mot de passe ;
 - déposer un avis sur une commande terminée qui n'a pas encore reçu d'avis.
 
-Fonctionnalités à valider après correction de la base :
-
-- calcul de livraison reposant sur des services publics externes, avec estimation locale de secours ;
-- synchronisation MongoDB après une commande ou une annulation ;
-- envoi des e-mails de confirmation et d'invitation à déposer un avis.
 
 ### Employé (`employe`)
 
@@ -115,10 +104,6 @@ Fonctionnalités implémentées dans le code :
 - créer, modifier, activer, désactiver et supprimer des employés ;
 - accéder également à l'espace employé.
 
-Fonctionnalités partiellement sécurisées :
-
-- les autorisations sont contrôlées manuellement à partir de la session, et non par le composant Security de Symfony ;
-- le mot de passe initial d'un employé est enregistré en clair dans `mot_de_passe_initial`, ce qui doit être supprimé avant toute utilisation réelle.
 
 ## Règles métier principales
 
@@ -137,8 +122,6 @@ Les règles suivantes sont codées :
 - un avis passe d'abord au statut `en_attente`, puis peut être `accepte` ou `refuse` par un employé ;
 - au maximum trois avis acceptés peuvent être sélectionnés pour la page d'accueil ;
 - les statuts de commande prévus sont `en_attente`, `acceptee`, `en_preparation`, `en_livraison`, `livree`, `en_attente_retour_materiel`, `terminee` et `annulee`.
-
-Limites connues : le catalogue public filtre sur le champ `actif`, mais ne filtre pas directement les dates de disponibilité ni le stock. La disponibilité réelle doit donc être confirmée avant une mise en production.
 
 ## Technologies utilisées
 
@@ -163,7 +146,7 @@ Le dépôt ne contient pas de `package.json`. Node.js et npm ne sont donc pas n�
 
 - **MySQL 8** : format du schéma et des données fournis dans `database/`, et dialecte utilisé par plusieurs requêtes métier ;
 - **MongoDB** : copie documentaire des commandes utilisée pour les statistiques par menu ; si MongoDB est indisponible, le service retourne les données calculées depuis la base relationnelle ;
-- **PostgreSQL 16** : présent dans la configuration générée (`.env`, `compose.yaml`), mais incompatible en l'état avec les scripts et une partie du SQL applicatif.
+- **PostgreSQL 16** : uniquement présent dans le fichier Docker généré `compose.yaml`, qui n'est pas utilisé par l'application installée ni par la production.
 
 ### Outils de développement
 
@@ -183,14 +166,12 @@ Le projet suit partiellement l'organisation MVC de Symfony :
 - `InputValidator` centralise plusieurs validations réutilisées ;
 - AssetMapper publie les fichiers CSS, JavaScript et images du dossier `assets/`.
 
-Il n'existe actuellement ni entité Doctrine, ni repository applicatif, ni classe de formulaire Symfony. Une part importante de la logique métier et SQL demeure donc concentrée dans les contrôleurs.
-
 ## Prérequis
 
 - Git ;
 - PHP 8.4 ou supérieur ;
 - Composer 2 ;
-- MySQL 8, recommandé tant que l'incohérence PostgreSQL n'est pas corrigée ;
+- MySQL 8 ou une version compatible de MariaDB ;
 - MongoDB et son extension PHP, uniquement pour persister les statistiques documentaires ;
 - un serveur SMTP ou Mailpit, uniquement pour tester les e-mails réels.
 
@@ -242,21 +223,6 @@ Sous PowerShell :
 Copy-Item .env .env.local
 ```
 
-Ne versionnez pas `.env.local`. Remplacez-y les valeurs de développement par des valeurs propres à votre poste, sans publier de secret.
-
-Exemple cohérent avec les scripts SQL fournis :
-
-```dotenv
-APP_ENV=dev
-APP_SECRET=change_me_with_a_long_random_value
-APP_URL="http://127.0.0.1:8005"
-DEFAULT_URI="http://127.0.0.1:8005"
-DATABASE_URL="mysql://vite_gourmand:mot_de_passe@127.0.0.1:3306/vite_et_gourmand?serverVersion=8.0&charset=utf8mb4"
-MONGODB_URI="mongodb://127.0.0.1:27017"
-MONGODB_DATABASE="vite_gourmand_nosql"
-MAILER_DSN="null://null"
-MAILER_FROM="contact@example.test"
-ADMIN_EMAIL="administration@example.test"
 ```
 
 | Variable | Obligatoire | Rôle |
@@ -265,7 +231,7 @@ ADMIN_EMAIL="administration@example.test"
 | `APP_SECRET` | Oui | Secret interne de Symfony ; utiliser une valeur aléatoire privée. |
 | `APP_URL` | Oui pour les liens applicatifs | URL de base de l'application. |
 | `DEFAULT_URI` | Recommandée | URI utilisée pour générer des URL absolues hors requête. |
-| `DATABASE_URL` | Oui | Connexion à la base relationnelle. Elle doit être MySQL tant que le code n'est pas porté vers PostgreSQL. |
+| `DATABASE_URL` | Oui | Connexion à la base relationnelle MySQL/MariaDB. |
 | `MONGODB_URI` | Non | Connexion MongoDB ; le code utilise `mongodb://127.0.0.1:27017` par défaut. |
 | `MONGODB_DATABASE` | Non | Nom de la base documentaire ; défaut : `vite_gourmand_nosql`. |
 | `MAILER_DSN` | Oui | Transport d'e-mails ; `null://null` désactive l'envoi réel. |
@@ -281,7 +247,8 @@ Suivez la section suivante. Le projet n'utilise ni migration Doctrine ni fixture
 
 ### Situation actuelle
 
-Les fichiers `database/01_creation_base.sql` et `database/02_insertion_donnees.sql` sont des exports MySQL. Ils ne sont pas compatibles avec le conteneur PostgreSQL défini dans `compose.yaml`. N'utilisez pas `doctrine:migrations:migrate` ni `doctrine:fixtures:load` pour l'installation actuelle : aucune migration et aucune fixture ne sont présentes.
+Les fichiers `database/01_creation_base.sql` et `database/02_insertion_donnees.sql` constituent la source d'installation MySQL locale. Les variantes suffixées `_alwaysdata.sql` sont adaptées à l'hébergement, où la base existe déjà et où les instructions `CREATE DATABASE` et `USE` ne doivent pas être exécutées.
+
 
 ### Initialisation avec MySQL 8
 
@@ -304,7 +271,7 @@ Get-Content -Raw database/02_insertion_donnees.sql | mysql -u vite_gourmand -p v
 
 Les scripts contiennent des suppressions de tables. Leur réimportation peut effacer les données existantes : utilisez-les uniquement sur une base de développement sauvegardée ou vide.
 
-> `[À COMPLÉTER : décider si la configuration officielle doit rester sur MySQL 8 ou si le code et le schéma doivent être migrés vers PostgreSQL 16]`
+Les scripts `03_correction_accents.sql` à `06_correction_accents_finale.sql` sont des correctifs historiques destinés à une base dont les textes ont subi un mauvais encodage. Ils ne sont pas nécessaires lors d'une installation propre à partir des deux scripts principaux.
 
 ## Configuration de MongoDB
 
@@ -314,8 +281,6 @@ MongoDB stocke la collection `commandes_par_menu` dans la base `vite_gourmand_no
 2. Activez l'extension PHP MongoDB.
 3. Ajoutez au besoin `MONGODB_URI` et `MONGODB_DATABASE` dans `.env.local`.
 4. Ouvrez une page de statistiques administrateur après connexion : la base et la collection sont créées automatiquement lors de la première écriture.
-
-Aucune commande d'import MongoDB ni donnée documentaire indépendante n'est fournie. Si MongoDB est indisponible, le service intercepte l'erreur et utilise directement les documents calculés depuis SQL ; les graphiques peuvent donc s'afficher sans persistance MongoDB.
 
 ## Compilation des assets
 
@@ -349,15 +314,14 @@ Le dépôt contient aussi `demarrer-site.bat`, qui lance ce serveur avec le chem
 
 ## Comptes de démonstration
 
-Les scripts de données ne créent aucun utilisateur de démonstration. Aucun identifiant ne peut donc être documenté de manière fiable.
+Le script `database/02_insertion_donnees.sql` crée trois comptes de démonstration actifs :
 
 | Rôle | Adresse e-mail | Mot de passe | Accès principal |
 | --- | --- | --- | --- |
-| Administrateur | `[À COMPLÉTER : compte de démonstration]` | `[À COMPLÉTER : mot de passe de démonstration]` | Administration et espace employé |
-| Employé | `[À COMPLÉTER : compte de démonstration]` | `[À COMPLÉTER : mot de passe de démonstration]` | Gestion opérationnelle |
-| Client | `[À COMPLÉTER : compte de démonstration]` | `[À COMPLÉTER : mot de passe de démonstration]` | Commandes et espace personnel |
+| Administrateur | `admin.test@vite-gourmand.local` | Valeur hachée dans le script | Administration et espace employé |
+| Employé | `employe.test@vite-gourmand.local` | `ViteGourmand2026!` | Gestion opérationnelle |
+| Client | `cliente.test@vite-gourmand.local` | Valeur hachée dans le script | Commandes et espace personnel |
 
-Ces comptes devront être réservés aux environnements de développement ou de démonstration. Un client peut être créé depuis `/inscription`. La création sécurisée du premier administrateur reste à définir.
 
 ## Utilisation de l'application
 
@@ -395,9 +359,10 @@ Vite-gourmand/
 ├── assets/                  # CSS, JavaScript, images et contrôleurs Stimulus
 ├── bin/                     # Console Symfony et lanceur PHPUnit
 ├── config/                  # Services, routes et configuration des composants
-├── database/                # Schéma et données de démonstration MySQL
+├── database/                # Schéma, données MySQL et variantes alwaysdata
+├── docs/                    # Manuels et documentations du projet
 ├── migrations/              # Dossier présent, sans migration applicative
-├── public/                  # Point d'entrée HTTP et routeur du serveur PHP
+├── public/                  # Point d'entrée HTTP, assets compilés et fichiers SEO
 ├── src/
 │   ├── Controller/          # Contrôleurs et logique métier
 │   ├── Service/             # Synchronisation des statistiques MongoDB
@@ -408,7 +373,7 @@ Vite-gourmand/
 ├── translations/            # Fichiers de traduction du framework
 ├── .env                     # Valeurs de configuration par défaut
 ├── composer.json            # Dépendances et scripts Composer
-├── compose.yaml             # Service PostgreSQL actuellement incohérent avec le SQL
+├── compose.yaml             # Service PostgreSQL généré, non utilisé par le projet
 ├── importmap.php            # Dépendances JavaScript de l'importmap
 └── phpunit.dist.xml         # Configuration PHPUnit
 ```
@@ -417,11 +382,11 @@ Vite-gourmand/
 
 ## Organisation du code
 
-- `src/Controller/` contient les huit contrôleurs publics, client, employé et administrateur.
+- `src/Controller/` contient les neuf contrôleurs publics, client, employé et administrateur.
 - `src/Service/MongoStatsService.php` transforme les commandes SQL en documents MongoDB.
 - `src/Validator/InputValidator.php` valide notamment dates, horaires, téléphone, code postal, longueur et thèmes.
 - `src/Twig/ScheduleExtension.php` expose les horaires et fermetures aux templates.
-- `templates/` regroupe 38 fichiers Twig.
+- `templates/` regroupe 41 fichiers Twig.
 - `assets/app.js` charge les styles et scripts applicatifs ; AssetMapper les publie.
 - `config/routes.yaml` déclare les routes applicatives ; aucune route par attribut n'a été trouvée dans les contrôleurs.
 - `database/` remplace actuellement les migrations pour créer et remplir la base MySQL.
@@ -452,8 +417,6 @@ Vite-gourmand/
 - les droits sont contrôlés manuellement dans les contrôleurs à partir de données de session ;
 - la déconnexion est accessible en GET et ne vérifie pas de jeton CSRF ;
 - le mot de passe initial d'un employé est conservé en clair dans la colonne `mot_de_passe_initial` ;
-- aucune limitation de tentatives de connexion ou de réinitialisation n'a été trouvée ;
-- aucune politique explicite de cookies sécurisés ou d'en-têtes HTTP de sécurité n'est configurée ;
 - aucune validation de téléversement n'est nécessaire actuellement, car les formulaires enregistrent des chemins d'image et ne téléversent pas de fichier.
 
 ## Gestion des rôles et autorisations
@@ -466,7 +429,6 @@ Les noms réellement stockés sont :
 | `employe` | 2 | Espace employé |
 | `administrateur` | 3 | Espace administrateur et espace employé |
 
-Il ne s'agit pas de rôles Symfony de type `ROLE_USER`, `ROLE_EMPLOYEE` ou `ROLE_ADMIN`. L'héritage administrateur vers employé est codé dans `EmployeeController`, qui accepte le libellé `administrateur` ou l'identifiant 3.
 
 ## Commandes utiles
 
@@ -493,17 +455,13 @@ PHPUnit 13.2 est installé et configuré dans `phpunit.dist.xml`. Le lanceur est
 php bin/phpunit
 ```
 
-> Aucun test automatisé n'est actuellement présent dans le projet. La commande aboutit avec le message `No tests executed!`.
-
 Tests recommandés :
 
 - inscription, connexion et réinitialisation de mot de passe ;
 - calcul du panier, remise et livraison ;
 - création, modification et annulation d'une commande ;
-- cloisonnement des commandes entre clients ;
 - autorisations employé et administrateur ;
 - modération des avis ;
-- repli lorsque MongoDB ou le service de distance est indisponible.
 
 ## Qualité du code
 
@@ -517,12 +475,14 @@ php bin/console lint:twig templates
 
 ## Déploiement
 
-L'application n'est pas confirmée comme déployée. Avant toute mise en production, il faut d'abord harmoniser le moteur relationnel et remplacer le mécanisme de création de tables à l'exécution par des migrations.
+L'application est déployée manuellement sur **alwaysdata** : [https://viteetgourmand33.alwaysdata.net/](https://viteetgourmand33.alwaysdata.net/).
 
-Étapes compatibles avec la structure actuelle après cette correction :
+La production utilise PHP, Apache et MySQL/MariaDB. Le document root doit pointer vers `public/`. MongoDB doit être fourni par un service externe ou un service personnalisé, car il n'est pas proposé comme base managée par alwaysdata. MySQL reste la source de vérité si MongoDB est momentanément indisponible.
+
+Résumé de la procédure de déploiement :
 
 1. configurer un serveur web dont le document root pointe vers `public/` ;
-2. installer PHP 8.4, les extensions nécessaires, MySQL 8 et éventuellement MongoDB ;
+2. sélectionner PHP 8.4 et activer les extensions nécessaires ;
 3. définir les variables de production sans les commiter ;
 4. installer les dépendances :
 
@@ -530,7 +490,7 @@ L'application n'est pas confirmée comme déployée. Avant toute mise en product
    composer install --no-dev --optimize-autoloader
    ```
 
-5. initialiser la base avec une procédure de migration validée ;
+5. initialiser la base avec `database/01_creation_base_alwaysdata.sql`, puis `database/02_insertion_donnees_alwaysdata.sql` ;
 6. compiler les assets et le fichier d'environnement :
 
    ```bash
@@ -546,14 +506,14 @@ L'application n'est pas confirmée comme déployée. Avant toute mise en product
 
 8. donner au processus web les droits d'écriture nécessaires sur `var/` ;
 9. configurer HTTPS, les cookies sécurisés, le SMTP et les sauvegardes ;
-10. créer le premier administrateur par une procédure sécurisée à définir ;
+10. remplacer ou réinitialiser les identifiants de démonstration ;
 11. exécuter des tests fonctionnels sur l'environnement déployé.
 
-Application déployée : `[À COMPLÉTER : URL de l'application déployée]`
+La procédure détaillée, les contrôles après mise en ligne, les sauvegardes et le retour arrière sont décrits dans [`docs/documentation-technique.md`](docs/documentation-technique.md#5-déploiement).
 
 ## Variables sensibles et fichiers ignorés
 
-Les secrets, mots de passe, jetons et identifiants SMTP ne doivent jamais être publiés sur GitHub. La configuration locale doit rester dans `.env.local`.
+ La configuration locale doit rester dans `.env.local`.
 
 Le `.gitignore` exclut notamment :
 
@@ -570,33 +530,19 @@ Le projet n'utilise pas `node_modules/`, puisqu'il n'a pas de `package.json`.
 
 ## Documentation complémentaire
 
-- Manuel utilisateur : `[À COMPLÉTER : lien ou chemin]`
-- Charte graphique : `[À COMPLÉTER : lien ou chemin]`
-- Documentation technique : ce README et `[À COMPLÉTER : documentation complémentaire]`
-- Documentation de gestion de projet : `[À COMPLÉTER : lien ou chemin]`
-- Schémas UML et diagramme de classes : `[À COMPLÉTER : lien ou chemin]`
-- MCD : `[À COMPLÉTER : lien ou chemin]`
-- Diagrammes de séquence : `[À COMPLÉTER : lien ou chemin]`
-- Maquettes Figma : `[À COMPLÉTER : lien]`
+- [Manuel d'utilisation](docs/Manuel%20d'utilisation.pdf)
+- [Charte graphique](docs/Chartegraphique.pdf)
+- [Annexes de la charte graphique](docs/Chartegraphiqueannexes.pdf)
+- [Documentation technique](docs/documentation-technique.md), comprenant l'architecture, le modèle de données, les diagrammes et le déploiement
+- [Documentation de gestion de projet](docs/documentation-gestion-projet.md)
 
 ## Liens du projet
 
 - Dépôt GitHub : [manonlrt261/Vite-gourmand](https://github.com/manonlrt261/Vite-gourmand)
-- Application en ligne : `[À COMPLÉTER : URL]`
-- Gestion de projet : `[À COMPLÉTER : URL]`
-- Maquettes Figma : `[À COMPLÉTER : URL]`
-- Documentation : `[À COMPLÉTER : URL ou chemin]`
+- Application en ligne : [viteetgourmand33.alwaysdata.net](https://viteetgourmand33.alwaysdata.net/)
+- Gestion de projet : [tableau Notion Vite & Gourmand](https://app.notion.com/p/6482621c5f4d42b1ad54ca0e19fc8a46)
+- Documentation : [`docs/`](docs/)
 
-## Améliorations futures
-
-- choisir officiellement MySQL ou PostgreSQL et harmoniser `.env`, Docker, le schéma et toutes les requêtes ;
-- créer des migrations Doctrine reproductibles et supprimer les créations ou altérations de tables dans les contrôleurs ;
-- migrer l'authentification et les autorisations vers Symfony Security ;
-- supprimer tout stockage de mot de passe en clair et utiliser un lien d'activation à usage unique pour les employés ;
-- ajouter des tests unitaires, d'intégration et fonctionnels, puis une intégration continue ;
-- extraire la logique métier et SQL volumineuse des contrôleurs vers des services et repositories ;
-- contrôler les dates de disponibilité et le stock dans le catalogue et au moment de commander ;
-- renforcer l'accessibilité, le responsive et les contrôles de sécurité avant déploiement.
 
 ## Auteur
 
