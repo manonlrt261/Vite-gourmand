@@ -32,7 +32,7 @@ INSERT INTO `roles` (`role_id`, `libelle`, `created_at`, `updated_at`) VALUES (1
 INSERT INTO `utilisateurs` (`id`, `nom`, `prenom`, `email`, `telephone`, `mot_de_passe`, `adresse_postale`, `ville`, `code_postal`, `role_id`, `actif`, `created_at`, `updated_at`, `poste`, `date_naissance`, `lieu_naissance`, `email_personnel`, `mot_de_passe_initial`) VALUES
 (1,'Cliente','Test','cliente.test@vite-gourmand.local','0600000001','$2y$12$o5C5w.HC4Y0tX5qDu763P.vauZHGKbdK7CKVDwnQOvMptghbAU.w2','1 rue Test','Bordeaux','33000',1,1,NOW(),NULL,'Client',NULL,NULL,NULL,NULL),
 (2,'Employe','Test','employe.test@vite-gourmand.local','0600000002','$2y$12$o5C5w.HC4Y0tX5qDu763P.vauZHGKbdK7CKVDwnQOvMptghbAU.w2','2 rue Test','Bordeaux','33000',2,1,NOW(),NULL,'EmployÃ© polyvalent','1995-01-01','Bordeaux','employe.personnel.test@vite-gourmand.local','ViteGourmand2026!'),
-(3,'Administrateur','Vite et Gourmand','admin.test@vite-gourmand.local','0600000003','$2y$12$SfA8Sa.Zv7AgfpDcLBjqDOtl896bnwOk2vK4wdkMapip7LN6MejpK','3 rue Test','Bordeaux','33000',3,1,NOW(),NULL,'Administrateur',NULL,NULL,NULL,NULL);
+(3,'Administrateur','Vite et Gourmand','admin.test@vite-gourmand.local','0600000003','$2y$12$9/9d7TY74x78K0Rf8x5mDOF33i0CuwMFwn8DIUfYmCuzVTu3kI7NW','3 rue Test','Bordeaux','33000',3,1,NOW(),NULL,'Administrateur',NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `utilisateurs` ENABLE KEYS */;
 
 --

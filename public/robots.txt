@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /espace-administrateur
+Disallow: /espace-employe
+Disallow: /mon-compte
+Disallow: /panier
+Disallow: /commande
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /mot-de-passe-oublie
+Disallow: /reinitialiser-mot-de-passe
+
+Sitemap: https://viteetgourmand33.alwaysdata.net/sitemap.xml
