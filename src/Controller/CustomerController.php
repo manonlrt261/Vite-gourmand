@@ -471,7 +471,9 @@ class CustomerController extends AbstractController
         );
 
         if (!$customer || (int) $customer['actif'] !== 1) {
-            return $this->redirectToRoute('logout');
+            $session->invalidate();
+
+            return $this->redirectToRoute('login');
         }
 
         if ($request->isMethod('POST')) {
@@ -541,13 +543,6 @@ class CustomerController extends AbstractController
                 'mot_de_passe' => $hashedPassword,
                 'updated_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ], ['id' => $userId]);
-
-            try {
-            // Si le compte employé avait un mot de passe initial visible par l'administrateur,
-            // il est effacé dès que l'utilisateur définit son propre mot de passe.
-                $connection->update('utilisateurs', ['mot_de_passe_initial' => null], ['id' => $userId]);
-            } catch (\Throwable) {
-            }
 
             // On relit la base pour confirmer que le nouveau mot de passe a bien remplacé l'ancien.
             $savedPassword = (string) $connection->fetchOne(

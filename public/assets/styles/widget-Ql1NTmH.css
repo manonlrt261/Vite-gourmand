@@ -1,0 +1,157 @@
+/* Indicateurs synthétiques du tableau de bord administrateur. */
+.admindashboardwidget-preview {
+  padding: 24px;
+}
+
+.admindashboardwidget {
+  width: 386px;
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.admindashboardwidget-card {
+  min-height: 126px;
+  padding: 20px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+
+  background-color: var(--white);
+  border: 0.2px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.admindashboardwidget-icon {
+  font-size: 24px;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.admindashboardwidget-value {
+  margin: 0 0 4px 0;
+  font-family: var(--font-text);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+.admindashboardwidget-label {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  opacity: 0.7;
+  line-height: 1;
+}
+
+/* Répartition du nombre de commandes par menu. */
+.menubasedorder-preview {
+  padding: 24px;
+}
+
+.menubasedorder {
+  width: 447px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.menubasedorder-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.menubasedorder-card {
+  flex: 1;
+  min-height: 128px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.menubasedorder-card-large {
+  width: 100%;
+}
+
+.menubasedorder-value {
+  margin: 0 0 4px 0;
+  font-family: var(--font-title);
+  font-size: 55px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.menubasedorder-label {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}
+
+/* Indicateurs clés liés au chiffre d’affaires. */
+.kpiadministrator-preview {
+  padding: 24px;
+}
+
+.kpiadministrator {
+  width: 508px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.kpiadministrator-card {
+  width: 495px;
+  padding: 24px;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  background-color: var(--offwhite);
+  border: 0.5px solid var(--primary);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.kpiadministrator-value {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 55px;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.kpiadministrator-label {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--secondary);
+  line-height: 1;
+}

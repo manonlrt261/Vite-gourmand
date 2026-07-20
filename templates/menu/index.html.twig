@@ -20,11 +20,29 @@
         </div>
 
         <div class="menus-filter-panel__controls">
-            <select class="menus-filter-control" aria-label="Trier par prix" data-filter-price>
-                <option value="">Prix</option>
-                <option value="asc">Prix croissant</option>
-                <option value="desc">Prix d&eacute;croissant</option>
-            </select>
+            <label class="sr-only" for="menu-price-min">Prix minimum</label>
+            <input
+                id="menu-price-min"
+                class="menus-filter-control"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="Prix minimum"
+                data-filter-price-min
+            >
+
+            <label class="sr-only" for="menu-price-max">Prix maximum</label>
+            <input
+                id="menu-price-max"
+                class="menus-filter-control"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="Prix maximum"
+                data-filter-price-max
+            >
 
             <select class="menus-filter-control" aria-label="Filtrer par disponibilit&eacute;" data-filter-stock>
                 <option value="">Disponibilit&eacute;</option>

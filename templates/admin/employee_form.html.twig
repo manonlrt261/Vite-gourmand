@@ -101,37 +101,8 @@
                 </select>
             </label>
 
-            {# Les attributs data-password-* relient les deux champs au contrôle d'affichage du mot de passe. #}
-            <label>
-                <span>Création de mot de passe *</span>
-                <span class="auth-password-control">
-                    <input type="password" name="password" value="{{ employee.password|default('') }}" placeholder="Créer un mot de passe" data-password-input required>
-                    <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher le mot de passe" title="Afficher le mot de passe">
-                        <span aria-hidden="true">Afficher</span>
-                    </button>
-                </span>
-            </label>
-
-            <label>
-                <span>Confirmation du mot de passe *</span>
-                <span class="auth-password-control">
-                    <input type="password" name="password_confirm" value="{{ employee.password_confirm|default('') }}" placeholder="Confirmer le mot de passe" data-password-input required>
-                    <button type="button" class="auth-password-toggle" data-password-toggle aria-label="Afficher la confirmation du mot de passe" title="Afficher la confirmation du mot de passe">
-                        <span aria-hidden="true">Afficher</span>
-                    </button>
-                </span>
-            </label>
-
-            {# Rappel des règles de sécurité appliquées côté serveur avant l'enregistrement. #}
             <div class="register-password-info admin-employee-password-info admin-employee-create-form__full">
-                <p><strong>Le mot de passe doit contenir au minimum :</strong></p>
-                <ul>
-                    <li>10 caractères minimum</li>
-                    <li>Au minimum 1 caractère spécial</li>
-                    <li>Une majuscule</li>
-                    <li>Une minuscule</li>
-                    <li>Au minimum 1 chiffre</li>
-                </ul>
+                <p><strong>Activation sécurisée :</strong> l'employé recevra sur son adresse personnelle un lien valable 24 heures pour choisir lui-même son mot de passe.</p>
             </div>
 
             <div class="admin-employee-create-form__actions">

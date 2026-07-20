@@ -194,32 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     viewModal.querySelector('[data-view-poste]').textContent = button.dataset.poste || 'Non renseigné';
   };
 
-  const preparePasswordPreview = (button) => {
-    // Le mot de passe initial n'est affichable que s'il correspond encore au mot de passe cree par l'administrateur.
-    const maskedPassword = '••••••••••';
-    const initialPassword = (button.dataset.initialPassword || '').trim();
-    const unavailableValues = ['non visible', '***', maskedPassword, 'null', 'undefined'];
-    const canRevealInitialPassword = initialPassword !== '' && !unavailableValues.includes(initialPassword.toLowerCase());
-    const passwordText = viewModal.querySelector('[data-view-password]');
-    const passwordToggle = viewModal.querySelector('[data-view-password-toggle]');
-    const passwordUnavailable = viewModal.querySelector('[data-view-password-unavailable]');
-
-    if (!passwordText || !passwordToggle || !passwordUnavailable) {
-      return;
-    }
-
-    passwordToggle.dataset.passwordValue = canRevealInitialPassword ? initialPassword : '';
-    passwordToggle.dataset.visible = 'false';
-    passwordToggle.textContent = 'Afficher';
-    passwordText.textContent = canRevealInitialPassword ? maskedPassword : 'Non visible';
-    passwordToggle.hidden = !canRevealInitialPassword;
-    passwordUnavailable.hidden = canRevealInitialPassword;
-  };
-
   const openViewModal = (button) => {
     lastFocusedElement = button;
     fillViewModal(button);
-    preparePasswordPreview(button);
     viewModal.hidden = false;
     document.body.classList.add('employee-modal-is-open');
     viewModal.querySelector('[data-view-modal-close]')?.focus();
@@ -269,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
       viewButton.dataset.lieuNaissance = employee.lieu_naissance || '';
       viewButton.dataset.email = employee.email || '';
       viewButton.dataset.emailPersonnel = employee.email_personnel || '';
-      viewButton.dataset.initialPassword = employee.mot_de_passe_initial || '';
       viewButton.dataset.telephone = employee.telephone || '';
       viewButton.dataset.adresse = employee.adresse_postale || '';
       viewButton.dataset.ville = employee.ville || '';
@@ -280,27 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   page.querySelectorAll('[data-employee-view]').forEach((button) => {
     button.addEventListener('click', () => openViewModal(button));
-  });
-
-  viewModal?.querySelector('[data-view-password-toggle]')?.addEventListener('click', (event) => {
-    const button = event.currentTarget;
-    const passwordText = viewModal.querySelector('[data-view-password]');
-    const isVisible = button.dataset.visible === 'true';
-
-    if (!passwordText) {
-      return;
-    }
-
-    if (isVisible) {
-      passwordText.textContent = '••••••••••';
-      button.textContent = 'Afficher';
-      button.dataset.visible = 'false';
-      return;
-    }
-
-    passwordText.textContent = button.dataset.passwordValue || '';
-    button.textContent = 'Masquer';
-    button.dataset.visible = 'true';
   });
 
   page.querySelectorAll('[data-employee-edit]').forEach((button) => {

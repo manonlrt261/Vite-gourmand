@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 // Contrôleur de l'espace administrateur : statistiques et gestion des comptes employés.
 class AdminController extends AbstractController
@@ -89,18 +90,19 @@ class AdminController extends AbstractController
                     'email_personnel' => $formData['email_personnel'],
                     'telephone' => $formData['telephone'],
                     'poste' => $formData['poste'],
-                    'mot_de_passe' => password_hash($formData['password'], PASSWORD_DEFAULT),
+                    'mot_de_passe' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
                     // Mot de passe initial visible par l'administrateur tant que l'employé ne l'a pas changé.
-                    'mot_de_passe_initial' => $formData['password'],
                     'role_id' => $this->getEmployeeRoleId($connection),
                     'actif' => 1,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
 
-                $this->sendEmployeeCreationEmail($mailer, $formData);
+                $employeeId = (int) $connection->lastInsertId();
+                $invitationUrl = $this->createEmployeeInvitation($connection, $employeeId);
+                $this->sendEmployeeCreationEmail($mailer, $formData, $invitationUrl);
 
-                $this->addFlash('employee_success', 'Compte employé créé. Un email de confirmation a été envoyé à l’adresse personnelle de l’employé.');
+                $this->addFlash('employee_success', 'Compte employé créé. Un lien sécurisé valable 24 heures a été envoyé à l’adresse personnelle de l’employé.');
 
                 return $this->redirectToRoute('admin_employees');
             }
@@ -571,7 +573,7 @@ class AdminController extends AbstractController
         $this->ensureEmployeeIdentityColumns($connection);
 
         return $connection->fetchAllAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone, u.date_naissance, u.lieu_naissance,
+             'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.telephone, u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal, u.created_at, u.actif, u.poste
              FROM utilisateurs u
              LEFT JOIN roles r ON r.role_id = u.role_id
@@ -623,12 +625,6 @@ class AdminController extends AbstractController
         } catch (\Throwable) {
         }
 
-        try {
-            // Ce champ conserve uniquement le mot de passe créé par l'administrateur.
-            // Il reste vide si l'employé a déjà défini son propre mot de passe.
-            $connection->executeStatement('ALTER TABLE utilisateurs ADD COLUMN mot_de_passe_initial VARCHAR(255) DEFAULT NULL');
-        } catch (\Throwable) {
-        }
     }
 
     /**
@@ -649,8 +645,6 @@ class AdminController extends AbstractController
             'email_personnel' => trim((string) $request->request->get('email_personnel')),
             'telephone' => trim((string) $request->request->get('telephone')),
             'poste' => trim((string) $request->request->get('poste')),
-            'password' => (string) $request->request->get('password'),
-            'password_confirm' => (string) $request->request->get('password_confirm'),
         ];
     }
 
@@ -681,18 +675,6 @@ class AdminController extends AbstractController
 
         if (($data['email_personnel'] ?? '') !== '' && !filter_var($data['email_personnel'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Veuillez renseigner une adresse email personnelle valide.';
-        }
-
-        if ($isCreation && (($data['password'] ?? '') === '' || ($data['password_confirm'] ?? '') === '')) {
-            $errors[] = 'Veuillez créer et confirmer le mot de passe de l’employé.';
-        }
-
-        if ($isCreation && ($data['password'] ?? '') !== ($data['password_confirm'] ?? '')) {
-            $errors[] = 'Les mots de passe ne correspondent pas.';
-        }
-
-        if ($isCreation && ($data['password'] ?? '') !== '' && !$this->isStrongPassword($data['password'])) {
-            $errors[] = 'Le mot de passe doit contenir au minimum 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
         }
 
         // La date de naissance doit exister et ne pas être dans le futur.
@@ -767,21 +749,11 @@ class AdminController extends AbstractController
         return $parsedDate instanceof \DateTimeImmutable && $parsedDate->format('Y-m-d') === $date;
     }
 
-    // Vérifie que le mot de passe employé respecte les mêmes règles que les comptes clients.
-    private function isStrongPassword(string $password): bool
-    {
-        return strlen($password) >= 10
-            && preg_match('/[A-Z]/', $password)
-            && preg_match('/[a-z]/', $password)
-            && preg_match('/\d/', $password)
-            && preg_match('/[^A-Za-z0-9]/', $password);
-    }
-
     /**
      * @param array<string, string> $employeeData
      */
     // Envoie un email de confirmation sur l'adresse personnelle du nouvel employé.
-    private function sendEmployeeCreationEmail(MailerInterface $mailer, array $employeeData): void
+    private function sendEmployeeCreationEmail(MailerInterface $mailer, array $employeeData, string $invitationUrl): void
     {
         $personalEmail = $employeeData['email_personnel'] ?? '';
 
@@ -795,6 +767,7 @@ class AdminController extends AbstractController
         $lastname = trim($employeeData['nom'] ?? '');
         $professionalEmail = $employeeData['email'] ?? '';
         $fullName = trim($firstname . ' ' . $lastname);
+        $safeInvitationUrl = htmlspecialchars($invitationUrl, ENT_QUOTES, 'UTF-8');
 
         try {
             $mailer->send((new Email())
@@ -805,7 +778,7 @@ class AdminController extends AbstractController
                     "Bonjour {$fullName},\n\n"
                     . "Votre compte employé Vite & Gourmand a bien été créé.\n\n"
                     . "Votre email professionnel est : {$professionalEmail}\n\n"
-                    . "Pour obtenir votre mot de passe, merci de vous rapprocher de l'administrateur.\n\n"
+                    . "Choisissez votre mot de passe avec ce lien valable 24 heures : {$invitationUrl}\n\n"
                     . "À bientôt,\n"
                     . "L'équipe Vite & Gourmand"
                 )
@@ -813,7 +786,8 @@ class AdminController extends AbstractController
                     '<p>Bonjour ' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . ',</p>'
                     . '<p>Votre compte employé <strong>Vite & Gourmand</strong> a bien été créé.</p>'
                     . '<p>Votre adresse email professionnelle est : <strong>' . htmlspecialchars($professionalEmail, ENT_QUOTES, 'UTF-8') . '</strong></p>'
-                    . '<p>Pour obtenir votre mot de passe, merci de vous rapprocher de l’administrateur.</p>'
+                    . '<p><a href="' . $safeInvitationUrl . '">Choisir mon mot de passe</a></p>'
+                    . '<p>Ce lien personnel est valable pendant 24 heures et ne peut être utilisé qu’une fois.</p>'
                     . '<p>Adresse de contact de l’administrateur : ' . htmlspecialchars($adminEmail, ENT_QUOTES, 'UTF-8') . '</p>'
                     . '<p>À bientôt,<br>L’équipe Vite & Gourmand</p>'
                 ));
@@ -830,14 +804,33 @@ class AdminController extends AbstractController
         return $roleId ? (int) $roleId : 2;
     }
 
-    // Génère un mot de passe temporaire pour un nouvel employé.
-    private function generateTemporaryEmployeePassword(): string
+    // Crée un jeton à usage unique permettant au nouvel employé de choisir son mot de passe.
+    private function createEmployeeInvitation(Connection $connection, int $employeeId): string
     {
-        try {
-            return 'Vg!2026' . bin2hex(random_bytes(4));
-        } catch (\Throwable) {
-            return 'Vg!2026Temp';
-        }
+        $connection->executeStatement(
+            'CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id INT AUTO_INCREMENT NOT NULL,
+                utilisateur_id INT NOT NULL,
+                token_hash VARCHAR(64) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                used_at DATETIME DEFAULT NULL,
+                created_at DATETIME NOT NULL,
+                INDEX IDX_PASSWORD_RESET_USER (utilisateur_id),
+                UNIQUE INDEX UNIQ_PASSWORD_RESET_TOKEN (token_hash),
+                PRIMARY KEY(id)
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB'
+        );
+
+        $token = bin2hex(random_bytes(32));
+        $connection->insert('password_reset_tokens', [
+            'utilisateur_id' => $employeeId,
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => (new \DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s'),
+            'used_at' => null,
+            'created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ]);
+
+        return $this->generateUrl('reset_password', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     /**
@@ -883,7 +876,7 @@ class AdminController extends AbstractController
     private function getEmployees(Connection $connection): array
     {
         return $connection->fetchAllAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone,
+            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.telephone,
                     u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste
@@ -902,7 +895,7 @@ class AdminController extends AbstractController
     private function getEmployeeById(Connection $connection, int $id): array|false
     {
         return $connection->fetchAssociative(
-            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.mot_de_passe_initial, u.telephone,
+            'SELECT u.id, u.nom, u.prenom, u.email, u.email_personnel, u.telephone,
                     u.date_naissance, u.lieu_naissance,
                     u.adresse_postale, u.ville, u.code_postal,
                     u.actif, u.created_at, u.updated_at, u.poste

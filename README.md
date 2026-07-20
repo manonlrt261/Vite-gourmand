@@ -416,7 +416,7 @@ Vite-gourmand/
 - aucune règle `access_control`, hiérarchie `role_hierarchy`, classe User, voter ou authenticator Symfony n'est configuré ;
 - les droits sont contrôlés manuellement dans les contrôleurs à partir de données de session ;
 - la déconnexion est accessible en GET et ne vérifie pas de jeton CSRF ;
-- le mot de passe initial d'un employé est conservé en clair dans la colonne `mot_de_passe_initial` ;
+- le mot de passe d'un nouvel employé est choisi via un lien personnel à usage unique valable 24 heures ;
 - aucune validation de téléversement n'est nécessaire actuellement, car les formulaires enregistrent des chemins d'image et ne téléversent pas de fichier.
 
 ## Gestion des rôles et autorisations

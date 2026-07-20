@@ -149,7 +149,7 @@
     </section>
 
     <div class="customer-logout">
-        <a href="{{ path('logout') }}" class="buttonprimary">Se déconnecter</a>
+        {% include 'components/_logout_form.html.twig' with { label: 'Se déconnecter', class: 'buttonprimary' } %}
     </div>
 </main>
 {% endblock %}

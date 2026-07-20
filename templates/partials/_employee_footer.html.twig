@@ -35,6 +35,6 @@
         <a href="{{ path('home_show') }}">Accueil</a>
         <a href="{{ path('menu_index') }}">Menus</a>
         <a href="{{ path(footerDashboardRoute) }}">Mon espace</a>
-        <a href="{{ path('logout') }}">Déconnexion</a>
+        {% include 'components/_logout_form.html.twig' %}
     </nav>
 </footer>

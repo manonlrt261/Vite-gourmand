@@ -29,7 +29,7 @@
         <a href="{{ path('contact_index') }}">Contact</a>
         {% if app.session.get('utilisateur_id') %}
             <a href="{{ path('customer_account') }}">Mon compte</a>
-            <a href="{{ path('logout') }}">Déconnexion</a>
+            {% include 'components/_logout_form.html.twig' %}
         {% else %}
             <a href="{{ path('login') }}">Connexion</a>
         {% endif %}

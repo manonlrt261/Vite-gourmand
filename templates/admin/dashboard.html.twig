@@ -177,7 +177,7 @@
 
         <div class="admin-dashboard-actions">
             <a href="{{ path('employee_dashboard') }}" class="buttonoffwhite">Espace employ&eacute;</a>
-            <a href="{{ path('logout') }}" class="buttonprimary">Se d&eacute;connecter</a>
+            {% include 'components/_logout_form.html.twig' with { label: 'Se d&eacute;connecter', class: 'buttonprimary' } %}
         </div>
     </main>
 {% endblock %}

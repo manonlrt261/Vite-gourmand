@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const fields = {
-    price: filterPanel.querySelector('[data-filter-price]'),
+    priceMin: filterPanel.querySelector('[data-filter-price-min]'),
+    priceMax: filterPanel.querySelector('[data-filter-price-max]'),
     stock: filterPanel.querySelector('[data-filter-stock]'),
     theme: filterPanel.querySelector('[data-filter-theme]'),
     regime: filterPanel.querySelector('[data-filter-regime]'),
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const getNumber = (card, name) => Number.parseFloat(card.dataset[name] || '0');
 
   const getSelectedFilters = () => ({
-    price: fields.price.value,
+    priceMin: fields.priceMin.value === '' ? null : Number.parseFloat(fields.priceMin.value),
+    priceMax: fields.priceMax.value === '' ? null : Number.parseFloat(fields.priceMax.value),
     stock: fields.stock.value,
     theme: fields.theme.value,
     regime: fields.regime.value,
@@ -54,8 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const cardMatchesFilters = (card, filters) => {
+    const price = getNumber(card, 'price');
     const stock = getNumber(card, 'stock');
     const minimumPerson = getNumber(card, 'minimumPerson');
+
+    if (filters.priceMin !== null && price < filters.priceMin) {
+      return false;
+    }
+
+    if (filters.priceMax !== null && price > filters.priceMax) {
+      return false;
+    }
 
     if (filters.stock === 'available' && stock <= 0) {
       return false;
@@ -77,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const sortCards = (visibleCards, filters) => {
-    const sortValue = filters.price ? `price-${filters.price}` : filters.sort;
+    const sortValue = filters.sort;
 
     return visibleCards.sort((first, second) => {
       const firstCard = first.card;
@@ -131,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const resetFilters = () => {
     Object.values(fields).forEach((field) => {
-      field.selectedIndex = 0;
+      field.value = '';
     });
 
     originalCards.forEach(({ card, grid }) => {
@@ -151,6 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // La touche Entree applique les filtres comme le bouton principal.
     if (event.key === 'Enter' && event.target.matches('input, select')) {
       event.preventDefault();
+
+      if (event.target.matches('[data-filter-price-min], [data-filter-price-max]') && event.target.value === '') {
+        resetFilters();
+        return;
+      }
+
       applyFilters();
     }
   });

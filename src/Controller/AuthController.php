@@ -309,15 +309,6 @@ class AuthController extends AbstractController
                 'id' => (int) $resetRequest['utilisateur_id'],
             ]);
 
-            try {
-                // Le lien de réinitialisation définit un nouveau mot de passe personnel.
-                // Le mot de passe initial créé par l'administrateur ne doit donc plus être visible.
-                $connection->update('utilisateurs', ['mot_de_passe_initial' => null], [
-                    'id' => (int) $resetRequest['utilisateur_id'],
-                ]);
-            } catch (\Throwable) {
-            }
-
             $connection->update('password_reset_tokens', [
                 'used_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             ], [

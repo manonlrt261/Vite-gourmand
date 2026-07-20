@@ -1,0 +1,21 @@
+[
+    "\/assets\/stimulus_bootstrap.js",
+    "\/assets\/styles\/variables.css",
+    "\/assets\/styles\/typography.css",
+    "\/assets\/styles\/buttons.css",
+    "\/assets\/styles\/badge.css",
+    "\/assets\/styles\/bigtittle.css",
+    "\/assets\/styles\/card.css",
+    "\/assets\/styles\/filters.css",
+    "\/assets\/styles\/forms.css",
+    "\/assets\/styles\/header.css",
+    "\/assets\/styles\/footer.css",
+    "\/assets\/styles\/widget.css",
+    "\/assets\/styles\/app.css",
+    "@symfony\/stimulus-bundle",
+    "@hotwired\/stimulus",
+    "\/assets\/@symfony\/stimulus-bundle\/controllers.js",
+    "\/assets\/@symfony\/ux-turbo\/turbo_controller.js",
+    "\/assets\/@symfony\/ux-turbo\/mercure_stream_source_element.js",
+    "@hotwired\/turbo"
+]

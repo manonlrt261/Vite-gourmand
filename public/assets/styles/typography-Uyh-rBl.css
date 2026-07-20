@@ -1,0 +1,57 @@
+/* Hiérarchie typographique globale fondée sur les variables du thème. */
+h1 {
+  font-family: var(--font-title);
+  font-size: var(--font-size-h1);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+h2 {
+  font-family: var(--font-title);
+  font-size: var(--font-size-h2);
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+h3 {
+  font-family: var(--font-text);
+  font-size: var(--font-size-h3);
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+h4 {
+  font-family: var(--font-text);
+  font-size: var(--font-size-h4);
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+p {
+  font-family: var(--font-text);
+  font-size: var(--font-size-content);
+  font-weight: 400;
+  color: var(--color-secondary);
+}
+
+.description {
+  font-family: var(--font-text);
+  font-size: var(--font-size-description);
+  font-weight: 400;
+  color: var(--color-secondary);
+}
+
+a {
+  font-family: var(--font-text);
+  font-size: var(--font-size-link);
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.header-content {
+  font-family: var(--font-title);
+  font-size: var(--font-size-headercontent);
+  font-weight: 400;
+  color: var(--color-white);
+}

@@ -88,7 +88,8 @@ body {
 }
 
 .footer-legal a,
-.footer-nav a {
+.footer-nav a,
+.footer-nav .logout-button {
   font-family: var(--font-text);
   font-size: 18px;
   font-weight: 400;
@@ -127,7 +128,8 @@ body {
 }
 
 .footer-employee .footer-legal a,
-.footer-employee .footer-nav a {
+.footer-employee .footer-nav a,
+.footer-employee .footer-nav .logout-button {
   font-size: 20px;
 }
 
@@ -181,7 +183,8 @@ body {
 
   .footer-text,
   .footer-legal a,
-  .footer-nav a {
+  .footer-nav a,
+  .footer-nav .logout-button {
     font-size: 13px;
     line-height: 1.1;
   }
@@ -209,7 +212,8 @@ body {
 
   .footer-text,
   .footer-legal a,
-  .footer-nav a {
+  .footer-nav a,
+  .footer-nav .logout-button {
     font-size: 11px;
   }
 
@@ -223,7 +227,8 @@ body {
 
   .footer-employee-links a,
   .footer-employee .footer-legal a,
-  .footer-employee .footer-nav a {
+  .footer-employee .footer-nav a,
+  .footer-employee .footer-nav .logout-button {
     font-size: 11px;
   }
 }

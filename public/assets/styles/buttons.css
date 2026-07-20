@@ -227,3 +227,17 @@
 .buttonrefuse:active {
   color: var(--secondary);
 }
+.logout-form {
+    display: contents;
+}
+
+.logout-button {
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: inherit;
+}

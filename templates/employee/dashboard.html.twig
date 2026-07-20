@@ -201,7 +201,7 @@
 
         {# Bouton de déconnexion de l'employé. #}
         <div class="employee-dashboard-logout">
-            <a href="{{ path('logout') }}" class="buttonprimary">Déconnexion</a>
+            {% include 'components/_logout_form.html.twig' with { class: 'buttonprimary' } %}
         </div>
     </main>
 {% endblock %}

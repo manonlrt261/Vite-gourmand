@@ -58,7 +58,7 @@ reset_password:
 
 logout:
     path: /deconnexion
-    controller: App\Controller\AuthController::logout
+    methods: [POST]
 
 customer_account:
     path: /mon-compte

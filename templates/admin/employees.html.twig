@@ -114,7 +114,6 @@
                             data-lieu-naissance="{{ employee.lieu_naissance }}"
                             data-email="{{ employee.email }}"
                             data-email-personnel="{{ employee.email_personnel|default('') }}"
-                            data-initial-password="{{ employee.mot_de_passe_initial|default('')|e('html_attr') }}"
                             data-telephone="{{ employee.telephone }}"
                             data-adresse="{{ employee.adresse_postale }}"
                             data-ville="{{ employee.ville }}"
@@ -176,8 +175,7 @@
 
             <ul>
                 <li>L'employ&eacute; re&ccedil;oit un email informant qu'un compte a &eacute;t&eacute; cr&eacute;&eacute; pour lui.</li>
-                <li>Le mot de passe n'est pas communiqu&eacute; dans cet email.</li>
-                <li>L'employ&eacute; doit se rapprocher de vous pour obtenir ce mot de passe.</li>
+                <li>Un lien personnel valable 24 heures lui permet de choisir son propre mot de passe.</li>
                 <li>D&eacute;sactivez un compte en cas de d&eacute;part de l'employ&eacute; ou d'acc&egrave;s multiples.</li>
             </ul>
         </section>
@@ -203,14 +201,6 @@
                     <div><dt>Ville</dt><dd data-view-ville></dd></div>
                     <div><dt>Email professionnel</dt><dd data-view-email></dd></div>
                     <div><dt>Email personnel</dt><dd data-view-email-personnel></dd></div>
-                    <div>
-                        <dt>Mot de passe</dt>
-                        <dd class="admin-employee-password-view">
-                            <span data-view-password>••••••••••</span>
-                            <button type="button" class="buttonoffwhite admin-employee-password-toggle" data-view-password-toggle hidden>Afficher</button>
-                            <small data-view-password-unavailable hidden>Non visible car l'employ&eacute; a modifi&eacute; son mot de passe.</small>
-                        </dd>
-                    </div>
                     <div><dt>Num&eacute;ro de t&eacute;l&eacute;phone</dt><dd data-view-telephone></dd></div>
                     <div><dt>Poste</dt><dd data-view-poste></dd></div>
                 </dl>

@@ -173,7 +173,8 @@ body {
   gap: 18px;
 }
 
-.public-menu-panel__nav a {
+.public-menu-panel__nav a,
+.public-menu-panel__nav .logout-button {
   font-family: var(--font-title);
   font-size: 28px;
   font-weight: 500;
@@ -184,7 +185,9 @@ body {
 }
 
 .public-menu-panel__nav a:hover,
-.public-menu-panel__nav a:focus {
+.public-menu-panel__nav a:focus,
+.public-menu-panel__nav .logout-button:hover,
+.public-menu-panel__nav .logout-button:focus {
   color: var(--secondary);
   text-decoration: none;
 }
@@ -290,7 +293,8 @@ body.public-menu-is-open {
   background-color: var(--white);
 }
 
-.employee-menu-panel__nav a {
+.employee-menu-panel__nav a,
+.employee-menu-panel__nav .logout-button {
   min-height: 38px;
   display: inline-flex;
   align-items: center;
@@ -303,7 +307,9 @@ body.public-menu-is-open {
 }
 
 .employee-menu-panel__nav a:hover,
-.employee-menu-panel__nav a:focus {
+.employee-menu-panel__nav a:focus,
+.employee-menu-panel__nav .logout-button:hover,
+.employee-menu-panel__nav .logout-button:focus {
   color: var(--secondary);
   text-decoration: none;
 }
@@ -347,7 +353,8 @@ body.employee-menu-is-open {
     font-size: 18px;
   }
 
-  .employee-menu-panel__nav a {
+  .employee-menu-panel__nav a,
+  .employee-menu-panel__nav .logout-button {
     font-size: 28px;
   }
 }
@@ -370,7 +377,8 @@ body.employee-menu-is-open {
     padding-bottom: 30px;
   }
 
-  .public-menu-panel__nav a {
+  .public-menu-panel__nav a,
+  .public-menu-panel__nav .logout-button {
     font-size: 26px;
   }
 
@@ -393,7 +401,8 @@ body.employee-menu-is-open {
     padding-right: 20px;
   }
 
-  .employee-menu-panel__nav a {
+  .employee-menu-panel__nav a,
+  .employee-menu-panel__nav .logout-button {
     min-height: 34px;
     font-size: 24px;
   }

@@ -25,6 +25,10 @@
             <div class="auth-alert auth-alert--error">{{ message }}</div>
         {% endfor %}
 
+        {% if authentication_error|default(null) %}
+            <div class="auth-alert auth-alert--error">Email ou mot de passe incorrect.</div>
+        {% endif %}
+
         {# Confirmation notamment utilisée après une réinitialisation réussie du mot de passe. #}
         {% for message in app.flashes('success') %}
             <div class="auth-alert auth-alert--success">{{ message }}</div>
@@ -33,7 +37,7 @@
         {# Les paramètres de requête sont conservés afin que le contrôleur puisse rediriger vers la cible initiale. #}
         <form class="auth-form" method="post" action="{{ path('login', app.request.query.all) }}">
             {# Le même identifiant CSRF protège l’ensemble des actions publiques d’authentification. #}
-            <input type="hidden" name="_csrf_token" value="{{ csrf_token('auth_action') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
             <label class="auth-field">
                 <span>Email</span>

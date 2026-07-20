@@ -424,7 +424,6 @@ CREATE TABLE `utilisateurs` (
   `date_naissance` date DEFAULT NULL,
   `lieu_naissance` varchar(150) DEFAULT NULL,
   `email_personnel` varchar(255) DEFAULT NULL,
-  `mot_de_passe_initial` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   KEY `fk_utilisateurs_role` (`role_id`),
