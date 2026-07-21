@@ -495,6 +495,34 @@ Le commit `3cb6164`, intitulé « Modifications RGAA et sécurité », confirme 
 
 Cette démarche montre que l’accessibilité a été intégrée au projet avant le déploiement. Je ne peux cependant pas affirmer une conformité RGAA complète sans audit formalisé. Je présente donc cette phase comme une amélioration et une vérification manuelle, et non comme une certification.
 
+## 20.1 Tableau de contrôle des pages principales
+
+Le contrôle ci-dessous a été renouvelé le 21 juillet 2026 sur les principales pages publiques du site déployé. Il combine l’inspection du HTML et des feuilles de style avec un affichage à 1 280 px et à 640 px. Il s’agit d’un contrôle de premier niveau et non d’un audit exhaustif des 106 critères du RGAA.
+
+Légende : **OK** = aucun écart détecté sur le contrôle réalisé ; **Partiel** = disposition présente dans le code, mais parcours manuel complet restant à effectuer ; **NC** = écart constaté ; **N/A** = contrôle non applicable à l’état observé ; **À vérifier** = mesure spécialisée ou vérification visuelle complémentaire nécessaire.
+
+| Page contrôlée | Navigation au clavier | Focus visible | Textes alternatifs | Structure des titres | Labels des champs | Messages d’erreur accessibles | Contrastes | Zoom à 200 % | Affichage mobile |
+|---|---|---|---|---|---|---|---|---|---|
+| Accueil (`/`) | Partiel | OK | OK | OK | N/A | N/A | À vérifier | OK | OK |
+| Liste des menus (`/menus`) | Partiel | OK | OK | OK | OK | N/A | À vérifier | OK | OK |
+| Contact (`/contact`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
+| Connexion (`/connexion`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
+| Inscription (`/inscription`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
+| Panier vide (`/panier`) | Partiel | OK | OK | OK | N/A | N/A | À vérifier | OK | OK |
+
+## 20.2 Résultats et limites du contrôle
+
+- **Navigation au clavier :** les éléments interactifs utilisent des éléments HTML natifs (`a`, `button`, `input`, `select` et `textarea`). Le contrôle reste classé « Partiel », car l’ordre complet de tabulation, les menus dynamiques, les modales et tous les parcours authentifiés n’ont pas été testés manuellement jusqu’à leur terme.
+- **Visibilité du focus :** une règle globale `:focus-visible` ajoute un contour de 3 px et une ombre sur les liens, boutons et champs. Aucun style global ne supprime ce repère.
+- **Textes alternatifs :** aucune image sans attribut `alt` n’a été relevée sur les six pages contrôlées. Les images de contenu possèdent un texte alternatif et les éléments décoratifs identifiés sont masqués aux technologies d’assistance.
+- **Structure des titres :** l’accueil, la liste des menus et le panier vide possèdent un seul `h1` et une hiérarchie cohérente. Contact, Connexion et Inscription possèdent chacune deux `h1` : celui du bandeau commun et celui du contenu. Le second devrait devenir un `h2`, ou le bandeau devrait être rendu sans nouveau `h1`.
+- **Labels des champs :** tous les champs visibles de l’échantillon possèdent un `label` associé ou un nom accessible. Les champs cachés de protection CSRF ne nécessitent pas de label.
+- **Messages d’erreur :** le panier prévoit une zone `role="alert"`, mais les alertes de Contact, Connexion et Inscription sont de simples paragraphes ou `div`. Elles doivent recevoir `role="alert"` ou être placées dans une zone `aria-live`, et être reliées aux champs concernés lorsque l’erreur porte sur un champ précis.
+- **Contrastes :** les couleurs et les voiles de fond montrent une prise en compte de la lisibilité, mais les rapports de contraste n’ont pas été mesurés pour chaque combinaison texte/fond et chaque état de composant. Ce point ne peut donc pas être déclaré conforme.
+- **Zoom à 200 % et affichage mobile :** aucun débordement horizontal n’a été détecté sur les pages contrôlées à 640 px de large, largeur utilisée comme approximation d’un affichage à 200 % depuis 1 280 px. Une vérification visuelle à 200 % dans le navigateur et sur plusieurs appareils reste recommandée, notamment pour détecter les contenus masqués ou superposés.
+
+Les résultats « OK » portent uniquement sur les pages, états et dimensions indiqués. Ils ne constituent ni une déclaration d’accessibilité, ni une preuve de conformité RGAA complète. Un audit formalisé devra aussi couvrir les espaces client, employé et administrateur, les contenus dynamiques, les erreurs de formulaire déclenchées, les modales, les tableaux, ainsi que des tests avec lecteur d’écran.
+
 # 21. Gestion du déploiement
 
 ## 21.1 Préparation

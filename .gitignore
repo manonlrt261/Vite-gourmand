@@ -24,3 +24,6 @@
 # Fichiers système générés par macOS
 .DS_Store
 ._*
+
+/docs/*.pdf
+/output/pdf/
