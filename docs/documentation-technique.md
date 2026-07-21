@@ -121,7 +121,7 @@ Le projet a été développé sous Windows avec Laragon. Node.js n’est pas né
 ## 2.2 Récupération du projet
 
 ```bash
-git clone https://github.com/manonlrt261/Vite-gourmand.git
+git clone https://github.com/manonlrt261/Vite-gourmand-production.git
 cd Vite-gourmand
 ```
 
@@ -155,7 +155,7 @@ Exemple sans identifiants réels :
 
 ```env
 APP_ENV=dev
-APP_SECRET=valeur_locale_a_remplacer
+APP_SECRET=
 DATABASE_URL="mysql://utilisateur:mot_de_passe@127.0.0.1:3306/vite_et_gourmand?charset=utf8mb4"
 MONGODB_URI="mongodb://127.0.0.1:27017"
 MONGODB_DATABASE="vite_gourmand_nosql"
@@ -529,7 +529,7 @@ Le serveur ne fait pas confiance aux prix du navigateur. Les menus, prix, stocks
 
 L’application Vite & Gourmand est déployée sur la plateforme **alwaysdata** et accessible à l’adresse suivante :
 
-**URL de production : <https://viteetgourmand33.alwaysdata.net/>**
+**URL de production : <https://gourmandetvite.alwaysdata.net/>**
 
 Le déploiement est donc effectif. Aucun pipeline CI/CD ni script de déploiement automatisé n’est toutefois présent dans le dépôt : la mise en ligne repose sur une procédure manuelle. La documentation ci-dessous présente la démarche correspondant au projet et à l’environnement alwaysdata.
 
@@ -574,7 +574,6 @@ Alwaysdata fournit l’hébergement web et permet de sélectionner une version d
 
 Dans l’interface alwaysdata, le site doit être déclaré dans **Web > Sites** avec l’adresse `viteetgourmand33.alwaysdata.net`. Le répertoire racine du site doit pointer vers le dossier `public/` du projet Symfony. Les dossiers `src/`, `config/`, `database/`, `vendor/` et les fichiers `.env*` ne doivent pas être accessibles directement depuis le Web.
 
-Références : [documentation PHP alwaysdata](https://help.alwaysdata.com/fr/langages/php/) et [documentation des sites web alwaysdata](https://help.alwaysdata.com/fr/sites/).
 
 ## 5.3 Récupération du code
 
@@ -638,7 +637,6 @@ Le projet ne contient aucune migration Doctrine. `database/01_creation_base.sql`
 
 Tant que des migrations versionnées n’ont pas été créées, chaque évolution de schéma doit faire l’objet d’un script SQL incrémental relu, sauvegardé et testé sur une copie de la base avant production.
 
-Référence : [documentation MariaDB/MySQL alwaysdata](https://help.alwaysdata.com/fr/docs/hebergement-web/bases-de-donnees/mariadb/).
 
 ## 5.7 Mise en place de MongoDB
 
@@ -650,11 +648,6 @@ MongoDB n’est plus proposé comme base managée par alwaysdata. Pour conserver
 
 Configurer ensuite `MONGODB_URI` et `MONGODB_DATABASE`, puis vérifier que l’espace administrateur peut alimenter et relire la collection.
 
-MySQL reste la source de vérité. Si MongoDB est indisponible, les commandes ne doivent pas être recréées manuellement dans MongoDB ; il faut rétablir la connexion puis relancer le calcul depuis MySQL.
-
-`[À CONFIRMER : préciser si la version en ligne utilise un service MongoDB alwaysdata personnalisé, MongoDB Atlas ou une autre instance externe.]`
-
-Référence : [guide MongoDB alwaysdata](https://help.alwaysdata.com/fr/guides/mongodb/).
 
 ## 5.8 Compilation des assets
 
@@ -684,7 +677,7 @@ La configuration du site alwaysdata doit :
 - transmettre correctement les en-têtes du proxy, si nécessaire ;
 - désactiver l’affichage des erreurs PHP en production.
 
-L’URL publique utilise déjà HTTPS : `https://viteetgourmand33.alwaysdata.net/`. Le certificat TLS doit rester valide. Les cookies de session doivent être protégés avec `Secure`, `HttpOnly` et une politique `SameSite` adaptée.
+L’URL publique utilise déjà HTTPS : `https://gourmandetvite.alwaysdata.net/`. Le certificat TLS doit rester valide. Les cookies de session doivent être protégés avec `Secure`, `HttpOnly` et une politique `SameSite` adaptée.
 
 ## 5.11 Vérifications après déploiement
 
@@ -744,8 +737,38 @@ En cas d’échec :
 
 Une restauration de base est une opération sensible. Elle doit être testée et ne doit jamais être improvisée directement sur la production.
 
-## 5.14 Conclusion
+## 5.14 Reprise du déploiement et création d'un nouvel environnement de production
 
-Le déploiement de Vite & Gourmand sur alwaysdata rend l’application accessible en ligne à l’adresse <https://viteetgourmand33.alwaysdata.net/>. La mise en production repose sur la configuration du site Symfony, l’installation des dépendances Composer, la connexion à la base MariaDB/MySQL, la préparation des assets et la sécurisation des variables d’environnement.
+Lors de la première tentative de déploiement sur alwaysdata, l'hébergement a rencontré une saturation de l'espace disque disponible. Une partie importante de cet espace était occupée par le dépôt Git cloné sur le serveur, qui contenait l'ensemble de son historique de versions. Cette situation compliquait également les différentes tentatives de correction déjà effectuées sur l'environnement de production.
+
+Au fil des essais, plusieurs modifications de configuration avaient également été réalisées (variables d'environnement, installation des dépendances Composer, configuration de MongoDB, extension PHP MongoDB, cache Symfony et configuration du serveur). L'accumulation de ces changements rendait l'environnement difficile à maintenir et à diagnostiquer.
+
+Afin de repartir sur une base propre et de garantir un déploiement fiable, il a été décidé de recréer entièrement l'environnement de production plutôt que de poursuivre les corrections sur celui existant.
+
+Pour cela, un nouveau projet nommé vite-gourmand-production a été créé à partir du projet d'origine. Un nouveau dépôt GitHub a été mis en place afin de disposer d'une version dédiée au déploiement. Un nouveau compte alwaysdata a également été créé afin de bénéficier d'un environnement vierge, sans les fichiers ni les configurations issus des premiers essais.
+
+Les principales opérations réalisées ont été les suivantes :
+
+- duplication du projet dans un nouveau dossier vite-gourmand-production ;
+- création d'un nouveau dépôt GitHub destiné au déploiement ;
+- création d'un nouveau compte alwaysdata ;
+- création d'une nouvelle base de données MySQL ;
+- import de la structure et des données de démonstration ;
+- configuration des variables d'environnement ;
+- installation des dépendances Composer ;
+- compilation et installation de l'extension MongoDB compatible avec PHP 8.4 ;
+- configuration du site alwaysdata afin d'utiliser le dossier public/ comme racine du site ;
+- reconstruction du cache Symfony et vérification complète du fonctionnement de l'application.
+
+Le dépôt GitHub d'origine a été conservé afin de préserver l'intégralité de l'historique de développement (branches, commits et évolution du projet). Le nouveau dépôt GitHub a uniquement été utilisé comme support de déploiement de la version finale sur alwaysdata.
+
+Cette démarche a permis de repartir d'un environnement entièrement propre, de supprimer les configurations devenues obsolètes et d'obtenir un déploiement plus stable et plus facilement reproductible.
+
+- Dépôt GitHub historique : [manonlrt261/Vite-gourmand](https://github.com/manonlrt261/Vite-gourmand)
+- Dépôt Github de déploiement : [manonlrt261/Vite-gourmand-production](https://github.com/manonlrt261/Vite-gourmand-production)
+
+## 6 Conclusion
+
+Le déploiement de Vite & Gourmand sur alwaysdata rend l’application accessible en ligne à l’adresse <https://gourmandetvite.alwaysdata.net/>. La mise en production repose sur la configuration du site Symfony, l’installation des dépendances Composer, la connexion à la base MariaDB/MySQL, la préparation des assets et la sécurisation des variables d’environnement.
 
 Cette mise en ligne démontre que l’application peut fonctionner en dehors de l’environnement local de développement. La procédure reste actuellement manuelle : les prochaines améliorations prioritaires consisteraient à créer des migrations versionnées, ajouter des tests automatisés et mettre en place un processus de déploiement reproductible. Une attention particulière doit également être portée à la disponibilité de MongoDB, aux sauvegardes et au contrôle des journaux après chaque nouvelle version.

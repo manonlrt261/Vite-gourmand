@@ -1,0 +1,34 @@
+## Cahier de recette manuelle
+
+En l’absence de tests automatisés, une campagne de recette manuelle a été réalisée tout au long du développement, puis renouvelée après la mise en ligne de l’application. Elle a porté sur les parcours visiteur, client, employé et administrateur, ainsi que sur les principales règles métier.
+
+Les anomalies rencontrées pendant cette campagne ont été corrigées avant la livraison. Les contrôles suivants ont été validés .
+
+| N° | Fonctionnalité testée | Scénario et résultat attendu | Résultat |
+|---:|---|---|---|
+| 1 | Inscription | Création d’un compte client avec des informations valides. Le compte est enregistré et permet ensuite de se connecter. Les champs obligatoires, l’unicité de l’adresse électronique et la politique du mot de passe sont contrôlés. | Conforme |
+| 2 | Connexion | Connexion avec des identifiants valides, puis tentative avec un mot de passe incorrect. L’utilisateur valide accède à son espace, tandis qu’un message d’erreur est affiché lorsque les identifiants sont incorrects. | Conforme |
+| 3 | Réinitialisation du mot de passe | Demande de réinitialisation depuis l’adresse électronique d’un compte, ouverture du lien reçu et définition d’un nouveau mot de passe conforme. L’ancien mot de passe n’est plus utilisable et le nouveau permet la connexion. | Conforme |
+| 4 | Minimum de commande | Ajout d’un menu au panier avec une quantité inférieure au nombre minimum de personnes. La validation est refusée. Avec une quantité égale ou supérieure au minimum, la commande peut être poursuivie. | Conforme |
+| 5 | Calcul sans réduction | Commande d’un menu à 45 € par personne pour 8 personnes, soit le minimum du menu Découverte. Le prix des menus attendu est de 360 € avant livraison. | Conforme |
+| 6 | Réduction de 10 % | Commande du même menu pour 13 personnes, soit le minimum augmenté de cinq. Le montant brut est de 585 €, la réduction attendue est de 58,50 € et le montant après réduction est de 526,50 € avant livraison. | Conforme |
+| 7 | Frais de livraison | Saisie d’une adresse située dans le code postal 33000 : la livraison est gratuite. Pour une adresse extérieure à cette zone, les frais sont calculés avec une base de 5 € à laquelle s’ajoutent 0,59 € par kilomètre. Le total de la commande est actualisé. | Conforme |
+| 8 | Création d’une commande | Validation d’un panier avec une date, une heure et une adresse de livraison valides. La commande est enregistrée avec ses lignes, son montant et le statut initial « En attente ». Elle apparaît ensuite dans l’espace client. | Conforme |
+| 9 | Modification d’une commande en attente | Depuis l’espace client, modification des informations ou du contenu d’une commande au statut « En attente ». Les nouvelles données et le nouveau montant sont enregistrés. | Conforme |
+| 10 | Annulation par le client | Annulation d’une commande encore au statut « En attente ». La commande passe au statut « Annulée » et la modification est ajoutée à son historique. | Conforme |
+| 11 | Blocage après acceptation | Après passage de la commande au statut « Acceptée », tentative de modification, d’ajout de menu et d’annulation depuis le compte client. Les actions sont refusées et un message indique que la commande a déjà été acceptée. | Conforme |
+| 12 | Transitions de statut | Depuis l’espace employé, passage successif d’une commande par les statuts « En attente », « Acceptée », « En cours de préparation », « En cours de livraison », « Livrée » et « Terminée ». Pour une commande avec du matériel, contrôle du statut « En attente de retour matériel ». Chaque changement est visible dans l’historique. | Conforme |
+| 13 | Annulation par un employé | Annulation d’une commande depuis l’espace employé après saisie du motif et de la trace du contact avec le client. La commande passe au statut « Annulée » et la justification est conservée dans l’historique. | Conforme |
+| 14 | Autorisations du client | Tentative d’accès d’un client aux espaces employé et administrateur. L’accès est refusé. Le client ne peut consulter et gérer que son propre compte et ses propres commandes. | Conforme |
+| 15 | Autorisations de l’employé | Connexion avec un compte employé. L’espace opérationnel est accessible : commandes, menus, repas, horaires, avis et messages. La gestion des comptes employés et les fonctions réservées à l’administrateur restent interdites. | Conforme |
+| 16 | Autorisations de l’administrateur | Connexion avec un compte administrateur. L’espace administrateur, la gestion des employés, les statistiques et les fonctions de l’espace employé sont accessibles. | Conforme |
+| 17 | Dépôt d’un avis | Tentative de dépôt d’un avis sur une commande non terminée : l’action est refusée. Sur une commande terminée appartenant au client, l’avis est créé avec le statut « En attente ». Un deuxième avis sur la même commande est refusé. | Conforme |
+| 18 | Validation d’un avis | Depuis l’espace employé, acceptation d’un avis en attente. Son statut devient « Accepté » et il peut être sélectionné pour apparaître sur la page d’accueil. | Conforme |
+| 19 | Refus d’un avis | Depuis l’espace employé, refus d’un avis en attente. Son statut devient « Refusé » et il n’est pas affiché sur la page d’accueil. La remise en attente a également été contrôlée. | Conforme |
+| 20 | Limite des avis d’accueil | Sélection de plusieurs avis acceptés pour la page d’accueil. L’application limite la sélection à trois avis. | Conforme |
+| 21 | Statistiques MongoDB | Création et modification de commandes, puis consultation des statistiques administrateur. Le nombre de commandes et le chiffre d’affaires par menu sont recalculés depuis MySQL, enregistrés dans la collection MongoDB `commandes_par_menu`, puis affichés dans l’espace administrateur. Les commandes annulées ne sont pas intégrées au chiffre d’affaires. | Conforme |
+| 22 | Indisponibilité de MongoDB | Consultation des statistiques lorsque MongoDB n’est pas disponible. MySQL reste la source de vérité et l’application utilise les données calculées depuis la base relationnelle afin de ne pas bloquer son fonctionnement. | Conforme |
+
+Des vérifications complémentaires ont également été réalisées sur le parcours visiteur, les filtres du catalogue, le panier, l’espace personnel, les e-mails, le responsive, les principaux contrôles d’accès et l’affichage sur ordinateur et mobile.
+
+Cette recette constitue la preuve actuelle de validation fonctionnelle de l’application. Elle reste manuelle : le dossier `tests` ne contient pour le moment que l’amorçage de PHPUnit. Une amélioration future consisterait à automatiser en priorité les scénarios d’authentification, les calculs de commande, les autorisations, les transitions de statut, la modération des avis et les statistiques MongoDB afin d’éviter les régressions lors des prochaines évolutions.

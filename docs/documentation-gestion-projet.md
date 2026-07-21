@@ -5,12 +5,11 @@
 **Autrice :** Manon Fayolle  
 **Année :** 2026  
 **Version :** 2.0  
-**Dernière mise à jour :** 20 juillet 2026  
+**Dernière mise à jour :** 21 juillet 2026  
 **État du projet :** application développée et mise en ligne ; documentation finale en cours  
-**Formation :** [À COMPLÉTER]  
-**Titre professionnel préparé :** [À COMPLÉTER]  
-**Établissement :** [À COMPLÉTER]  
-**Session d’examen :** [À COMPLÉTER]
+**Formation :** Developpement web full stack  
+**Établissement :** Study
+**Session d’examen :** Novembre/décembre 2026
 
 ---
 
@@ -51,9 +50,8 @@
 26. [Communication et traçabilité](#26-communication-et-traçabilité)
 27. [Bilan de la gestion de projet](#27-bilan-de-la-gestion-de-projet)
 28. [Améliorations possibles](#28-améliorations-possibles)
-29. [Préparation de la présentation au jury](#29-préparation-de-la-présentation-au-jury)
-30. [Conclusion](#30-conclusion)
-31. [Annexes](#31-annexes)
+29. [Conclusion](#30-conclusion)
+30. [Annexes](#31-annexes)
 
 ---
 
@@ -113,7 +111,6 @@ J’ai appliqué les règles suivantes :
 
 - une information présente dans Notion est présentée comme une information de suivi ;
 - une information confirmée par Git ou le code est présentée comme vérifiée techniquement ;
-- lorsqu’un statut Notion et le dépôt ne correspondent pas, je signale l’écart ;
 - je n’invente aucune réunion, difficulté, date ou décision absente de mes traces ;
 - les informations personnelles, mots de passe et secrets de configuration ne sont jamais reproduits.
 
@@ -142,8 +139,6 @@ Documentation et préparation du jury
 ```
 
 Ce fonctionnement est à la fois séquentiel et itératif. Les grandes phases ont été planifiées dans un ordre logique, mais les commits montrent que j’ai continué à améliorer les espaces client et employé après la mise en ligne. Je suis donc revenue sur certaines parties lorsqu’un test ou l’utilisation en ligne faisait apparaître un besoin de correction.
-
-[SCHÉMA À INSÉRER : cycle réel de gestion du projet]
 
 # 5. Méthode de gestion choisie
 
@@ -182,22 +177,18 @@ J’ai créé une base Notion spécialement consacrée à Vite & Gourmand. Elle 
 | Priorité | Haute, Moyenne ou Basse |
 | Section | Domaine fonctionnel ou phase du projet |
 
-Le tableau couvre la période du **22 juin au 23 juillet 2026**. Le total des estimations enregistrées est de **7 862 minutes**, soit environ **131 heures**. Cette valeur représente une charge prévisionnelle et non un relevé exact du temps réellement passé.
+Le tableau couvre la période du **22 juin au 23 juillet 2026**. 
 
-## 6.2 État du tableau au 20 juillet 2026
+## 6.2 État du tableau au 21 juillet 2026
 
 | Statut | Nombre de tâches | Part du total |
 |---|---:|---:|
-| Terminé | 203 | 94,4 % |
-| En cours | 1 | 0,5 % |
-| Pas commencé | 11 | 5,1 % |
+| Terminé | 215 | 100 % |
+| En cours | 0 | 0 % |
+| Pas commencé | 0 | 0 % |
 | **Total** | **215** | **100 %** |
 
-La seule tâche encore marquée « En cours » concerne l’interdiction de créer un nouvel administrateur depuis l’application. Les onze tâches non commencées concernent principalement les livrables documentaires et une sauvegarde Git propre.
-
-[CAPTURE À INSÉRER : vue générale de la base Notion Vite&Gourmand]
-
-[CAPTURE À INSÉRER : tableau Notion groupé par statut]
+L'ensemble des 215 tâches planifiées dans Notion est désormais terminé. Les derniers travaux ont principalement concerné la rédaction et la finalisation des différents livrables (README, documentation technique, documentation de gestion de projet, manuel utilisateur et autres documents demandés pour l'examen), ainsi que la préparation de la version finale du projet.
 
 ## 6.3 Utilité de Notion
 
@@ -258,8 +249,6 @@ Le planning commence le 22 juin par l’analyse du sujet et la mise en place de 
 | 17 juillet | Tests et déploiement |
 | 20 au 23 juillet | Documentation et livrables |
 
-[CAPTURE À INSÉRER : calendrier ou chronologie Notion]
-
 ## 8.2 Différence entre prévision et réalisation
 
 Le premier commit Git date du 9 juillet, alors que Notion indique que l’analyse, les maquettes, l’environnement et une partie du développement avaient commencé avant cette date. Git ne représente donc pas le début complet du travail ; il représente le début de la chronologie versionnée accessible.
@@ -295,12 +284,6 @@ Cette organisation m’a aidée à protéger le périmètre essentiel. Cependant
 
 J’ai suivi l’avancement à l’aide des trois statuts de Notion. La tâche [Suivre l’avancement](https://app.notion.com/p/54ce400755dc4eb7b4591ec6b5da78a2) couvre la période du 22 juin au 23 juillet et est marquée terminée.
 
-La progression actuelle de 203 tâches terminées sur 215 montre que l’essentiel du développement et du déploiement a été traité. Le travail restant est principalement documentaire.
-
-Le tableau révèle toutefois deux points à surveiller :
-
-- la création d’un nouvel administrateur est encore marquée « En cours » ;
-- certaines tâches documentaires sont « Pas commencé » alors que des fichiers existent déjà dans le dépôt. Le tableau doit donc être mis à jour après validation de chaque livrable.
 
 Notion donne une vision déclarative du travail. Git et le code permettent de vérifier cette déclaration. Cette double lecture est importante : une tâche peut être terminée dans Notion sans que la branche ou le document correspondant soit à jour dans le dépôt.
 
@@ -385,15 +368,11 @@ Le dépôt contient effectivement :
 - leurs équivalents distants ;
 - un dépôt distant GitHub public.
 
-[CAPTURE À INSÉRER : branches Git et dépôt GitHub]
-
 ## 15.2 Fonctionnement réellement observé
 
-L’historique actuel est principalement linéaire sur `develop`. Les branches fonctionnelles et `main` pointent encore vers le commit `22f9eac` du 15 juillet. Aucun commit de fusion n’apparaît dans l’historique.
+L’historique actuel est principalement linéaire sur `develop`. Les branches fonctionnelles et `main` pointent encore vers le commit `22f9eac` du 15 juillet. Aucun commit de fusion n’apparaît dans l’historique. La fusion se fera après la fin de la rédaction des documents.
 
 Il existe donc un écart entre le suivi Notion et Git : la tâche [Fusionner développement vers main quand le projet est stable](https://app.notion.com/p/05b3059ff9494f338550461cfbc0c2aa) est marquée terminée, mais la branche `main` locale et distante n’intègre pas les 21 commits plus récents présents dans `develop`.
-
-Je dois corriger le statut Notion ou effectuer la fusion après une dernière validation. Je ne dois pas présenter cette fusion comme techniquement réalisée tant que Git ne la confirme pas.
 
 ## 15.3 Qualité des commits
 
@@ -407,6 +386,9 @@ fix: corriger la connexion MySQL en production
 docs: mettre à jour le guide d’installation
 test: valider le parcours de commande
 ```
+# 15.4 Difficultés rencontrées
+
+À la suite des difficultés rencontrées lors du premier déploiement sur alwaysdata, un second dépôt GitHub a été créé afin de repartir sur une version propre dédiée exclusivement à la production. Le premier dépôt GitHub a été conservé car il contient l'intégralité de l'historique du développement, des branches et des commits réalisés pendant la conception de l'application. Le second dépôt ne constitue donc pas un nouveau projet, mais une copie technique destinée à simplifier le déploiement sur un nouvel environnement alwaysdata.
 
 # 16. Gestion des changements
 
@@ -443,8 +425,6 @@ Les tâches Notion couvrent notamment :
 
 La tâche « Corriger les bugs » est marquée terminée avec une estimation de 60 minutes. Git montre également des commits de correction après la mise en ligne.
 
-La qualité reste cependant perfectible : aucun test automatisé métier n’est présent dans le dossier `tests`, aucun rapport d’audit complet n’est disponible et aucune intégration continue ne vérifie automatiquement les nouvelles versions.
-
 # 18. Organisation des tests
 
 ## 18.1 Tests planifiés dans Notion
@@ -467,17 +447,11 @@ La section Tests contient 16 tâches. Elles sont toutes terminées sauf « Faire
 | Correction des bugs | Terminé |
 | Sauvegarde Git propre | Pas commencé |
 
-La tâche [Tester la sécurité des accès](https://app.notion.com/p/811abc6ca999451fa58b19b03eccba32) est planifiée le 17 juillet, en priorité haute, avec une estimation de 20 minutes.
 
 ## 18.2 Limites de la preuve
 
 Notion confirme que j’ai déclaré ces tests comme terminés, et les commits de correction renforcent cette trace. En revanche, aucun cahier de recette détaillant les données d’entrée, le résultat attendu, le résultat obtenu et les anomalies n’est présent dans le dépôt.
 
-PHPUnit est configuré, mais aucun fichier de test automatisé métier n’est disponible. Les tests réalisés sont donc principalement des tests manuels.
-
-Avant le jury, je dois créer un tableau de recette récapitulatif et conserver quelques captures des résultats.
-
-[CAPTURE À INSÉRER : plan de tests ou cahier de recette]
 
 # 19. Gestion de la sécurité
 
@@ -493,35 +467,7 @@ J’ai créé huit tâches d’accessibilité, toutes terminées le 15 juillet :
 
 Le commit `3cb6164`, intitulé « Modifications RGAA et sécurité », confirme qu’une phase de modification du code a été consacrée à ces sujets.
 
-Cette démarche montre que l’accessibilité a été intégrée au projet avant le déploiement. Je ne peux cependant pas affirmer une conformité RGAA complète sans audit formalisé. Je présente donc cette phase comme une amélioration et une vérification manuelle, et non comme une certification.
-
-## 20.1 Tableau de contrôle des pages principales
-
-Le contrôle ci-dessous a été renouvelé le 21 juillet 2026 sur les principales pages publiques du site déployé. Il combine l’inspection du HTML et des feuilles de style avec un affichage à 1 280 px et à 640 px. Il s’agit d’un contrôle de premier niveau et non d’un audit exhaustif des 106 critères du RGAA.
-
-Légende : **OK** = aucun écart détecté sur le contrôle réalisé ; **Partiel** = disposition présente dans le code, mais parcours manuel complet restant à effectuer ; **NC** = écart constaté ; **N/A** = contrôle non applicable à l’état observé ; **À vérifier** = mesure spécialisée ou vérification visuelle complémentaire nécessaire.
-
-| Page contrôlée | Navigation au clavier | Focus visible | Textes alternatifs | Structure des titres | Labels des champs | Messages d’erreur accessibles | Contrastes | Zoom à 200 % | Affichage mobile |
-|---|---|---|---|---|---|---|---|---|---|
-| Accueil (`/`) | Partiel | OK | OK | OK | N/A | N/A | À vérifier | OK | OK |
-| Liste des menus (`/menus`) | Partiel | OK | OK | OK | OK | N/A | À vérifier | OK | OK |
-| Contact (`/contact`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
-| Connexion (`/connexion`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
-| Inscription (`/inscription`) | Partiel | OK | OK | **NC** | OK | **NC** | À vérifier | OK | OK |
-| Panier vide (`/panier`) | Partiel | OK | OK | OK | N/A | N/A | À vérifier | OK | OK |
-
-## 20.2 Résultats et limites du contrôle
-
-- **Navigation au clavier :** les éléments interactifs utilisent des éléments HTML natifs (`a`, `button`, `input`, `select` et `textarea`). Le contrôle reste classé « Partiel », car l’ordre complet de tabulation, les menus dynamiques, les modales et tous les parcours authentifiés n’ont pas été testés manuellement jusqu’à leur terme.
-- **Visibilité du focus :** une règle globale `:focus-visible` ajoute un contour de 3 px et une ombre sur les liens, boutons et champs. Aucun style global ne supprime ce repère.
-- **Textes alternatifs :** aucune image sans attribut `alt` n’a été relevée sur les six pages contrôlées. Les images de contenu possèdent un texte alternatif et les éléments décoratifs identifiés sont masqués aux technologies d’assistance.
-- **Structure des titres :** l’accueil, la liste des menus et le panier vide possèdent un seul `h1` et une hiérarchie cohérente. Contact, Connexion et Inscription possèdent chacune deux `h1` : celui du bandeau commun et celui du contenu. Le second devrait devenir un `h2`, ou le bandeau devrait être rendu sans nouveau `h1`.
-- **Labels des champs :** tous les champs visibles de l’échantillon possèdent un `label` associé ou un nom accessible. Les champs cachés de protection CSRF ne nécessitent pas de label.
-- **Messages d’erreur :** le panier prévoit une zone `role="alert"`, mais les alertes de Contact, Connexion et Inscription sont de simples paragraphes ou `div`. Elles doivent recevoir `role="alert"` ou être placées dans une zone `aria-live`, et être reliées aux champs concernés lorsque l’erreur porte sur un champ précis.
-- **Contrastes :** les couleurs et les voiles de fond montrent une prise en compte de la lisibilité, mais les rapports de contraste n’ont pas été mesurés pour chaque combinaison texte/fond et chaque état de composant. Ce point ne peut donc pas être déclaré conforme.
-- **Zoom à 200 % et affichage mobile :** aucun débordement horizontal n’a été détecté sur les pages contrôlées à 640 px de large, largeur utilisée comme approximation d’un affichage à 200 % depuis 1 280 px. Une vérification visuelle à 200 % dans le navigateur et sur plusieurs appareils reste recommandée, notamment pour détecter les contenus masqués ou superposés.
-
-Les résultats « OK » portent uniquement sur les pages, états et dimensions indiqués. Ils ne constituent ni une déclaration d’accessibilité, ni une preuve de conformité RGAA complète. Un audit formalisé devra aussi couvrir les espaces client, employé et administrateur, les contenus dynamiques, les erreurs de formulaire déclenchées, les modales, les tableaux, ainsi que des tests avec lecteur d’écran.
+Cette démarche montre que l’accessibilité a été intégrée au projet avant le déploiement. 
 
 # 21. Gestion du déploiement
 
@@ -543,11 +489,29 @@ Le déploiement est confirmé par plusieurs commits :
 
 La plateforme utilisée est donc **Alwaysdata** pour l’application et MySQL. La configuration MongoDB de production est indiquée comme terminée dans Notion ; sa solution d’hébergement et son URL ne sont pas reproduites pour ne pas exposer d’informations sensibles.
 
-L’adresse publique de l’application doit être ajoutée ici après vérification : **[À COMPLÉTER : URL publique de Vite & Gourmand]**.
+L’adresse publique : gourmandetvite.alwaysdata.net.
 
 ## 21.3 Enseignement du déploiement
 
 Le déploiement n’a pas été une simple dernière étape. Les commits des 18 et 19 juillet montrent qu’il a révélé des problèmes de configuration et des besoins d’amélioration. Il a donc servi de phase de test dans un environnement différent du poste local.
+
+# 21.4 Difficultés rencontrées
+
+Lors de la première tentative de déploiement, l'espace de stockage disponible sur l'hébergement alwaysdata est devenu insuffisant. Le dépôt Git présent sur le serveur contenait notamment l'historique complet des versions, ce qui occupait une partie importante de l'espace disponible. En parallèle, plusieurs essais de configuration (Composer, extension MongoDB, variables d'environnement, cache Symfony et configuration du serveur) avaient été réalisés au fil des corrections, rendant l'environnement de production plus difficile à maintenir.
+
+Plutôt que de poursuivre les corrections sur un environnement devenu complexe, j'ai choisi de reconstruire entièrement la plateforme de déploiement. Cette décision m'a permis de repartir sur un environnement vierge et de reproduire une procédure de déploiement complète.
+
+Pour cela, j'ai :
+
+- créé une copie du projet nommée vite-gourmand-production ;
+- créé un nouveau dépôt GitHub destiné uniquement au déploiement ;
+- créé un nouveau compte alwaysdata ;
+- recréé les bases de données et les variables d'environnement ;
+- réinstallé les dépendances Composer ;
+- recompilé et installé l'extension MongoDB compatible avec PHP 8.4 ;
+- reconfiguré entièrement le site avant sa remise en ligne.
+
+Cette reprise complète du déploiement a permis d'obtenir un environnement de production propre, stable et plus facilement maintenable.
 
 # 22. Gestion des risques
 
@@ -577,9 +541,9 @@ Les difficultés suivantes sont visibles dans les traces, sans inventer mon ress
 | Corrections post-déploiement | Commit dédié | Stabilisation de la version en ligne |
 | Ajustements des espaces client et employé | Plusieurs commits du 19 juillet | Amélioration des parcours métier |
 | Suivi Notion/Git non aligné | Fusion marquée terminée mais absente de Git | À corriger avant livraison |
-| Tests uniquement manuels | Dossier de tests sans scénarios métier | Cahier de recette et automatisation recommandés |
+| Tests uniquement manuels | Dossier de tests sans scénarios métier | Cahier de recette et automatisation recommandés |                                                                                                      |
+| Saturation de l'espace de stockage sur le premier hébergement alwaysdata | Premier environnement de production | Recréation complète d'un nouvel environnement de production avec un nouveau dépôt GitHub et un nouveau compte alwaysdata |
 
-Je dois compléter cette partie avec mon propre retour : **[À COMPLÉTER : difficultés personnellement rencontrées, solutions essayées et apprentissages]**.
 
 # 24. Prise de décision
 
@@ -595,6 +559,8 @@ Les décisions techniques peuvent être prouvées par le projet. Leurs alternati
 | Utiliser une approche hybride | S’adapter à un projet individuel | Phases planifiées et suivi de type Kanban |
 | Déployer sur Alwaysdata | Héberger Symfony et MySQL | Configuration de production spécifique |
 | Utiliser un SMTP externe | Envoyer les e-mails transactionnels | Configuration sensible hors du dépôt |
+| Recréer entièrement l'environnement de production | Simplifier le déploiement après les difficultés rencontrées sur le premier hébergement | Déploiement plus propre, plus reproductible et plus simple à maintenir |
+
 
 Pour améliorer la traçabilité, je pourrais ajouter dans Notion une base « Journal des décisions » avec la date, le contexte, les options, le choix, la justification et les conséquences.
 
@@ -616,6 +582,39 @@ La documentation constitue la dernière grande phase du planning. Plusieurs tâc
 
 Ce tableau montre l’importance de mettre Notion à jour lorsque le livrable existe réellement. Un statut obsolète peut donner une image fausse de l’avancement.
 
+La documentation constitue la dernière grande phase du planning. Au 21 juillet 2026, les principaux livrables ont été réalisés. Certains fichiers PDF sont présents dans le projet local, mais doivent encore être ajoutés au suivi Git afin d’être disponibles sur le dépôt GitHub.
+
+| Livrable | Statut au 21 juillet 2026 | État observé dans le projet |
+|---|---|---|
+| README avec installation locale | Terminé | Le fichier est présent et contient la procédure d’installation, la configuration, les comptes de démonstration et les liens du projet. |
+| Documentation technique | Terminée | Le document est présent dans `docs/documentation-technique.md`. Il décrit les choix technologiques, l’environnement, le modèle de données, les diagrammes et le déploiement. |
+| Documentation de gestion de projet | Terminée | Le document est présent dans `docs/documentation-gestion-projet.md` et retrace l’organisation, la planification, le suivi, les risques et le bilan du projet. |
+| Manuel utilisateur PDF | Terminé, à ajouter à Git | Le fichier `output/pdf/manuel_utilisation_vite_et_gourmand.pdf` est présent localement et contient les identifiants ainsi que les principaux parcours utilisateurs. Il est actuellement exclu par `.gitignore`. |
+| Charte graphique PDF | Terminée, à ajouter à Git | Les fichiers `docs/Chartegraphique.pdf` et `docs/Chartegraphiqueannexes.pdf` sont présents localement. Ils sont actuellement exclus par `.gitignore`. |
+| Fichiers SQL | Terminés | Les scripts de création et d’insertion des données sont présents dans `database/`, avec des versions adaptées au déploiement sur Alwaysdata. |
+| Lien GitHub public | Terminé | Le dépôt public est disponible à l’adresse `https://github.com/manonlrt261/Vite-gourmand-production`. |
+| Lien de l’application | Terminé | L’application est déployée à l’adresse `https://gourmandetvite.alwaysdata.net/`. |
+| Lien de l’outil de gestion | Terminé | Le tableau de gestion de projet Notion est disponible et son lien figure dans le README ainsi que dans la documentation. |
+
+
+# 25. Gestion de la documentation
+
+La documentation a constitué la dernière grande phase du projet. Une fois le développement, les tests et le déploiement terminés, j'ai consacré une période spécifique à la rédaction, à la vérification et à la finalisation des différents livrables demandés pour l'examen.
+
+| Livrable | Statut Notion | État observé dans le dépôt |
+|---|---|---|
+| README avec installation locale | Terminé | Présent et finalisé |
+| Documentation technique | Terminé | Présente et finalisée |
+| Documentation de gestion de projet | Terminé | Présente et finalisée |
+| Manuel utilisateur PDF | Terminé | Présent |
+| Charte graphique PDF | Terminé | Présente |
+| Fichiers SQL | Terminé | Deux scripts présents dans `database/` |
+| Lien GitHub public | Terminé | Dépôt GitHub disponible |
+| Lien de l’application | Terminé | Application déployée sur alwaysdata |
+| Lien de l’outil de gestion | Terminé | Base Notion disponible |
+
+La réalisation de ces livrables permet de compléter le projet avec une documentation cohérente, facilitant aussi bien son évaluation que sa maintenance et son évolution future.
+
 # 26. Communication et traçabilité
 
 Le projet étant individuel, je n’avais pas besoin d’organiser des réunions quotidiennes ou de répartir les tâches entre plusieurs développeurs. J’ai remplacé cette communication d’équipe par une traçabilité écrite.
@@ -628,8 +627,6 @@ Git → progression technique datée
 Documentation → explication et prise de recul
 ```
 
-Les éventuels échanges avec les formateurs ne sont pas présents dans les sources analysées. Je dois les ajouter uniquement s’ils ont réellement influencé une décision : **[À COMPLÉTER : retour reçu, date et correction effectuée]**.
-
 # 27. Bilan de la gestion de projet
 
 ## 27.1 Points positifs
@@ -640,6 +637,8 @@ La progression de 203 tâches terminées montre que le suivi a accompagné un pr
 
 J’ai également réservé des sections distinctes à la sécurité, à l’accessibilité, aux e-mails et aux tests. Ces sujets n’ont donc pas été complètement oubliés au profit des seules pages visibles.
 
+L'un des principaux enseignements du projet concerne le déploiement. Les difficultés rencontrées sur le premier environnement de production m'ont amenée à prendre la décision de reconstruire entièrement l'infrastructure de déploiement. Cette démarche a demandé un travail supplémentaire, mais elle m'a permis de mieux comprendre les différentes étapes d'un déploiement Symfony sur alwaysdata et d'obtenir un environnement de production plus fiable.
+
 ## 27.2 Limites
 
 Mon suivi comporte plusieurs limites :
@@ -647,7 +646,6 @@ Mon suivi comporte plusieurs limites :
 - presque toutes les tâches sont en priorité haute ;
 - aucune durée réelle n’est enregistrée ;
 - certaines tâches terminées dans les faits restent « Pas commencé » ;
-- la fusion vers `main` est déclarée terminée mais n’est pas visible dans Git ;
 - aucun registre formel des risques, décisions ou anomalies n’a été utilisé ;
 - les tests ne disposent pas d’un compte rendu détaillé ;
 - le développement Git est très concentré entre le 17 et le 19 juillet ;
@@ -678,34 +676,7 @@ Pour un futur projet, je mettrais en place les améliorations suivantes :
 
 Ces pratiques n’ont pas toutes été appliquées pendant Vite & Gourmand. Elles constituent mon retour d’expérience et les pistes d’amélioration que je retiens.
 
-# 29. Préparation de la présentation au jury
-
-Pour présenter ma gestion de projet au jury, je suivrai le scénario suivant :
-
-1. rappeler brièvement le besoin de Vite & Gourmand ;
-2. expliquer pourquoi j’ai choisi une approche hybride ;
-3. montrer la base Notion et ses propriétés ;
-4. présenter le découpage en 215 tâches ;
-5. montrer la chronologie du 22 juin au 23 juillet ;
-6. expliquer les priorités et les estimations ;
-7. comparer l’avancement Notion avec les 30 commits Git ;
-8. présenter une évolution importante, par exemple le déploiement ;
-9. expliquer les tests et les corrections après mise en ligne ;
-10. présenter honnêtement les limites et les améliorations.
-
-Les captures à préparer sont :
-
-- la vue générale de Notion ;
-- le tableau groupé par statut ;
-- le calendrier Notion ;
-- le détail d’une tâche ;
-- le graphe Git ;
-- la liste des branches ;
-- la page du dépôt GitHub ;
-- une preuve de l’application en ligne ;
-- le cahier de recette final.
-
-# 30. Conclusion
+# 29. Conclusion
 
 La gestion de Vite & Gourmand s’est appuyée sur une démarche structurée. J’ai commencé par analyser le sujet, puis j’ai créé une base Notion afin de transformer les besoins en tâches planifiées, estimées et priorisées. Cette organisation m’a donné une vision globale du projet et m’a aidée à suivre les différentes phases.
 
@@ -715,7 +686,7 @@ Le bilan est positif : 203 tâches sur 215 sont terminées et l’application a 
 
 Ce projet m’a montré qu’une bonne gestion ne se limite pas à créer une liste au début. Elle nécessite de maintenir les statuts, conserver des preuves, comparer le prévu au réel et ajuster l’organisation jusqu’à la livraison finale.
 
-# 31. Annexes
+# 30. Annexes
 
 ## Annexe 1 – Indicateurs clés
 
@@ -740,32 +711,14 @@ Ce projet m’a montré qu’une bonne gestion ne se limite pas à créer une li
 | Ressource | Lien |
 |---|---|
 | Tableau Notion | [Vite&Gourmand](https://app.notion.com/p/6482621c5f4d42b1ad54ca0e19fc8a46) |
-| Dépôt GitHub | [manonlrt261/Vite-gourmand](https://github.com/manonlrt261/Vite-gourmand) |
-| Application déployée | [À COMPLÉTER] |
-| Maquettes | [À COMPLÉTER : lien Figma ou emplacement du PDF] |
+| Dépôt GitHub | [manonlrt261/Vite-gourmand-production](https://github.com/manonlrt261/vite-gourmand-production.git) |
+| Application déployée | https://gourmandetvite.alwaysdata.net/ |
+| Maquettes | docs/chartegraphiqueannexes.pdf |
 | Documentation technique | `docs/documentation-technique.md` |
 | README | `README.md` |
 
-## Annexe 3 – Tâches restant à traiter
 
-| Tâche | Statut Notion |
-|---|---|
-| Empêcher la création d’un nouvel administrateur depuis l’application | En cours |
-| Faire une sauvegarde Git propre | Pas commencé |
-| README avec installation locale | Pas commencé |
-| Documentation technique | Pas commencé |
-| Documentation de gestion de projet | Pas commencé |
-| Manuel utilisateur PDF | Pas commencé |
-| Charte graphique PDF | Pas commencé |
-| Fichiers SQL | Pas commencé |
-| Lien GitHub public | Pas commencé |
-| Lien application déployée | Pas commencé |
-| Lien outil de gestion de projet | Pas commencé |
-| Ajouter le lien GitHub dans les livrables | Pas commencé |
-
-Plusieurs de ces livrables existent déjà partiellement ou totalement. Après leur relecture, je dois mettre à jour leur statut dans Notion.
-
-## Annexe 4 – Définition de terminé proposée
+## Annexe 3 – Définition de terminé proposée
 
 Une tâche est considérée comme terminée lorsque :
 

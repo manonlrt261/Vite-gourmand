@@ -46,15 +46,15 @@ Le dépôt constitue un projet d'examen réalisé en 2026. Il met notamment en p
 
 ## État du projet
 
-> Une version fonctionnelle est déployée sur [viteetgourmand33.alwaysdata.net](https://viteetgourmand33.alwaysdata.net/).
+> Une version fonctionnelle est déployée sur (https://gourmandetvite.alwaysdata.net/).
 
-Les principaux parcours visiteur, client, employé et administrateur sont implémentés. Le moteur relationnel effectivement retenu est MySQL : les scripts SQL, les requêtes applicatives et la configuration de production sont conçus pour ce moteur.
+L'application est développée et déployée, et l'ensemble des livrables du projet a été finalisé. Les principaux parcours visiteur, client, employé et administrateur sont implémentés. Le moteur relationnel effectivement retenu est MySQL : les scripts SQL, les requêtes applicatives et la configuration de production sont conçus pour ce moteur.
 
 Le fichier `compose.yaml`, généré initialement par Symfony, décrit encore un service PostgreSQL 16. Il n'est pas utilisé par la procédure d'installation documentée et ne doit pas être considéré comme la configuration de référence. 
 
 ## Fonctionnalités
 
-La classification suivante s'appuie sur les flux effectivement présents dans les contrôleurs, les templates, les scripts et le schéma SQL. Les fonctionnalités nécessitant une base opérationnelle restent à valider de bout en bout après harmonisation de la configuration.
+La classification suivante s'appuie sur les flux présents dans les contrôleurs, les templates, les scripts et le schéma SQL.
 
 ### Visiteur
 
@@ -193,7 +193,7 @@ composer check-platform-reqs
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/manonlrt261/Vite-gourmand.git
+git clone https://github.com/manonlrt261/Vite-gourmand-production.git
 cd Vite-gourmand
 ```
 
@@ -223,6 +223,10 @@ Sous PowerShell :
 Copy-Item .env .env.local
 ```
 
+Adaptez ensuite les valeurs de `.env.local` à votre environnement. La valeur `DATABASE_URL` fournie par défaut dans `.env` correspond au service PostgreSQL généré par Symfony et doit être remplacée par une connexion MySQL, par exemple :
+
+```dotenv
+DATABASE_URL="mysql://vite_gourmand:mot_de_passe@127.0.0.1:3306/vite_et_gourmand?serverVersion=8.0&charset=utf8mb4"
 ```
 
 | Variable | Obligatoire | Rôle |
@@ -253,20 +257,20 @@ Les fichiers `database/01_creation_base.sql` et `database/02_insertion_donnees.s
 ### Initialisation avec MySQL 8
 
 1. Démarrez MySQL 8.
-2. Créez un utilisateur et une base vides avec l'outil de votre choix.
-3. Configurez `DATABASE_URL` dans `.env.local`.
-4. Importez le schéma, puis les données de démonstration :
+2. Créez un utilisateur MySQL autorisé à créer et à utiliser la base `vite_et_gourmand`.
+3. Configurez `DATABASE_URL` dans `.env.local` avec cet utilisateur.
+4. Importez le schéma, puis les données de démonstration. Les scripts créent et sélectionnent eux-mêmes la base `vite_et_gourmand` :
 
 ```bash
-mysql -u vite_gourmand -p vite_et_gourmand < database/01_creation_base.sql
-mysql -u vite_gourmand -p vite_et_gourmand < database/02_insertion_donnees.sql
+mysql -u vite_gourmand -p < database/01_creation_base.sql
+mysql -u vite_gourmand -p < database/02_insertion_donnees.sql
 ```
 
 Équivalent PowerShell, qui évite l'opérateur de redirection :
 
 ```powershell
-Get-Content -Raw database/01_creation_base.sql | mysql -u vite_gourmand -p vite_et_gourmand
-Get-Content -Raw database/02_insertion_donnees.sql | mysql -u vite_gourmand -p vite_et_gourmand
+Get-Content -Raw database/01_creation_base.sql | mysql -u vite_gourmand -p
+Get-Content -Raw database/02_insertion_donnees.sql | mysql -u vite_gourmand -p
 ```
 
 Les scripts contiennent des suppressions de tables. Leur réimportation peut effacer les données existantes : utilisez-les uniquement sur une base de développement sauvegardée ou vide.
@@ -475,7 +479,9 @@ php bin/console lint:twig templates
 
 ## Déploiement
 
-L'application est déployée manuellement sur **alwaysdata** : [https://viteetgourmand33.alwaysdata.net/](https://viteetgourmand33.alwaysdata.net/).
+L'application est déployée manuellement sur **alwaysdata** : [https://gourmandetvite.alwaysdata.net/](https://gourmandetvite.alwaysdata.net/).
+
+La version actuellement déployée provient d'un nouvel environnement de production recréé afin de garantir un déploiement propre et reproductible.
 
 La production utilise PHP, Apache et MySQL/MariaDB. Le document root doit pointer vers `public/`. MongoDB doit être fourni par un service externe ou un service personnalisé, car il n'est pas proposé comme base managée par alwaysdata. MySQL reste la source de vérité si MongoDB est momentanément indisponible.
 
@@ -530,7 +536,6 @@ Le projet n'utilise pas `node_modules/`, puisqu'il n'a pas de `package.json`.
 
 ## Documentation complémentaire
 
-- [Manuel d'utilisation](docs/Manuel%20d'utilisation.pdf)
 - [Charte graphique](docs/Chartegraphique.pdf)
 - [Annexes de la charte graphique](docs/Chartegraphiqueannexes.pdf)
 - [Documentation technique](docs/documentation-technique.md), comprenant l'architecture, le modèle de données, les diagrammes et le déploiement
@@ -538,11 +543,21 @@ Le projet n'utilise pas `node_modules/`, puisqu'il n'a pas de `package.json`.
 
 ## Liens du projet
 
-- Dépôt GitHub : [manonlrt261/Vite-gourmand](https://github.com/manonlrt261/Vite-gourmand)
-- Application en ligne : [viteetgourmand33.alwaysdata.net](https://viteetgourmand33.alwaysdata.net/)
+- Dépôt GitHub historique : [manonlrt261/Vite-gourmand](https://github.com/manonlrt261/Vite-gourmand)
+- Dépôt Github de déploiement : [manonlrt261/Vite-gourmand-production](https://github.com/manonlrt261/Vite-gourmand-production)
+- Application en ligne : [viteetgourmand33.alwaysdata.net](https://gourmandetvite.alwaysdata.net/)
 - Gestion de projet : [tableau Notion Vite & Gourmand](https://app.notion.com/p/6482621c5f4d42b1ad54ca0e19fc8a46)
 - Documentation : [`docs/`](docs/)
 
+## Livrables
+
+Manuel d’utilisation ; [`docs/`](manuelutilisation)
+Charte graphique ; [`docs/`](Chartegraphique.pdf) [`docs/`](Chartegraphiqueannexes.pdf)
+Annexes contenant les six maquettes ; [`docs/`](Chartegraphiqueannexes.pdf)
+Documentation technique ; [`docs/`](documentation-technique.md)
+Documentation de gestion de projet ;[`docs/`](documentation-gestion-projet.md)
+Documentation sur l'audit RGAA : [`docs/`](audit-accessibilite-rgaa.md)
+Documentation sur les tests manuels : [`docs/`](testsmanuels.md)
 
 ## Auteur
 
